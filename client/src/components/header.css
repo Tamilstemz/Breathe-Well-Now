@@ -1,0 +1,49 @@
+/* Default Navlinks style */
+.Navlinks {
+  white-space: nowrap;
+}
+
+
+
+/* Responsive fix for 768px width and 498px height */
+@media (max-height: 550px) and (min-width: 768px) {
+  .Navlinks {
+    font-size: 0.7rem !important;
+    white-space: nowrap !important;
+  }
+
+  .glass-effect img {
+    max-height: 40px !important;
+    height: auto !important;
+    width: auto !important;
+  }
+
+  header {
+    padding-top: 0.25rem !important;
+    padding-bottom: 0.25rem !important;
+  }
+
+  .book-btn {
+    height: 35px !important;
+  }
+
+  .card-gradient-orange {
+    padding: 0rem 0.3rem !important;
+    font-size: 0.6rem !important;
+  }
+
+  .Navlinks.phone-link {
+    font-size: 0.7rem !important;
+    padding: 0.2rem 0.5rem !important;
+  }
+
+  .Navlinks.phone-link svg {
+    height: 0.7rem !important;
+    width: 0.7rem !important;
+  }
+}
+
+
+
+
+
