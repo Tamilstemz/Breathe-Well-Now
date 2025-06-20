@@ -231,7 +231,7 @@ const AppointmentBooking = () => {
     paymentMethod: "OR",
     dob: "",
     TransactionId: "",
-    servicecode: [environment.DEFAULT_SERVICE_CODE],
+    servicecode: [],
     totalPrice: 0,
     PaymentType: "",
   });
@@ -250,12 +250,17 @@ const AppointmentBooking = () => {
       paymentMethod: "OR",
       dob: "",
       TransactionId: "",
-      servicecode: [environment.DEFAULT_SERVICE_CODE],
+      servicecode: [],
       totalPrice: 0,
       slot_booking: [],
       PaymentType: "",
     },
   ]);
+
+    console.log('formData[11111]',formData);
+
+
+
 
   const [memberValidated, setMemberValidated] = useState<boolean[]>(() =>
     Array(members.length).fill(false)
@@ -284,6 +289,24 @@ const AppointmentBooking = () => {
       document.body.style.overflow = "auto";
     };
   }, [showDialog]);
+
+
+  useEffect(() => {
+  if (serviceList && serviceList.length === 1) {
+    
+    const oneCodes = serviceList[0];
+
+    console.log('serviceList[0]',oneCodes);
+
+
+    setFormData((prev) => ({
+      ...prev,
+      servicecode: [oneCodes?.code], // <-- fix here
+      totalPrice: parseInt(oneCodes?.price),
+    }));
+
+  }
+}, [serviceList]);
 
   const getMonthName = () => {
     return currentDate.toLocaleDateString("en-US", {
@@ -1148,6 +1171,7 @@ const AppointmentBooking = () => {
           dob,
           passportNo,
           gender,
+          paymentMethod
         } = member;
 
         if (!patientName.trim()) {
@@ -1162,6 +1186,11 @@ const AppointmentBooking = () => {
 
         if (!age.trim()) {
           errors[`age_${index}`] = "Age is required.";
+          hasError = true;
+        }
+
+        if (!paymentMethod.trim()) {
+          errors[`paymentMethod_${index}`] = "paymentMethod is required.";
           hasError = true;
         }
 
@@ -1217,7 +1246,12 @@ const AppointmentBooking = () => {
         passportNo,
         gender,
         hapId,
+        paymentMethod
+
       } = formData;
+
+      if (!paymentMethod.trim())
+        errors.paymentMethod = "paymentMethod is required.";
 
       if (!patientName.trim())
         errors.patientName = "Applicant Name is required.";
@@ -1816,7 +1850,6 @@ const AppointmentBooking = () => {
   ) => {
     const { name, value } = e.target;
 
-    console.log("vvvvvvv---1", appointmentType, "222222", index);
 
     if (appointmentType === "Self") {
       let updatedData = { ...formData, [name]: value };
@@ -1859,6 +1892,10 @@ const AppointmentBooking = () => {
 
       // console.log('formData-----',formData);
     } else if (appointmentType === "Group" && typeof index === "number") {
+
+      console.log('vvvvvv----222',value,'000----000',index);
+      
+
       const updatedMembers = [...members];
       updatedMembers[index][name] = value;
 
@@ -2514,1073 +2551,759 @@ const AppointmentBooking = () => {
 
       {/* Modal Dialog */}
       {showDialog && (
-        <div
-          className="modal show d-block"
-          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-        >
-          <div className="modal-dialog modal-lg modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header justify-content-between">
-                <h1
-                  style={{ fontSize: "30px", fontWeight: "bold" }}
-                  className="modal-title w-100 text-center"
-                >
-                  Schedule New Appointment
-                </h1>
-                <button onClick={cancel} className="btn-custom-orange">
-                  &#10006;
-                </button>
-              </div>
-
-              <>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    fontWeight: "bold",
-                    fontSize: "14px",
-                    padding: "10px 20px",
-                    gap: "5px",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <div
-                      style={{ width: "50%", display: "flex", gap: "0.4rem" }}
-                    >
-                      <label
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          width: "30%",
-                        }}
+              <div
+                className="modal show d-block"
+                style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+              >
+                <div className="modal-dialog modal-lg modal-dialog-centered">
+                  <div className="modal-content">
+                    <div className="modal-header justify-content-between">
+                      <h1
+                        style={{ fontSize: "30px", fontWeight: "bold" }}
+                        className="modal-title w-100 text-center"
                       >
-                        Selected Date <span>:</span>
-                      </label>
-                      <span>
-                        {selectedDate
-                          ? `${formatDateToDDMMYYYY(selectedDate)}`
-                          : "No date selected"}
-                      </span>
+                        Schedule New Appointment
+                      </h1>
+                      <button onClick={cancel} className="btn-custom-orange">
+                        &#10006;
+                      </button>
                     </div>
 
-                    <div
-                      style={{
-                        width: "50%",
-                        display: "flex",
-                        gap: "0.4rem",
-                        textAlign: "left",
-                        alignItems: "flex-start",
-                      }}
-                    >
-                      <label
-                        style={{
-                          width: "30%",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        Applicant Name <span>:</span>
-                      </label>
-                      <span
-                        style={{
-                          wordBreak: "break-word",
-                          flex: 1,
-                        }}
-                      >
-                        {formData?.patientName}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Row 2 */}
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                    }}
-                  >
-                    <div
-                      style={{ width: "50%", display: "flex", gap: "0.4rem" }}
-                    >
-                      <label
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          width: "30%",
-                        }}
-                      >
-                        Selected Slot <span>:</span>
-                      </label>
-                      <span>{selectedslottime}</span>
-                    </div>
-
-                    <div
-                      style={{
-                        width: "50%",
-                        display: "flex",
-                        gap: "0.4rem",
-                        textAlign: "left",
-                        alignItems: "flex-start",
-                      }}
-                    >
-                      <label
-                        style={{
-                          whiteSpace: "nowrap",
-                          width: "30%",
-                          display: "flex",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        Passport No <span>:</span>
-                      </label>
-                      <span
-                        style={{
-                          wordBreak: "break-word",
-                          flex: 1,
-                        }}
-                      >
-                        {formData?.passportNo}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="modal-body">
-                  {stepIndex === 0 && (
                     <>
-                      {appointmentType === "Group" && stepIndex === 0 ? (
-                        <>
-                          {" "}
-                          <Accordion
-                            type="single"
-                            collapsible
-                            value={openAccordion}
-                            onValueChange={(val) => setOpenAccordion(val)}
-                            className="w-full"
-                          >
-                            {members.map((member, i) => (
-                              <AccordionItem key={i} value={`item-${i}`}>
-                                <AccordionTrigger>
-                                  <div
-                                    className={`flex items-center gap-2 ${
-                                      memberHasError[i]
-                                        ? "bg-red-100 border-l-4 border-red-500 px-2 py-1 input-shake"
-                                        : ""
-                                    }`}
-                                  >
-                                    {i === 0 ? (
-                                      <>
-                                        Primary Member Details
-                                        <span className="ml-2 rounded bg-green-600 px-2 py-0.5 text-xs text-white">
-                                          Primary
-                                        </span>
-                                      </>
-                                    ) : (
-                                      `Member ${i + 1} Details`
+                      <div className="info-section">
+                        <div className="info-row">
+                          <div className="info-item">
+                            <label className="info-label">
+                              Selected Date <span>:</span>
+                            </label>
+                            <span className="info-value">
+                              {selectedDate ? `${formatDateToDDMMYYYY(selectedDate)}` : "No date selected"}
+                            </span>
+                          </div>
+
+                          <div className="info-item">
+                            <label className="info-label">
+                              Applicant Name <span>:</span>
+                            </label>
+                            <span className="info-value">
+                              {formData?.patientName}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Row 2 */}
+                        <div className="info-row">
+                          <div className="info-item">
+                            <label className="info-label">
+                              Selected Slot <span>:</span>
+                            </label>
+                            <span className="info-value">
+                              {selectedslottime}
+                            </span>
+                          </div>
+
+                          <div className="info-item">
+                            <label className="info-label">
+                              Passport No <span>:</span>
+                            </label>
+                            <span className="info-value">
+                              {formData?.passportNo}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="modal-body">
+                        {stepIndex === 0 && (
+                          <>
+                            {appointmentType === "Group" && stepIndex === 0 ? (
+                              <>
+                                {" "}
+                                <Accordion
+                                  type="single"
+                                  collapsible
+                                  value={openAccordion}
+                                  onValueChange={(val) => setOpenAccordion(val)}
+                                  className="w-full"
+                                >
+                                  {members.map((member, i) => (
+                                    <AccordionItem key={i} value={`item-${i}`}>
+                                      <AccordionTrigger>
+                                        <div
+                                          className={`flex items-center gap-2 ${
+                                            memberHasError[i]
+                                              ? "bg-red-100 border-l-4 border-red-500 px-2 py-1 input-shake"
+                                              : ""
+                                          }`}
+                                        >
+                                          {i === 0 ? (
+                                            <>
+                                              Primary Member Details
+                                              <span className="ml-2 rounded bg-green-600 px-2 py-0.5 text-xs text-white">
+                                                Primary
+                                              </span>
+                                            </>
+                                          ) : (
+                                            `Member ${i + 1} Details`
+                                          )}
+                                        </div>
+                                      </AccordionTrigger>
+                                      <AccordionContent>
+                                        <form>
+                                          <div className="row mb-3">
+                                            <div className="col-md-6 mb-3">
+                                            <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                              <label
+                                                htmlFor={`patientName_${i}`}
+                                                className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+                                                
+                                              >
+                                                Name:
+                                              </label>
+                                              <input
+                                                type="text"
+                                                className={`form-control ${
+                                                  formErrors[`patientName_${i}`]
+                                                    ? "is-invalid input-shake"
+                                                    : ""
+                                                }`}
+                                                id={`patientName_${i}`}
+                                                name="patientName"
+                                                value={member.patientName}
+                                                onChange={(e) => handleChange(e, i)}
+                                                autoComplete="off"
+                                                placeholder={getDynamicPlaceholder(
+                                                  "patientName"
+                                                )}
+                                              />
+                                            </div>
+                                            </div>
+                                            
+                                            <div className="col-md-6 mb-3">
+                                              <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                                <label
+                                                  htmlFor={`contactNumber_${i}`}
+                                                  className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+                                                  
+                                                >
+                                                  Contact Number:
+                                                </label>
+                                                <input
+                                                  type="text"
+                                                  className={`form-control ${
+                                                    formErrors[`contactNumber_${i}`]
+                                                      ? "is-invalid input-shake"
+                                                      : ""
+                                                  }`}
+                                                  id={`contactNumber_${i}`}
+                                                  name="contactNumber"
+                                                  value={member.contactNumber}
+                                                  maxLength={10}
+                                                  onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    if (/^\d*$/.test(value)) {
+                                                      handleChange(e, i);
+                                                    }
+                                                  }}
+                                                  placeholder={getDynamicPlaceholder(
+                                                    "contactNumber"
+                                                  )}
+                                                  autoComplete="off"
+                                                />
+                                              </div>
+                                            </div>
+                                          </div>
+
+                                          <div className="row mb-3">
+                                            <div className="col-md-6 mb-3">
+                                            <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                              <label
+                                                htmlFor={`gender_${i}`}
+                                                className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+                                                
+                                              >
+                                                Gender:
+                                              </label>
+                                              <select
+                                                className={`form-control ${
+                                                  formErrors[`gender_${i}`]
+                                                    ? "is-invalid input-shake"
+                                                    : ""
+                                                }`}
+                                                name="gender"
+                                                id={`gender_${i}`}
+                                                value={member.gender}
+                                                onChange={(e) => handleChange(e, i)}
+                                              >
+                                                <option value="">Select</option>
+                                                <option value="male">Male</option>
+                                                <option value="female">Female</option>
+                                                <option value="other">Other</option>
+                                              </select>
+                                            </div>
+                                            </div>
+
+                                            <div className="col-md-6 mb-3">
+                                              <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                                <label
+                                                  htmlFor={`dob_${i}`}
+                                                  className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+                                                  
+                                                >
+                                                  DOB:
+                                                </label>
+                                                <input
+                                                  type="date"
+                                                  className={`form-control ${
+                                                    formErrors[`dob_${i}`]
+                                                      ? "is-invalid input-shake"
+                                                      : ""
+                                                  }`}
+                                                  id="dob"
+                                                  name="dob"
+                                                  value={member.dob}
+                                                  min={getMinDOB()}
+                                                  max={getMaxDOB()}
+                                                  onChange={(e) => handleChange(e, i)}
+                                                  style={{
+                                                    cursor: "pointer",
+                                                    backgroundColor: "#fff",
+                                                  }}
+                                                  onKeyDown={(e) => e.preventDefault()}
+                                                />
+                                              </div>
+                                            </div>
+                                          </div>
+
+                                          <div className="row mb-3">
+                                            <div className="col-md-6 mb-3">
+                                            <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                              <label
+                                                htmlFor={`age_${i}`}
+                                                className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+                                                
+                                              >
+                                                Age:
+                                              </label>
+                                              <input
+                                                type="text"
+                                                className={`form-control ${
+                                                  formErrors[`age_${i}`]
+                                                    ? "is-invalid input-shake"
+                                                    : ""
+                                                }`}
+                                                id={`age_${i}`}
+                                                name="age"
+                                                value={member.age}
+                                                maxLength={2}
+                                                onChange={(e) => {
+                                                  const value = e.target.value;
+                                                  if (/^\d*$/.test(value)) {
+                                                    handleChange(e, i);
+                                                  }
+                                                }}
+                                                placeholder={getDynamicPlaceholder(
+                                                  "age"
+                                                )}
+                                                autoComplete="off"
+                                              />
+                                            </div>
+                                            </div>
+
+                                            <div className="col-md-6 mb-3">
+                                            <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                              <label
+                                                htmlFor={`passportNo_${i}`}
+                                                className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+                                                
+                                              >
+                                                Passport No:
+                                              </label>
+                                        
+                                                <input
+                                                  type="text"
+                                                  className={`form-control ${
+                                                    formErrors[`passportNo_${i}`]
+                                                      ? "is-invalid input-shake"
+                                                      : ""
+                                                  }`}
+                                                  id={`passportNo_${i}`}
+                                                  name="passportNo"
+                                                  value={member.passportNo}
+                                                  onChange={(e) => handleChange(e, i)}
+                                                  maxLength={12}
+                                                  placeholder={getDynamicPlaceholder(
+                                                    "passportNo"
+                                                  )}
+                                                  autoComplete="off"
+                                                />
+                                              </div>
+                                        
+                                            </div>
+                                          </div>
+
+                                          {i === 0 && (
+                                            <>
+                                              <div className="row mb-3">
+                                                <div className="col-md-6 mb-3">
+                                                  <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                                    <label
+                                                      htmlFor={`email_${i}`}
+                                                      className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+                                                      
+                                                    >
+                                                      Email:
+                                                    </label>
+                                                    <input
+                                                      type="email"
+                                                      id={`email_${i}`}
+                                                      className={`form-control ${
+                                                        formErrors[`email_${i}`]
+                                                          ? "is-invalid input-shake"
+                                                          : ""
+                                                      }`}
+                                                      name="email"
+                                                      value={members[i].email}
+                                                      onChange={(e) =>
+                                                        handleChange(e, i)
+                                                      }
+                                                      placeholder={getDynamicPlaceholder(
+                                                        "email"
+                                                      )}
+                                                      autoComplete="off"
+                                                    />
+                                                  </div>
+                                                </div>
+
+                                                <div className="col-md-6 mb-3">
+                                                  <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                                    <label
+                                                      className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+                                                      
+                                                    >
+                                                      HAP ID:
+                                                    </label>
+                                                    <input
+                                                      type="text"
+                                                      className={`form-control ${
+                                                        formErrors[`hapId_${i}`]
+                                                          ? "is-invalid input-shake"
+                                                          : ""
+                                                      }`}
+                                                      id={`hapId_${i}`}
+                                                      inputMode="numeric"
+                                                      pattern="\d*"
+                                                      name="hapId"
+                                                      value={members[i].hapId}
+                                                      onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        if (/^\d*$/.test(value)) {
+                                                          handleChange(e, i);
+                                                        }
+                                                      }}
+                                                      maxLength={8}
+                                                      placeholder={getDynamicPlaceholder(
+                                                        "hapId"
+                                                      )}
+                                                      autoComplete="off"
+                                                    />
+                                                  </div>
+                                                </div>
+                                              </div>
+
+                                              <div className="row mb-3">
+                                                <div className="col-md-6 mb-3">
+                                                  <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                                    <label
+                                                      htmlFor={`alternativeNumber_${i}`}
+                                                      className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+                                                      
+                                                    >
+                                                      Alternative Number:
+                                                    </label>
+                                                    <input
+                                                      type="text"
+                                                      className={`form-control ${
+                                                        formErrors[
+                                                          `alternativeNumber_${i}`
+                                                        ]
+                                                          ? "is-invalid input-shake"
+                                                          : ""
+                                                      }`}
+                                                      id={`alternativeNumber_${i}`}
+                                                      name="alternativeNumber"
+                                                      value={
+                                                        members[i].alternativeNumber
+                                                      }
+                                                      maxLength={10}
+                                                      onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        if (/^\d*$/.test(value)) {
+                                                          handleChange(e, i);
+                                                        }
+                                                      }}
+                                                      placeholder={getDynamicPlaceholder(
+                                                        "alternativeNumber"
+                                                      )}
+                                                      autoComplete="off"
+                                                    />
+                                                  </div>
+                                                </div>
+
+                                                <div className="col-md-6 mb-3">
+                                                  <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                                    <label
+                                                      htmlFor={`paymentMethod_${i}`}
+                                                      className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+                                                      
+                                                    >
+                                                      Payment Method:
+                                                    </label>
+                                                    <select
+                                                      className={`form-control ${
+                                                        formErrors[`paymentMethod_${i}`]
+                                                          ? "is-invalid input-shake"
+                                                          : ""
+                                                      }`}
+                                                      id={`paymentMethod_${i}`}
+                                                      name="paymentMethod"
+                                                      value={members[i].paymentMethod}
+                                                      onChange={(e) =>
+                                                        handleChange(e, i)
+                                                      }
+                                                    >
+                                                      <option value="">Select</option>
+                                                      <option value="QR">QR</option>
+                                                    </select>
+                                                  </div>
+                                                </div>
+                                              </div>
+                                            </>
+                                          )}
+                                        </form>
+                                      </AccordionContent>
+                                    </AccordionItem>
+                                  ))}
+                                </Accordion>
+                              </>
+                            ) : (
+                              <form>
+                                <div className="row mb-3">
+                                  <div className="col-md-6 mb-3">
+                                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                      <label htmlFor="patientName" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Name</label>
+                                      <input
+                                        type="text"
+                                        className={`form-control ${formErrors.patientName ? "is-invalid input-shake" : ""}`}
+                                        id="patientName"
+                                        name="patientName"
+                                        value={formData.patientName}
+                                        onChange={handleChange}
+                                        placeholder={getDynamicPlaceholder("patientName")}
+                                        autoComplete="off"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="col-md-6 mb-3">
+                                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                      <label htmlFor="hapId" className="form-label label-fixed me-md-2 mb-1 mb-md-0">HAP ID</label>
+                                      <input
+                                        type="text"
+                                        className={`form-control ${formErrors.hapId ? "is-invalid input-shake" : ""}`}
+                                        id="hapId"
+                                        name="hapId"
+                                        value={formData.hapId}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          if (/^\d*$/.test(value)) handleChange(e);
+                                        }}
+                                        placeholder={getDynamicPlaceholder("hapId")}
+                                        maxLength={8}
+                                        inputMode="numeric"
+                                        autoComplete="off"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="row mb-3">
+                                  <div className="col-md-6 mb-3">
+                                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                      <label htmlFor="email" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Email</label>
+                                      <input
+                                        type="email"
+                                        className={`form-control ${formErrors.email ? "is-invalid input-shake" : ""}`}
+                                        id="email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        placeholder={getDynamicPlaceholder("email")}
+                                        autoComplete="off"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="col-md-6 mb-3">
+                                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                      <label htmlFor="contactNumber" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Contact Number</label>
+                                      <input
+                                        type="text"
+                                        className={`form-control ${formErrors.contactNumber ? "is-invalid input-shake" : ""}`}
+                                        id="contactNumber"
+                                        name="contactNumber"
+                                        value={formData.contactNumber}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          if (/^\d*$/.test(value)) handleChange(e);
+                                        }}
+                                        maxLength={10}
+                                        placeholder={getDynamicPlaceholder("contactNumber")}
+                                        autoComplete="off"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="row mb-3">
+                                  <div className="col-md-6 mb-3">
+                                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                      <label htmlFor="alternativeNumber" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Alternative Number</label>
+                                      <input
+                                        type="text"
+                                        className={`form-control ${formErrors.alternativeNumber ? "is-invalid input-shake" : ""}`}
+                                        id="alternativeNumber"
+                                        name="alternativeNumber"
+                                        value={formData.alternativeNumber}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          if (/^\d*$/.test(value)) handleChange(e);
+                                        }}
+                                        maxLength={10}
+                                        placeholder={getDynamicPlaceholder("alternativeNumber")}
+                                        autoComplete="off"
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="col-md-6 mb-3">
+                                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                      <label htmlFor="gender" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Gender</label>
+                                      <select
+                                        className={`form-control ${formErrors.gender ? "is-invalid input-shake" : ""}`}
+                                        id="gender"
+                                        name="gender"
+                                        value={formData.gender}
+                                        onChange={handleChange}
+                                      >
+                                        <option value="">Select</option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                        <option value="other">Other</option>
+                                      </select>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="row mb-3">
+                                  <div className="col-md-6 mb-3">
+                                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                      <label htmlFor="dob" className="form-label label-fixed me-md-2 mb-1 mb-md-0">DOB</label>
+                                      <input
+                                        type="date"
+                                        className={`form-control ${formErrors.dob ? "is-invalid" : ""}`}
+                                        id="dob"
+                                        name="dob"
+                                        value={formData.dob}
+                                        onChange={handleChange}
+                                        min={getMinDOB()}
+                                        max={getMaxDOB()}
+                                        onKeyDown={(e) => e.preventDefault()}
+                                        style={{ backgroundColor: "#fff", cursor: "pointer" }}
+                                      />
+                                    </div>
+                                  </div>
+
+                                  <div className="col-md-6 mb-3">
+                                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                      <label htmlFor="age" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Age</label>
+                                      <input
+                                        type="text"
+                                        className={`form-control ${formErrors.age ? "is-invalid input-shake" : ""}`}
+                                        id="age"
+                                        name="age"
+                                        value={formData.age}
+                                        onChange={(e) => {
+                                          const value = e.target.value;
+                                          if (/^\d*$/.test(value)) handleChange(e);
+                                        }}
+                                        maxLength={2}
+                                        placeholder={getDynamicPlaceholder("age")}
+                                        autoComplete="off"
+                                        disabled
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="row mb-3">
+                                  <div className="col-md-6 mb-3">
+                                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                      <label htmlFor="passportNo" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Passport No</label>
+                                      <input
+                                        type="text"
+                                        className={`form-control ${formErrors.passportNo ? "is-invalid input-shake" : ""}`}
+                                        id="passportNo"
+                                        name="passportNo"
+                                        value={formData.passportNo}
+                                        onChange={handleChange}
+                                        maxLength={12}
+                                        placeholder={getDynamicPlaceholder("passportNo")}
+                                        autoComplete="off"
+                                      />
+                                    </div>
+                                    {formErrors.passportNo && (
+                                      <small className="text-danger mt-1 d-block text-end">eg: A123456 or AB1234567</small>
                                     )}
                                   </div>
-                                </AccordionTrigger>
-                                <AccordionContent>
-                                  <form>
-                                    <div className="row mb-3">
-                                      <div className="col-md-6 d-flex align-items-center">
-                                        <label
-                                          htmlFor={`patientName_${i}`}
-                                          className="me-2 mb-0"
-                                          style={{ width: "150px" }}
-                                        >
-                                          Name:
-                                        </label>
-                                        <input
-                                          type="text"
-                                          className={`form-control flex-grow-1 ${
-                                            formErrors[`patientName_${i}`]
-                                              ? "is-invalid input-shake"
-                                              : ""
-                                          }`}
-                                          id={`patientName_${i}`}
-                                          name="patientName"
-                                          value={member.patientName}
-                                          onChange={(e) => handleChange(e, i)}
-                                          autoComplete="off"
-                                          placeholder={getDynamicPlaceholder(
-                                            "patientName"
-                                          )}
-                                        />
-                                      </div>
 
-                                      <div className="col-md-6 d-flex align-items-center">
-                                        <label
-                                          htmlFor={`contactNumber_${i}`}
-                                          className="me-2 mb-0"
-                                          style={{ width: "150px" }}
-                                        >
-                                          Contact Number:
-                                        </label>
-                                        <input
-                                          type="text"
-                                          className={`form-control flex-grow-1 ${
-                                            formErrors[`contactNumber_${i}`]
-                                              ? "is-invalid input-shake"
-                                              : ""
-                                          }`}
-                                          id={`contactNumber_${i}`}
-                                          name="contactNumber"
-                                          value={member.contactNumber}
-                                          maxLength={10}
-                                          onChange={(e) => {
-                                            const value = e.target.value;
-                                            if (/^\d*$/.test(value)) {
-                                              handleChange(e, i);
-                                            }
-                                          }}
-                                          placeholder={getDynamicPlaceholder(
-                                            "contactNumber"
-                                          )}
-                                          autoComplete="off"
-                                        />
-                                      </div>
+                                  <div className="col-md-6 mb-3">
+                                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                      <label htmlFor="paymentMethod" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Payment Method</label>
+                                      <select
+                                        className={`form-control ${formErrors.paymentMethod ? "is-invalid input-shake" : ""}`}
+                                        id="paymentMethod"
+                                        name="paymentMethod"
+                                        value={formData.paymentMethod}
+                                        onChange={handleChange}
+                                      >
+                                        <option value="">Select</option>
+                                        <option value="QR">QR</option>
+                                      </select>
                                     </div>
+                                  </div>
+                                </div>
+                              </form>
 
-                                    <div className="row mb-3">
-                                      <div className="col-md-6 d-flex align-items-center">
-                                        <label
-                                          htmlFor={`gender_${i}`}
-                                          className="me-2 mb-0"
-                                          style={{ width: "150px" }}
-                                        >
-                                          Gender:
-                                        </label>
-                                        <select
-                                          className={`form-control flex-grow-1 ${
-                                            formErrors[`gender_${i}`]
-                                              ? "is-invalid input-shake"
-                                              : ""
-                                          }`}
-                                          name="gender"
-                                          id={`gender_${i}`}
-                                          value={member.gender}
-                                          onChange={(e) => handleChange(e, i)}
-                                        >
-                                          <option value="">Select</option>
-                                          <option value="male">Male</option>
-                                          <option value="female">Female</option>
-                                          <option value="other">Other</option>
-                                        </select>
-                                      </div>
+                            )}
+                          </>
+                        )}
 
-                                      <div className="col-md-6 d-flex align-items-center">
-                                        <label
-                                          htmlFor={`dob_${i}`}
-                                          className="me-2 mb-0"
-                                          style={{ width: "150px" }}
-                                        >
-                                          DOB:
-                                        </label>
-                                        <input
-                                          type="date"
-                                          className={`form-control ${
-                                            formErrors[`dob_${i}`]
-                                              ? "is-invalid input-shake"
-                                              : ""
-                                          }`}
-                                          id="dob"
-                                          name="dob"
-                                          value={formData.dob}
-                                          min={getMinDOB()}
-                                          max={getMaxDOB()}
-                                          onChange={(e) => handleChange(e, i)}
-                                          style={{
-                                            cursor: "pointer",
-                                            backgroundColor: "#fff",
-                                          }}
-                                          onKeyDown={(e) => e.preventDefault()}
-                                        />
-                                        {/* <DatePicker
-                                          selected={
-                                            member.dob
-                                              ? new Date(member.dob)
-                                              : null
-                                          }
-                                          onChange={(date: Date | null) => {
-                                            if (date) {
-                                              const dobString = date
-                                                .toISOString()
-                                                .split("T")[0];
-                                              handleChange(
-                                                {
-                                                  target: {
-                                                    name: "dob",
-                                                    value: dobString,
-                                                  },
-                                                } as React.ChangeEvent<HTMLInputElement>,
-                                                i
-                                              );
-                                            }
-                                          }}
-                                          dateFormat="yyyy-MM-dd"
-                                          minDate={new Date(getMinDOB())}
-                                          maxDate={new Date(getMaxDOB())}
-                                          showMonthDropdown
-                                          showYearDropdown
-                                          dropdownMode="select"
-                                          placeholderText="Select DOB"
-                                          className={`form-control ${formErrors[`dob_${i}`]
-                                              ? "is-invalid input-shake"
-                                              : ""
-                                            }`}
-                                        /> */}
-                                      </div>
-                                    </div>
-
-                                    <div className="row mb-3">
-                                      <div className="col-md-6 d-flex align-items-center">
-                                        <label
-                                          htmlFor={`age_${i}`}
-                                          className="me-2 mb-0"
-                                          style={{ width: "150px" }}
-                                        >
-                                          Age:
-                                        </label>
-                                        <input
-                                          type="text"
-                                          className={`form-control flex-grow-1 ${
-                                            formErrors[`age_${i}`]
-                                              ? "is-invalid input-shake"
-                                              : ""
-                                          }`}
-                                          id={`age_${i}`}
-                                          name="age"
-                                          value={member.age}
-                                          maxLength={2}
-                                          onChange={(e) => {
-                                            const value = e.target.value;
-                                            if (/^\d*$/.test(value)) {
-                                              handleChange(e, i);
-                                            }
-                                          }}
-                                          placeholder={getDynamicPlaceholder(
-                                            "age"
-                                          )}
-                                          autoComplete="off"
-                                        />
-                                      </div>
-
-                                      <div className="col-md-6 d-flex align-items-center">
-                                        <label
-                                          htmlFor={`passportNo_${i}`}
-                                          className="me-2 mb-0"
-                                          style={{ width: "150px" }}
-                                        >
-                                          Passport No:
-                                        </label>
-                                        <div style={{ width: "100%" }}>
-                                          <input
-                                            type="text"
-                                            className={`form-control flex-grow-1 ${
-                                              formErrors[`passportNo_${i}`]
-                                                ? "is-invalid input-shake"
-                                                : ""
-                                            }`}
-                                            id={`passportNo_${i}`}
-                                            name="passportNo"
-                                            value={member.passportNo}
-                                            onChange={(e) => handleChange(e, i)}
-                                            maxLength={12}
-                                            placeholder={getDynamicPlaceholder(
-                                              "passportNo"
-                                            )}
-                                            autoComplete="off"
-                                          />
-                                        </div>
-                                      </div>
-                                    </div>
-
-                                    {i === 0 && (
-                                      <>
-                                        <div className="row mb-3">
-                                          <div className="col-md-6 d-flex align-items-center">
-                                            <label
-                                              htmlFor={`email_${i}`}
-                                              className="me-2 mb-0"
-                                              style={{ width: "150px" }}
-                                            >
-                                              Email:
-                                            </label>
-                                            <input
-                                              type="email"
-                                              id={`email_${i}`}
-                                              className={`form-control flex-grow-1 ${
-                                                formErrors[`email_${i}`]
-                                                  ? "is-invalid input-shake"
-                                                  : ""
-                                              }`}
-                                              name="email"
-                                              value={members[i].email}
-                                              onChange={(e) =>
-                                                handleChange(e, i)
-                                              }
-                                              placeholder={getDynamicPlaceholder(
-                                                "email"
-                                              )}
-                                              autoComplete="off"
-                                            />
-                                          </div>
-                                          <div className="col-md-6 d-flex align-items-center">
-                                            <label
-                                              className="me-2 mb-0"
-                                              style={{ width: "150px" }}
-                                            >
-                                              HAP ID:
-                                            </label>
-                                            <input
-                                              type="text"
-                                              className={`form-control flex-grow-1 ${
-                                                formErrors[`hapId_${i}`]
-                                                  ? "is-invalid input-shake"
-                                                  : ""
-                                              }`}
-                                              id={`hapId_${i}`}
-                                              inputMode="numeric"
-                                              pattern="\d*"
-                                              name="hapId"
-                                              value={members[i].hapId}
-                                              onChange={(e) => {
-                                                const value = e.target.value;
-                                                if (/^\d*$/.test(value)) {
-                                                  handleChange(e, i);
-                                                }
-                                              }}
-                                              maxLength={8}
-                                              placeholder={getDynamicPlaceholder(
-                                                "hapId"
-                                              )}
-                                              autoComplete="off"
-                                            />
-                                          </div>
-                                        </div>
-
-                                        <div className="row mb-3">
-                                          <div className="col-md-6 d-flex align-items-center">
-                                            <label
-                                              htmlFor={`alternativeNumber_${i}`}
-                                              className="me-2 mb-0"
-                                              style={{ width: "150px" }}
-                                            >
-                                              Alternative Number:
-                                            </label>
-                                            <input
-                                              type="text"
-                                              className={`form-control flex-grow-1 ${
-                                                formErrors[
-                                                  `alternativeNumber_${i}`
-                                                ]
-                                                  ? "is-invalid input-shake"
-                                                  : ""
-                                              }`}
-                                              id={`alternativeNumber_${i}`}
-                                              name="alternativeNumber"
-                                              value={
-                                                members[i].alternativeNumber
-                                              }
-                                              maxLength={10}
-                                              onChange={(e) => {
-                                                const value = e.target.value;
-                                                if (/^\d*$/.test(value)) {
-                                                  handleChange(e, i);
-                                                }
-                                              }}
-                                              placeholder={getDynamicPlaceholder(
-                                                "alternativeNumber"
-                                              )}
-                                              autoComplete="off"
-                                            />
-                                          </div>
-                                          <div className="col-md-6 d-flex align-items-center">
-                                            <label
-                                              htmlFor={`paymentMethod_${i}`}
-                                              className="me-2 mb-0"
-                                              style={{ width: "150px" }}
-                                            >
-                                              Payment Method:
-                                            </label>
-                                            <select
-                                              className={`form-control flex-grow-1 ${
-                                                formErrors[`paymentMethod_${i}`]
-                                                  ? "is-invalid input-shake"
-                                                  : ""
-                                              }`}
-                                              id={`paymentMethod_${i}`}
-                                              name="paymentMethod"
-                                              value={members[i].paymentMethod}
-                                              onChange={(e) =>
-                                                handleChange(e, i)
-                                              }
-                                            >
-                                              <option value="">Select</option>
-                                              <option value="QR">QR</option>
-                                            </select>
-                                          </div>
-                                        </div>
-                                      </>
-                                    )}
-                                  </form>
-                                </AccordionContent>
-                              </AccordionItem>
-                            ))}
-                          </Accordion>
-                        </>
-                      ) : (
-                        <form>
-                          <div className="row mb-3">
-                            <div className="col-md-6 d-flex align-items-center">
-                              <label
-                                htmlFor="patientName"
-                                className="me-2 mb-0"
-                                style={{ width: "150px" }}
-                              >
-                                Name
-                              </label>
-                              <input
-                                type="text"
-                                className={`form-control flex-grow-1 ${
-                                  formErrors.patientName
-                                    ? "is-invalid input-shake"
-                                    : ""
-                                }`}
-                                id="patientName"
-                                name="patientName"
-                                value={formData.patientName}
-                                onChange={handleChange}
-                                autoComplete="off"
-                                placeholder={getDynamicPlaceholder(
-                                  "patientName"
-                                )}
-                              />
+                        {stepIndex === 1 && (
+                          <div className="payment-section container">
+                            {/* Header Section */}
+                            <div className="d-flex flex-column flex-md-row justify-content-start align-items-start gap-3 mb-4">
+                              <h1 className="h5 fw-bold mb-2 mb-md-0">Price Details :</h1>
+                              <h1 className="h5 fw-bold">Scan the QR code to pay</h1>
                             </div>
-                            <div className="col-md-6 d-flex align-items-center">
-                              <label
-                                className="me-2 mb-0"
-                                style={{ width: "150px" }}
-                              >
-                                HAP ID
-                              </label>
-                              <input
-                                type="text"
-                                className={`form-control flex-grow-1 ${
-                                  formErrors.hapId
-                                    ? "is-invalid input-shake"
-                                    : ""
-                                }`}
-                                id="hapId"
-                                inputMode="numeric"
-                                pattern="\d*"
-                                name="hapId"
-                                value={formData.hapId}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  if (/^\d*$/.test(value)) {
-                                    handleChange(e); // only allow digits
-                                  }
-                                }}
-                                maxLength={8}
-                                placeholder={getDynamicPlaceholder("hapId")}
-                                autoComplete="off"
-                              />
-                            </div>
-                          </div>
 
-                          <div className="row mb-3">
-                            <div className="col-md-6 d-flex align-items-center">
-                              <label
-                                htmlFor="email"
-                                className="me-2 mb-0"
-                                style={{ width: "150px" }}
-                              >
-                                Email
-                              </label>
-                              <input
-                                type="email"
-                                id="email"
-                                className={`form-control flex-grow-1 ${
-                                  formErrors.email
-                                    ? "is-invalid input-shake"
-                                    : ""
-                                }`}
-                                name="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                placeholder={getDynamicPlaceholder("email")}
-                                autoComplete="off"
-                              />
-                            </div>
-                            <div className="col-md-6 d-flex align-items-center">
-                              <label
-                                htmlFor="contactNumber"
-                                className="me-2 mb-0"
-                                style={{ width: "150px" }}
-                              >
-                                Contact Number
-                              </label>
-                              <input
-                                type="text"
-                                className={`form-control flex-grow-1 ${
-                                  formErrors.contactNumber
-                                    ? "is-invalid input-shake"
-                                    : ""
-                                }`}
-                                id="contactNumber"
-                                name="contactNumber"
-                                value={formData.contactNumber}
-                                maxLength={10}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  if (/^\d*$/.test(value)) {
-                                    handleChange(e); // only allow digits
-                                  }
-                                }}
-                                placeholder={getDynamicPlaceholder(
-                                  "contactNumber"
-                                )}
-                                autoComplete="off"
-                              />
-                            </div>
-                          </div>
 
-                          <div className="row mb-3">
-                            <div className="col-md-6 d-flex align-items-center">
-                              <label
-                                htmlFor="alternativeNumber"
-                                className="me-2 mb-0"
-                                style={{ width: "150px" }}
-                              >
-                                Alternative Number
-                              </label>
-                              <input
-                                type="text"
-                                className={`form-control flex-grow-1 ${
-                                  formErrors.alternativeNumber
-                                    ? "is-invalid input-shake"
-                                    : ""
-                                }`}
-                                id="alternativeNumber"
-                                name="alternativeNumber"
-                                value={formData.alternativeNumber}
-                                maxLength={10}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  if (/^\d*$/.test(value)) {
-                                    handleChange(e);
-                                  }
-                                }}
-                                placeholder={getDynamicPlaceholder(
-                                  "alternativeNumber"
-                                )}
-                                autoComplete="off"
-                              />
-                            </div>
-                            <div className="col-md-6 d-flex align-items-center">
-                              <label
-                                htmlFor="gender"
-                                className="me-2 mb-0"
-                                style={{ width: "150px" }}
-                              >
-                                Gender
-                              </label>
-                              <select
-                                className={`form-control flex-grow-1 ${
-                                  formErrors.gender
-                                    ? "is-invalid input-shake"
-                                    : ""
-                                }`}
-                                name="gender"
-                                id="gender"
-                                value={formData.gender}
-                                onChange={handleChange}
-                              >
-                                <option value="">Select</option>
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
-                                <option value="other">Other</option>
-                              </select>
-                            </div>
-                          </div>
+                            {/* Main Content Section */}
+                            <div className="row">
+                              {/* Left Column */}
+                              <div className="col-12 col-lg-6 mb-4">
+                                <div className="d-flex flex-column gap-3">
 
-                          <div className="row mb-3">
-                            <div className="col-md-6 d-flex align-items-center">
-                              <label
-                                htmlFor="dob"
-                                className="me-2 mb-0"
-                                style={{ width: "150px" }}
-                              >
-                                DOB
-                              </label>
-                              <input
-                                type="date"
-                                className={`form-control flex-grow-1 ${
-                                  formErrors.dob ? "is-invalid" : ""
-                                }`}
-                                id="dob"
-                                name="dob"
-                                value={formData.dob}
-                                min={getMinDOB()}
-                                max={getMaxDOB()}
-                                onChange={handleChange}
-                                style={{
-                                  cursor: "pointer",
-                                  backgroundColor: "#fff",
-                                }}
-                                onKeyDown={(e) => e.preventDefault()}
-                              />
-                              {/* {" "} */}
-                              {/* <DatePicker
-                                selected={
-                                  formData.dob ? new Date(formData.dob) : null
-                                }
-                                onChange={(date: Date | null) => {
-                                  if (date) {
-                                    const dobString = date
-                                      .toISOString()
-                                      .split("T")[0];
-                                    handleChange({
-                                      target: {
-                                        name: "dob",
-                                        value: dobString,
-                                      },
-                                    } as React.ChangeEvent<HTMLInputElement>);
-                                  }
-                                }}
-                                dateFormat="yyyy-MM-dd"
-                                minDate={new Date(getMinDOB())}
-                                maxDate={new Date(getMaxDOB())}
-                                showMonthDropdown
-                                showYearDropdown
-                                dropdownMode="select"
-                                placeholderText="Select DOB"
-                                className={`form-control ${formErrors.dob ? "is-invalid input-shake" : ""
-                                  }`}
-                              /> */}
-                            </div>
-                            <div className="col-md-6 d-flex align-items-center">
-                              <label
-                                htmlFor="age"
-                                className="me-2 mb-0"
-                                style={{ width: "150px" }}
-                              >
-                                Age
-                              </label>
-                              <input
-                                type="text"
-                                className={`form-control flex-grow-1 ${
-                                  formErrors.age ? "is-invalid input-shake" : ""
-                                }`}
-                                id="age"
-                                name="age"
-                                value={formData.age}
-                                maxLength={2}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  if (/^\d*$/.test(value)) {
-                                    handleChange(e);
-                                  }
-                                }}
-                                placeholder={getDynamicPlaceholder("age")}
-                                autoComplete="off"
-                                disabled
-                              />
-                            </div>
-                          </div>
+                                  {/* Price */}
+                                  <div className="d-flex flex-column">
+                                    <label className="fw-bold mb-1">Price:</label>
+                                    <span className="form-control">&#8377; {formData?.totalPrice}</span>
+                                  </div>
 
-                          <div className="row mb-3">
-                            <div className="col-md-6 d-flex align-items-center">
-                              <label
-                                htmlFor="passportNo"
-                                className="me-2 mb-0"
-                                style={{ width: "150px" }}
-                              >
-                                Passport No
-                              </label>
-                              <div style={{ width: "100%" }}>
-                                <input
-                                  type="text"
-                                  className={`form-control flex-grow-1 ${
-                                    formErrors.passportNo
-                                      ? "is-invalid input-shake"
-                                      : ""
-                                  }`}
-                                  id="passportNo"
-                                  name="passportNo"
-                                  value={formData.passportNo}
-                                  onChange={handleChange}
-                                  maxLength={12}
-                                  placeholder={getDynamicPlaceholder(
-                                    "passportNo"
-                                  )}
-                                  autoComplete="off"
+                                  {/* Payment Type */}
+                                  <div className="d-flex flex-column">
+                                    <label htmlFor="PaymentType" className="fw-bold mb-1">Payment Type:</label>
+                                    <select
+                                      id="PaymentType"
+                                      name="PaymentType"
+                                      className={`form-control ${formErrors.PaymentType ? "is-invalid input-shake" : ""}`}
+                                      value={formData.PaymentType}
+                                      onChange={handleChange}
+                                      autoComplete="off"
+                                    >
+                                      <option value="Select">Select</option>
+                                      <option>Gpay</option>
+                                      <option>PhonePay</option>
+                                      <option>Paytm</option>
+                                    </select>
+                                  </div>
+
+                                  {/* Transaction File Upload */}
+                                  <div className="d-flex flex-column">
+                                    <label className="fw-bold mb-1">Upload Transaction File:</label>
+                                    <Input
+                                      type="file"
+                                      accept=".png,.pdf"
+                                      disabled={!formData.PaymentType}
+                                      onChange={handleFileChange}
+                                      className="form-control"
+                                      style={{
+                                        cursor:
+                                          !formData.PaymentType || formData.PaymentType === ""
+                                            ? "not-allowed"
+                                            : "pointer",
+                                      }}
+                                    />
+                                  </div>
+
+                                  {/* Transaction ID */}
+                                  <div className="d-flex flex-column">
+                                    <label htmlFor="TransactionId" className="fw-bold mb-1">Transaction ID:</label>
+                                    <input
+                                      id="TransactionId"
+                                      name="TransactionId"
+                                      className={`form-control ${formErrors.TransactionId ? "is-invalid input-shake" : ""}`}
+                                      value={formData.TransactionId}
+                                      onChange={handleChange}
+                                      autoComplete="off"
+                                      placeholder={getDynamicPlaceholder("TransactionId")}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Right Column - QR Code */}
+                              <div className="col-12 col-lg-6 d-flex justify-content-center align-items-center">
+                                <img
+                                  src={Nddiagnostics_QR_Code_1}
+                                  alt="QR Code"
+                                  className="img-fluid"
+                                  style={{ maxWidth: "250px", maxHeight: "280px", width: "100%", height: "auto" }}
                                 />
-                                {formErrors.passportNo && (
-                                  <span style={{ color: "red" }}>
-                                    eg: A123456 or AB1234567
-                                  </span>
-                                )}
                               </div>
                             </div>
-
-                            <div className="col-md-6 d-flex align-items-center">
-                              <label
-                                htmlFor="paymentMethod"
-                                className="me-2 mb-0"
-                                style={{ width: "150px" }}
-                              >
-                                Payment Method
-                              </label>
-                              <select
-                                className={`form-control flex-grow-1 ${
-                                  formErrors.paymentMethod
-                                    ? "is-invalid input-shake"
-                                    : ""
-                                }`}
-                                id="paymentMethod"
-                                name="paymentMethod"
-                                value={formData.paymentMethod}
-                                onChange={handleChange}
-                              >
-                                <option value="">Select</option>
-                                <option value="QR">QR</option>
-                              </select>
-                            </div>
                           </div>
-                        </form>
-                      )}
+                        )}
+
+                      </div>
                     </>
-                  )}
 
-                  {stepIndex === 1 && (
-                    <div className="payment-section">
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          padding: "5px",
-                          marginBottom: "20px",
-                        }}
-                      >
-                        <h1
-                          style={{
-                            fontSize: "20px",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          Price Details <span>:</span>
-                        </h1>
-                        <h1
-                          style={{
-                            fontSize: "20px",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          Scan the QR code to pay
-                        </h1>
-                      </div>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            padding: "5px",
-                            gap: "10px",
-                            fontSize: "15px",
-                          }}
-                        >
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "10px",
-                              fontWeight: "bold",
-                            }}
-                          >
-                            <label
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                                width: "185px",
-                              }}
-                            >
-                              Price <span>:</span>
-                            </label>{" "}
-                            <span>&#8377; {formData?.totalPrice}</span>
-                          </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "10px",
-                            }}
-                          >
-                            <label
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                                width: "185px",
-                                fontWeight: "bold",
-                              }}
-                              htmlFor="PaymentType"
-                            >
-                              Payment Type<span>:</span>
-                            </label>
-                            <select
-                              id="PaymentType"
-                              style={{ padding: "5px", width: "50%" }}
-                              name="PaymentType"
-                              className={`form-control flex-grow-1 ${
-                                formErrors.TransactionId
-                                  ? "is-invalid input-shake"
-                                  : ""
-                              }`}
-                              value={formData.PaymentType}
-                              onChange={handleChange}
-                              autoComplete="off"
-                            >
-                              <option value="Select">Select</option>
-                              <option>Gpay</option>
-                              <option>PhonePay</option>
-                              <option>Paytm</option>
-                            </select>
-                          </div>
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "10px",
-                            }}
-                          >
-                            <label
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                                width: "85%",
-                                fontWeight: "bold",
-                                cursor: "pointer",
-                                pointerEvents: "auto",
-                              }}
-                            >
-                              Upload Transaction file<span>:</span>
-                            </label>
-                            <div
-                              style={{
-                                display: "flex",
-                                flexDirection: "column",
-                              }}
-                            >
-                              <Input
-                                style={{
-                                  width: "183px",
-                                  cursor:
-                                    !formData.PaymentType ||
-                                    formData.PaymentType === ""
-                                      ? "not-allowed"
-                                      : "pointer",
-                                  pointerEvents: "auto",
-                                }}
-                                type="file"
-                                accept=".png,.pdf"
-                                onChange={handleFileChange}
-                                disabled={!formData.PaymentType}
-                              />
-                            </div>
-                          </div>
-
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "10px",
-                            }}
-                          >
-                            <label
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                                width: "185px",
-                                fontWeight: "bold",
-                              }}
-                            >
-                              Transaction ID<span>:</span>
-                            </label>
-                            <input
-                              style={{ padding: "5px", width: "50%" }}
-                              name="TransactionId"
-                              className={`form-control flex-grow-1 ${
-                                formErrors.TransactionId
-                                  ? "is-invalid input-shake"
-                                  : ""
-                              }`}
-                              value={formData.TransactionId}
-                              onChange={handleChange}
-                              autoComplete="off"
-                              placeholder={getDynamicPlaceholder(
-                                "TransactionId"
-                              )}
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <img
-                            src={Nddiagnostics_QR_Code_1}
-                            alt="QR Code"
-                            style={{ width: 250, height: 280 }}
-                          />
-                        </div>
-                      </div>
+                    <div className="modal-footer d-flex justify-content-end gap-2">
+                      <button className="btn-custom-orange" onClick={clear}>
+                        Clear
+                      </button>
+                      <button className="btn-custom-orange" onClick={cancel}>
+                        Cancel
+                      </button>
+                      {stepIndex > 0 && (
+                        <button className="btn-custom-orange" onClick={prevStep}>
+                          Prev
+                        </button>
+                      )}
+                      {stepIndex === 0 && (
+                        <button className="btn-custom-orange" onClick={nextStep}>
+                          Next
+                        </button>
+                      )}
+                      {stepIndex === 1 && (
+                        <button className="btn-custom-orange" onClick={onSubmit}>
+                          Save
+                        </button>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
-              </>
-
-              <div className="modal-footer d-flex justify-content-end gap-2">
-                <button className="btn-custom-orange" onClick={clear}>
-                  Clear
-                </button>
-                <button className="btn-custom-orange" onClick={cancel}>
-                  Cancel
-                </button>
-                {stepIndex > 0 && (
-                  <button className="btn-custom-orange" onClick={prevStep}>
-                    Prev
-                  </button>
-                )}
-                {stepIndex === 0 && (
-                  <button className="btn-custom-orange" onClick={nextStep}>
-                    Next
-                  </button>
-                )}
-                {stepIndex === 1 && (
-                  <button className="btn-custom-orange" onClick={onSubmit}>
-                    Save
-                  </button>
-                )}
               </div>
-            </div>
-          </div>
-        </div>
-      )}
+            )}
     </div>
   );
 };

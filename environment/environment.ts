@@ -16,7 +16,7 @@ export const environment = {
     "https://ndhealthcheck.com/appointment-service/transaction/applicant-appointment/details",
   APPLICANT_RECEIPT_API:
     "https://ndhealthcheck.com/appointment-service/transaction/invoice/pdf/",
-  BASE_PATH: "/ND-Diagnostics-latest/",
-  // BASE_PATH: "/",
+  // BASE_PATH: "/ND-Diagnostics-latest/",
+  BASE_PATH: "/",
  DEFAULT_SERVICE_CODE : "APPT"
 };
