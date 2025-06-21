@@ -6,11 +6,11 @@ import {
   FaInstagram,
 } from "react-icons/fa";
 import logoPath from "@assets/ND India Logo-01 (1)_1749586357933.png";
-import { useLocation } from "wouter";
+import { useNavigate } from "react-router-dom";
 import { environment } from "../../../environment/environment";
 
 export default function Footer() {
-  const [, navigate] = useLocation();
+  const navigate = useNavigate()
 
 
 
@@ -56,7 +56,7 @@ export default function Footer() {
       }
     };
 
-    if (window.location.pathname !== environment.BASE_PATH) {
+    if (window.location.hash !== '') {
       navigate(environment.BASE_PATH);
       setTimeout(() => {
         scrollWithOffset(sectionId);

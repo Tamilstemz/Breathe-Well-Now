@@ -3,13 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Phone, Menu, X } from "lucide-react";
 import logoPath from "@assets/ND India Logo-01 (1)_1749586357933.png";
-import { useLocation } from "wouter";
 import { environment } from "../../../environment/environment";
 import "./header.css";
+import { useNavigate } from "react-router-dom";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [, navigate] = useLocation();
+
+  const navigate = useNavigate()
  
 
 
@@ -53,8 +54,9 @@ export default function Header() {
         console.warn(`Failed to find section: #${id}`);
       }
     };
-
-    if (window.location.pathname !== environment.BASE_PATH) {
+    // console.log('window.location.pathname',window.location);
+    
+    if (window.location.hash !== '') {
       navigate(environment.BASE_PATH);
       setTimeout(() => {
         scrollWithOffset(sectionId);
