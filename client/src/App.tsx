@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Routes, Route } from "react-router-dom";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -19,23 +19,13 @@ import { environment } from "../../environment/environment";
 
 function Router() {
   return (
-    <Switch>
-      <Route path={environment.BASE_PATH} component={Home} />
-      <Route
-        path={`${environment.BASE_PATH}AppointmentBooking`}
-        component={AppointmentBooking}
-      />
-      <Route
-        path={`${environment.BASE_PATH}Privacy-Policy`}
-        component={PrivacyPolicy}
-      />
-
-      <Route
-        path={`${environment.BASE_PATH}Terms-Of-Use`}
-        component={TermsOfUse}
-      />
-      <Route component={NotFound} />
-    </Switch>
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="AppointmentBooking" element={<AppointmentBooking />} />
+      <Route path="Privacy-Policy" element={<PrivacyPolicy />} />
+      <Route path="Terms-Of-Use" element={<TermsOfUse />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 }
 
