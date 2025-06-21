@@ -33,6 +33,8 @@ const sectionVariants = {
 };
 
 export default function Home() {
+
+  // console.log('window.location.pathname222',window.location);
   return (
     <motion.div
       className="min-h-screen bg-background"

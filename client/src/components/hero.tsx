@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { CalendarCheck, Info, Shield, Users, Clock, Award } from "lucide-react";
 import doctorImage from "@assets/newpic1_1749587017199.png";
-import { useLocation } from "wouter";
+import { useNavigate } from "react-router-dom";
 import { environment } from "../../../environment/environment";
 
 export default function Hero() {
-  const [, navigate] = useLocation();
+  const navigate = useNavigate()
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);

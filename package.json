@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build && copy dist\\index.html dist\\404.html",
-    "preview": "vite preview",  
+    "preview": "vite preview",
     "start": "NODE_ENV=production node dist/index.js",
     "deploy": "gh-pages -d dist",
     "check": "tsc",
@@ -57,6 +57,7 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "connect-pg-simple": "^10.0.0",
+    "cookie": "^1.0.2",
     "crypto-js": "^4.2.0",
     "date-fns": "^3.6.0",
     "drizzle-orm": "^0.39.1",
