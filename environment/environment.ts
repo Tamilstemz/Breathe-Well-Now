@@ -1,22 +1,26 @@
 export const environment = {
   production: false,
+  // apiUrl: "http://localhost:3000/api",
+  // TOKEN_API: "https://ndhealthcheck.com/appointment-service/api/auth/token",
+  // APPLICANT_CRUD_API:"https://ndhealthcheck.com/appointment-service/transaction/applicant/details",
+  // APPOINMENT_SAVE_API:"https://ndhealthcheck.com/appointment-service/transaction/book_appointment/save",
+  // AVAILABLE_SLOTS_API: "https://ndhealthcheck.com/appointment-service/configuration/slot-listing",
+  // AVAILABLE_CENTER_API:"https://ndhealthcheck.com/appointment-service/master/center?application=1",
+  // AVAILABLE_SERVIVCE_API:"https://ndhealthcheck.com/appointment-service/master/service?status=1&application=1",
+  // APPLICANT_WITH_APPT_API:"https://ndhealthcheck.com/appointment-service/transaction/applicant-appointment/details",
+  // APPLICANT_RECEIPT_API:"https://ndhealthcheck.com/appointment-service/transaction/invoice/pdf/",
+
   apiUrl: "http://localhost:3000/api",
-  TOKEN_API: "https://ndhealthcheck.com/appointment-service/api/auth/token",
-  APPLICANT_CRUD_API:
-    "https://ndhealthcheck.com/appointment-service/transaction/applicant/details",
-  APPOINMENT_SAVE_API:
-    "https://ndhealthcheck.com/appointment-service/transaction/book_appointment/save",
-  AVAILABLE_SLOTS_API:
-    "https://ndhealthcheck.com/appointment-service/configuration/slot-listing",
-  AVAILABLE_CENTER_API:
-    "https://ndhealthcheck.com/appointment-service/master/center?application=1",
-  AVAILABLE_SERVIVCE_API:
-    "https://ndhealthcheck.com/appointment-service/master/service?status=1&application=1",
-  APPLICANT_WITH_APPT_API:
-    "https://ndhealthcheck.com/appointment-service/transaction/applicant-appointment/details",
-  APPLICANT_RECEIPT_API:
-    "https://ndhealthcheck.com/appointment-service/transaction/invoice/pdf/",
+  TOKEN_API: "http://localhost:8000/api/auth/token",
+  APPLICANT_CRUD_API:"http://localhost:8000/transaction/applicant/details",
+  APPOINMENT_SAVE_API:"http://localhost:8000/transaction/book_appointment/save",
+  AVAILABLE_SLOTS_API: "http://localhost:8000/configuration/slot-listing",
+  AVAILABLE_CENTER_API:"http://localhost:8000/master/center?application=1",
+  AVAILABLE_SERVIVCE_API:"http://localhost:8000/master/service?status=1&application=1",
+  APPLICANT_WITH_APPT_API:"http://localhost:8000/transaction/applicant-appointment/details",
+  APPLICANT_RECEIPT_API:"http://localhost:8000/transaction/invoice/pdf/",
+
   // BASE_PATH: "/ND-Diagnostics-latest/",
   BASE_PATH: "/",
- DEFAULT_SERVICE_CODE : "APPT"
+  DEFAULT_SERVICE_CODE: "APPT",
 };
