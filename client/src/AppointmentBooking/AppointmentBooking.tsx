@@ -236,7 +236,7 @@ const AppointmentBooking = () => {
     dob: "",
     TransactionId: "",
     servicecode: [],
-    totalPrice: 0,
+    totalPrice: 100,
     PaymentType: "",
   });
   const [members, setMembers] = useState<any[]>([
@@ -255,7 +255,7 @@ const AppointmentBooking = () => {
       dob: "",
       TransactionId: "",
       servicecode: [],
-      totalPrice: 0,
+      totalPrice: 100,
       slot_booking: [],
       PaymentType: "",
     },
@@ -2339,7 +2339,7 @@ const AppointmentBooking = () => {
                 <div className="col-12 col-md">
                   <div className="d-flex flex-wrap align-items-center">
                     <span className="text-danger me-2">
-                      For Reschedule and Cancellation, please call Customer Care -
+                      For rescheduling or cancelling appointments, please contact Customer Care -
                     </span>
                     <a
                       href="tel:+919582116116"
@@ -2667,20 +2667,21 @@ const AppointmentBooking = () => {
                               </h5>
                             </div>
 
+
+                              
+
                             {slots.length > 0 &&
-                              slots.some((ele) => ele?.remaining > 0) &&
                               slots.some(
                                 (ele) =>
-                                  ele?.remaining > 0 &&
-                                  !isSlotExpired(
-                                    ele?.time,
-                                    ele?.slotItem?.slot?.date
-                                  )
+                                  +ele?.remaining > 0 &&
+                                  !isSlotExpired(ele?.time, ele?.slotItem?.slot?.date)
                               ) ? (
                               <div
                                 className="row g-3 px-2 slottimebox"
                               >
-                                {slots.map((slot: any, idx: number) => (
+                                {slots
+                                  .filter((slot: any) => +slot.remaining !== 0)
+                                  .map((slot: any, idx: number) => (
                                   <div
                                     key={idx}
                                     className="col-12 col-sm-6 col-md-4 mb-3 position-relative"
@@ -2703,7 +2704,7 @@ const AppointmentBooking = () => {
                                         onClick={rescheduledata && rescheduledata.length > 0 ? () => rescheduleSlotbook(slot) : () => bookTimeSlot(slot)}
                                         disabled={
                                           slot.remaining < membercount ||
-                                          selectedServices.length === 0
+                                          selectedServices.length === 0 
                                         }
                                         style={{
                                           borderRadius: "5px",
@@ -3484,7 +3485,7 @@ const AppointmentBooking = () => {
                     <div className="col-12 col-md">
                       <div className="d-flex flex-wrap align-items-center">
                         <span className="text-danger me-2">
-                          For Reschedule and Cancellation, please call Customer Care -
+                          For rescheduling or cancelling appointments, please contact Customer Care -
                         </span>
                         <a
                           href="tel:+919582116116"
@@ -3498,8 +3499,6 @@ const AppointmentBooking = () => {
                     </div>
                   </div>
                 </div>
-
-                
                 <div className="modal-footer d-flex justify-content-end gap-2">
                   <button className="btn-custom-orange" onClick={clear}>
                     Clear
