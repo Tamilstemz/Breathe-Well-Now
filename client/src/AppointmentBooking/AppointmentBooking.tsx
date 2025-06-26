@@ -2328,9 +2328,9 @@ const AppointmentBooking = () => {
             </div>
 
 
-            <div
-              className="card border-0 shadow-sm mt-3 px-3 py-2"
-              style={{ backgroundColor: '#fff3f3', borderLeft: '4px solid #e74c3c' }}
+            {/* <div
+              className="card border-0 shadow-sm mt-3 px-3 py-2 small"
+              style={{ backgroundColor: '#fff3f3', borderLeft: '4px solid #e74c3c', fontSize: '13px' }}
             >
               <div className="row g-2 align-items-center">
                 <div className="col-12 col-md-auto">
@@ -2352,7 +2352,8 @@ const AppointmentBooking = () => {
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
+
 
 
 
@@ -2668,78 +2669,77 @@ const AppointmentBooking = () => {
                             </div>
 
 
-                              
+
 
                             {slots.length > 0 &&
                               slots.some(
                                 (ele) =>
-                                  +ele?.remaining > 0 &&
-                                  !isSlotExpired(ele?.time, ele?.slotItem?.slot?.date)
-                              ) ? (
+                                  +ele?.remaining > 0) ? (
                               <div
                                 className="row g-3 px-2 slottimebox"
                               >
                                 {slots
-                                  .filter((slot: any) => +slot.remaining !== 0)
+                                  .filter((slot: any) => +slot.remaining > 0 && !isSlotExpired(slot?.time, slot?.slotItem?.slot?.date))
                                   .map((slot: any, idx: number) => (
-                                  <div
-                                    key={idx}
-                                    className="col-12 col-sm-6 col-md-4 mb-3 position-relative"
-                                  >
-                                    <>
-                                      <span
-                                        className={`position-absolute badge Slotcountview ${slot.remaining < membercount
-                                          ? "badge-disabled"
-                                          : "slotNum-success"
-                                          }`}
-                                      >
-                                        {slot.remaining}
-                                      </span>
+                                    <div
+                                      key={idx}
+                                      className="col-12 col-sm-6 col-md-4 mb-3 position-relative"
+                                    >
+                                      <>
+                                        <span
+                                          className={`position-absolute badge Slotcountview ${slot.remaining < membercount
+                                            ? "badge-disabled"
+                                            : "slotNum-success"
+                                            }`}
+                                        >
+                                          {slot.remaining}
+                                        </span>
 
-                                      <button
-                                        className={`btn w-70 text-start btnclr ${slot.remaining < membercount
-                                          ? "btn-outline-secondary"
-                                          : "btn-outline-primary"
-                                          }`}
-                                        onClick={rescheduledata && rescheduledata.length > 0 ? () => rescheduleSlotbook(slot) : () => bookTimeSlot(slot)}
-                                        disabled={
-                                          slot.remaining < membercount ||
-                                          selectedServices.length === 0 
-                                        }
-                                        style={{
-                                          borderRadius: "5px",
-                                          background:
+                                        <button
+                                          className={`btn w-70 text-start btnclr ${slot.remaining < membercount
+                                            ? "btn-outline-secondary"
+                                            : "btn-outline-primary"
+                                            }`}
+                                          onClick={rescheduledata && rescheduledata.length > 0 ? () => rescheduleSlotbook(slot) : () => bookTimeSlot(slot)}
+                                          disabled={
+                                            slot.remaining < membercount ||
+                                            selectedServices.length === 0
+                                          }
+                                          style={{
+                                            borderRadius: "5px",
+                                            background:
+                                              slot.remaining < membercount
+                                                ? "grey"
+                                                : "",
+                                            color:
+                                              slot.remaining < membercount
+                                                ? "white"
+                                                : "",
+                                            cursor:
+                                              slot.remaining < membercount
+                                                ? "not-allowed"
+                                                : "pointer",
+                                          }}
+                                          aria-disabled={
+                                            slot.remaining < membercount ||
+                                            selectedServices.length === 0 
+                                            // ||
+                                            // isSlotExpired(
+                                            //   slot?.time,
+                                            //   slot?.slotItem?.slot?.date
+                                            // )
+                                          }
+                                          aria-label={
                                             slot.remaining < membercount
-                                              ? "grey"
-                                              : "",
-                                          color:
-                                            slot.remaining < membercount
-                                              ? "white"
-                                              : "",
-                                          cursor:
-                                            slot.remaining < membercount
-                                              ? "not-allowed"
-                                              : "pointer",
-                                        }}
-                                        aria-disabled={
-                                          slot.remaining < membercount ||
-                                          selectedServices.length === 0 ||
-                                          isSlotExpired(
-                                            slot?.time,
-                                            slot?.slotItem?.slot?.date
-                                          )
-                                        }
-                                        aria-label={
-                                          slot.remaining < membercount
-                                            ? "Not enough available slots"
-                                            : "Select time slot"
-                                        }
-                                      >
-                                        {slot.time}
-                                      </button>
-                                    </>
-                                  </div>
-                                ))}
+                                              ? "Not enough available slots"
+                                              : "Select time slot"
+                                          }
+                                        >
+                                          {slot.time}
+                                        </button>
+                                      </>
+                                    </div>
+                                  ))}
                               </div>
                             ) : (
                               <p className="text-muted fst-italic px-2 py-3">
