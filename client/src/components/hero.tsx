@@ -357,7 +357,7 @@ export default function Hero() {
 
 
   return (
-    <section className="hero-gradient py-16 lg:py-24 relative overflow-hidden">
+    <section id="home" className="hero-gradient py-16 lg:py-24 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-brand-blue/5 via-brand-purple/5 to-brand-teal/5" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-center">
