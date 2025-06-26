@@ -54,7 +54,7 @@ export default function Header() {
         console.warn(`Failed to find section: #${id}`);
       }
     };
-    // console.log('window.location.pathname',window.location);
+    // console.log('window.location.pathname',window.location.hash);
     
     if (window.location.hash !== '') {
       navigate(environment.BASE_PATH);

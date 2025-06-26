@@ -24,18 +24,24 @@ function Router() {
       <Route path="AppointmentBooking" element={<AppointmentBooking />} />
       <Route path="Privacy-Policy" element={<PrivacyPolicy />} />
       <Route path="Terms-Of-Use" element={<TermsOfUse />} />
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
 
 function App() {
+
+  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        {/* <Toaster /> */}
+        {/* <Toaster /> */} 
         <Toaster />
         <Header />
+      
+
+    {/* <ChatTooltipButton/> */}
         <main className="min-h-screen bg-background">
           <Router />
           <ToastContainer

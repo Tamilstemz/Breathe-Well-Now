@@ -273,7 +273,7 @@ input[type="number"] {
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .btnclr{
@@ -287,7 +287,23 @@ input[type="number"] {
 }
 
 .slotNum-success{
-  background-color: rgb(33 55 96) !important;
+  background-color: #5ebe5e !important;
+}
+
+.slottimebox{
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 5px 10px;
+  
+}
+
+.Slotcountview{
+  top: -10px;
+  left: 0px;
+  z-index: 1;
+  border-radius: 50%;
+  padding: 0.4em 0.6em;
 }
 
 
@@ -335,6 +351,15 @@ input[type="number"] {
 }
 
 
+@media (max-width: 1025px) {
+.btnclr{
+  font-size: 12px !important;
+}
+}
+
+
+
+
 /* =======================
    Responsive Styles
 ======================= */
@@ -365,6 +390,9 @@ input[type="number"] {
     width: 100% !important;
     max-width: 100% !important;
   }
+  .btnclr{
+  font-size: 16px !important;
+}
 
 }
 
@@ -484,9 +512,9 @@ input[type="number"] {
     border-radius: 6px;
   }
 
-  .calendar-day:hover {
+  /* .calendar-day:hover {
     background-color: #ffefde !important;
-  }
+  } */
 
   .calendar-tooltip {
     font-size: 14px;
@@ -512,6 +540,7 @@ input[type="number"] {
   .calendarmainbody {
     padding: 0 !important;
   }
+
 }
 
 
@@ -521,19 +550,42 @@ input[type="number"] {
 
 
 @media (max-width: 430px) {
+
+  .slottimebox{
+    text-align: center !important;
+  }
   .calendarAvalSlot {
     top: 16px;
     left: 25px;
   }
+
+  .Slotcountview{
+    top: -7px;
+    left: 65px;
+  }
 }
 
-
+@media (max-width: 390px) {
+  .Slotcountview {
+      left: 48px;
+    }
+}
 
 @media (max-width: 376px) {
+  .Slotcountview {
+      left: 42px;
+    }
   .calendarAvalSlot {
     top: 17px;
     left: 21px;
   }
+}
+
+
+@media (max-width: 345px) {
+  .Slotcountview {
+      left: 28px;
+    }
 }
 
 @media (max-width: 320px) {
