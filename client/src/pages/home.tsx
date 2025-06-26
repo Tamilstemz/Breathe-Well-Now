@@ -6,7 +6,6 @@ import About from "@/components/about";
 import Process from "@/components/process";
 import Documents from "@/components/documents";
 import Contact from "@/components/contact";
-import { ToastContainer } from "react-toastify";
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -34,7 +33,6 @@ const sectionVariants = {
 
 export default function Home() {
 
-  // console.log('window.location.pathname222',window.location);
   return (
     <motion.div
       className="min-h-screen bg-background"
@@ -44,6 +42,7 @@ export default function Home() {
       variants={pageVariants}
       transition={pageTransition}
     >
+
       <main>
         <motion.div
           initial="hidden"
@@ -52,7 +51,12 @@ export default function Home() {
           variants={sectionVariants}
         >
           <Hero />
+
+
         </motion.div>
+
+
+        
 
         <motion.div
           initial="hidden"
@@ -110,7 +114,6 @@ export default function Home() {
         >
           <Contact />
         </motion.div>
-       
       </main>
     </motion.div>
   );

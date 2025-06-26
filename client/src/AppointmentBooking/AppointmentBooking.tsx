@@ -38,6 +38,10 @@ import {
   TooltipTrigger,
   TooltipContent,
 } from "@/components/ui/tooltip";
+import CryptoJS from "crypto-js";
+import { useNavigate } from "react-router-dom";
+import { Phone } from "lucide-react";
+
 
 type Service = {
   id: number;
@@ -232,7 +236,7 @@ const AppointmentBooking = () => {
     dob: "",
     TransactionId: "",
     servicecode: [],
-    totalPrice: 0,
+    totalPrice: 100,
     PaymentType: "",
   });
   const [members, setMembers] = useState<any[]>([
@@ -251,13 +255,23 @@ const AppointmentBooking = () => {
       dob: "",
       TransactionId: "",
       servicecode: [],
-      totalPrice: 0,
+      totalPrice: 100,
       slot_booking: [],
       PaymentType: "",
     },
   ]);
 
-    console.log('formData[11111]',formData);
+  console.log('formData[11111]', formData);
+
+
+  // --------------------------- Reschedule -----------------------------
+
+  const [rescheduledata, setRescheduledata] = useState<any[]>([])
+
+  const navigate = useNavigate()
+
+
+  console.log('formData[222222]', rescheduledata);
 
 
 
@@ -292,21 +306,21 @@ const AppointmentBooking = () => {
 
 
   useEffect(() => {
-  if (serviceList && serviceList.length === 1) {
-    
-    const oneCodes = serviceList[0];
+    if (serviceList && serviceList.length === 1) {
 
-    console.log('serviceList[0]',oneCodes);
+      const oneCodes = serviceList[0];
+
+      console.log('serviceList[0]', oneCodes);
 
 
-    setFormData((prev) => ({
-      ...prev,
-      servicecode: [oneCodes?.code], // <-- fix here
-      totalPrice: parseInt(oneCodes?.price),
-    }));
+      setFormData((prev) => ({
+        ...prev,
+        servicecode: [oneCodes?.code], // <-- fix here
+        totalPrice: parseInt(oneCodes?.price),
+      }));
 
-  }
-}, [serviceList]);
+    }
+  }, [serviceList]);
 
   const getMonthName = () => {
     return currentDate.toLocaleDateString("en-US", {
@@ -1167,6 +1181,7 @@ const AppointmentBooking = () => {
           email,
           contactNumber,
           alternativeNumber,
+          hapId,
           age,
           dob,
           passportNo,
@@ -1176,6 +1191,14 @@ const AppointmentBooking = () => {
 
         if (!patientName.trim()) {
           errors[`patientName_${index}`] = "Applicant Name is required.";
+          hasError = true;
+        }
+
+        if (!email.trim() && index === 0) {
+          errors[`email_${index}`] = "Email is required.";
+          hasError = true;
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) && index === 0) {
+          errors[`email_${index}`] = "Enter a valid email (e.g., name@example.com)";
           hasError = true;
         }
 
@@ -1202,6 +1225,12 @@ const AppointmentBooking = () => {
             "6-9 characters, uppercase letters/numbers only.";
           hasError = true;
         }
+
+        if (hapId && !/^\d{8}$/.test(hapId)) {
+          errors[`hapId_${index}`] = "Must be exactly 8 digits.";
+          hasError = true;
+        }
+
 
         if (index === 0) {
           if (!contactNumber.trim()) {
@@ -1445,6 +1474,7 @@ const AppointmentBooking = () => {
       setFormData((prev) => ({
         ...prev,
         TransactionId: "",
+        PaymentType: '',
         // Keep servicecode and totalPrice
       }));
 
@@ -1452,6 +1482,7 @@ const AppointmentBooking = () => {
         prevMembers.map((member) => ({
           ...member,
           TransactionId: "",
+          PaymentType: '',
           // Keep servicecode, slot_booking, totalPrice
         }))
       );
@@ -1502,6 +1533,7 @@ const AppointmentBooking = () => {
           transaction_amt: member.totalPrice,
           status: 1,
           created_by: 1,
+          center: selectedCenter,
           slot_booking: member.slot_booking.map((slot: any) => ({
             ...slot,
             servicecode: selectedService,
@@ -1530,6 +1562,7 @@ const AppointmentBooking = () => {
             transaction_amt: formData.totalPrice,
             status: 1,
             created_by: 1,
+            center: selectedCenter,
             slot_booking: [
               {
                 action_date: formatDateToYYYYMMDDNew(new Date()),
@@ -1556,14 +1589,14 @@ const AppointmentBooking = () => {
       );
 
       const responseData = res.data.data;
-      if (res.data.status === "success") {
+      if (res.data.status === 1) {
         const invoiceUrls1: any[] = [];
         const allSuccessful = responseData.every((applicant: any) => {
           const appointments = applicant?.appointments;
           const booking = appointments?.bookings?.[0];
 
           if (
-            appointments?.status === "success" &&
+            appointments?.status === 1 &&
             appointments.errors?.length === 0 &&
             booking?.appointment_id
           ) {
@@ -1893,8 +1926,8 @@ const AppointmentBooking = () => {
       // console.log('formData-----',formData);
     } else if (appointmentType === "Group" && typeof index === "number") {
 
-      console.log('vvvvvv----222',value,'000----000',index);
-      
+      console.log('vvvvvv----222', value, '000----000', index);
+
 
       const updatedMembers = [...members];
       updatedMembers[index][name] = value;
@@ -1935,474 +1968,664 @@ const AppointmentBooking = () => {
     }
   };
 
+
+
+
+  //------------------------------------update
+
+
+  const getDecryptedAppointments = (): any[] => {
+    const encrypted = localStorage.getItem("appointments");
+    if (!encrypted) return [];
+
+    try {
+      const bytes = CryptoJS.AES.decrypt(encrypted, environment.SECRET_KEY);
+      const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+      return JSON.parse(decrypted);
+    } catch (error) {
+      console.error("Decryption error:", error);
+      return [];
+    }
+  };
+
+
+  useEffect(() => {
+
+    let update_data = getDecryptedAppointments()
+    if (update_data && update_data.length > 0) {
+      setRescheduledata(update_data)
+    }
+    // console.log('update_data______000', update_data);
+
+  }, [])
+
+
+
+
+  const rescheduleSlotbook = (slot: any) => {
+
+    console.log('Reschedule Slot Selected:', slot);
+
+    if (rescheduledata && rescheduledata.length > 0 && slot) {
+      const rescheduleConfirm = window.confirm(
+        `You are about to reschedule your appointment to:\n\nDate: ${slot?.slotItem?.slot?.date}\nTime: ${slot?.time}\n\nDo you want to proceed?`
+      );
+
+      if (rescheduleConfirm) {
+        const newAppointment = {
+          ...rescheduledata[0],
+          Newslot: slot,
+        };
+
+        // 1. Get encrypted data from localStorage
+        const encryptedData = localStorage.getItem("Newslot");
+        let newSlotData: any[] = [];
+
+        if (encryptedData) {
+          try {
+            const decryptedData = CryptoJS.AES.decrypt(
+              encryptedData,
+              environment.SECRET_KEY
+            ).toString(CryptoJS.enc.Utf8);
+            newSlotData = JSON.parse(decryptedData);
+          } catch (error) {
+            console.error("Failed to decrypt 'Newslot' data:", error);
+          }
+        }
+
+        // 2. Check if appointment with same ID exists
+        const index = newSlotData.findIndex((item) => item.id === newAppointment.id);
+
+        if (index !== -1) {
+          // Replace existing item
+          newSlotData[index] = newAppointment;
+        } else {
+          // Push new appointment
+          newSlotData.push(newAppointment);
+        }
+
+        // 3. Encrypt updated data
+        const reEncrypted = CryptoJS.AES.encrypt(
+          JSON.stringify(newSlotData),
+          environment.SECRET_KEY
+        ).toString();
+
+        // 4. Save to localStorage
+        localStorage.setItem("Newslot", reEncrypted);
+
+        // 5. Redirect or notify
+        navigate(environment.BASE_PATH);
+        setTimeout(() => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }, 50);
+
+      }
+    }
+  };
+
+
+
+
+
+
+
+
+
+
+
   return (
-    <div className="container-fluid p-3" style={{ marginTop: "10px" }}>
-      <div className="row custom-main-layout">
-        {/* Calendar Section */}
-        <div className="calendar-section col-lg-5 col-md-12 mb-4">
-          <div className="card border calendar-card">
-            <div className="card-header bg-white border-0">
-              <div className="d-flex justify-content-between align-items-center py-3">
-                <h4
-                  className="mb-0 text-dark fw-normal monthhead"
-                  style={{ fontSize: "20px" }}
-                >
-                  {getMonthName()}
-                </h4>
-                <div className="d-flex justify-content-center align-items-center gap-2">
-                  <button
-                    className="btn text-white d-flex align-items-center justify-content-center"
-                    style={{
-                      backgroundColor: "#e67e22",
-                      width: "40px",
-                      height: "30px",
-                      borderRadius: "5px",
-                      border: "none",
-                      fontSize: "16px",
-                      opacity: isCurrentMonth(currentDate) ? 0.5 : 1,
-                      pointerEvents: isCurrentMonth(currentDate)
-                        ? "none"
-                        : "auto",
-                    }}
-                    onClick={goToPrevious}
-                    disabled={isCurrentMonth(currentDate)}
-                  >
-                    ‹
-                  </button>
-                  <button
-                    className="btn text-white px-4"
-                    style={{
-                      backgroundColor: "#e67e22",
-                      height: "30px",
-                      borderRadius: "5px",
-                      border: "none",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                    }}
-                    onClick={goToToday}
-                  >
-                    Today
-                  </button>
-                  <button
-                    className="btn text-white d-flex align-items-center justify-content-center"
-                    style={{
-                      backgroundColor: "#e67e22",
-                      width: "40px",
-                      height: "30px",
-                      borderRadius: "5px",
-                      border: "none",
-                      fontSize: "16px",
-                      opacity: isBeyond90Days(currentDate) ? 0.5 : 1,
-                      pointerEvents: isBeyond90Days(currentDate)
-                        ? "none"
-                        : "auto",
-                    }}
-                    onClick={goToNext}
-                    disabled={isBeyond90Days(currentDate)}
-                  >
-                    ›
-                  </button>
-                </div>
+    <>
+      {rescheduledata && rescheduledata.length > 0 && (() => {
+        const data = rescheduledata[0];
+
+        return (
+          <div className="bg-white p-4 shadow rounded-lg border border-gray-200 mb-6">
+            <h2 className="text-lg font-semibold mb-4 text-blue-700">Appointment Details</h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-8 gap-4 text-sm text-gray-700">
+              <div className="flex flex-col">
+                <span className="font-medium text-gray-500">Applicant Number</span>
+                <span>{data.applicant_number}</span>
               </div>
-            </div>
-
-            <div className="calendar-legend d-flex flex-row align-items-center flex-wrap gap-3">
-              <div className="d-flex align-items-center gap-2">
-                <div
-                  className="bg-danger rounded-circle"
-                  style={{ width: "15px", height: "15px" }}
-                ></div>
-                <span className="text-muted small">Slot Closed</span>
+              <div className="flex flex-col">
+                <span className="font-medium text-gray-500">Applicant Name</span>
+                <span>{data.patient_name}</span>
               </div>
-              <div className="d-flex align-items-center gap-2 ms-4">
-                <div
-                  className="slotNum-success rounded-circle"
-                  style={{ width: "15px", height: "15px" }}
-                ></div>
-                <span className="text-muted small">Slot Available</span>
+              <div className="flex flex-col">
+                <span className="font-medium text-gray-500">HAP ID</span>
+                <span>{data.hap_id}</span>
               </div>
-            </div>
-
-            <div className="calendarmainbody card-body p-4">
-              {/* Weekday Headers */}
-              <div className="d-flex lg:mb-4 sm:mb-4">
-                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
-                  (day) => (
-                    <div key={day} className="flex-fill text-center">
-                      <div className="fw-semibold text-dark dayfontsize">
-                        {day}
-                      </div>
-                    </div>
-                  )
-                )}
+              <div className="flex flex-col">
+                <span className="font-medium text-gray-500">Passport Number</span>
+                <span>{data.passport_number}</span>
               </div>
-
-              <div className="calendar-wrapper">
-                <div
-                  className={`calendar-grid ${selectedCenter ? "active" : ""}`}
-                  style={{
-                    opacity: !selectedCenter ? 0.5 : 1,
-                    pointerEvents: !selectedCenter ? "none" : "auto",
-                    cursor: !selectedCenter ? "not-allowed" : "pointer",
-                  }}
-                >
-                  {getCalendarDays().map((day, index) => {
-                    const isSunday = day.getDay() === 0;
-                    const past = isPastDate(day) || isSunday;
-                    const today = isToday(day);
-                    const selected = isSelected(day);
-                    const hasSlot = hasEvent(day);
-                    const totaldaycount = totalcount(day);
-                    // console.log('meeeeee-99999',day,hasSlot,'totaldaycount',totaldaycount);
-                    console.log(totaldaycount);
-
-                    const currentMonth = isCurrentMonth(day);
-                    // console.log('totaldaycount---------',day,'day',totaldaycount);
-
-                    const isDisabled =
-                      isPastDate(day) || // Disable past
-                      day.getDay() === 0 || // Disable Sundays
-                      !isWithin90DaysFromToday(day) || // Disable if not in next 90 days
-                      (totaldaycount === 0 && hasSlot); // Disable if no available slots
-
-                    const dayStyle: React.CSSProperties = {
-                      opacity: isDisabled ? 0.5 : 1,
-                      border: isDisabled ? "1px solid #ccc" : "none",
-                      cursor: isDisabled ? "not-allowed" : "pointer",
-                      borderRadius: '5px',
-                       background: today ? "orange": "",
-                      // backgroundColor: today ? "#fe9647" : "transparent",
-                      height: '35px'
-                    };
-
-                    return (
-                      <div
-                        key={index}
-                        className="d-flex align-items-center justify-content-center position-relative calendardaybox"
-                        style={{
-                          pointerEvents: isDisabled ? "none" : "auto",
-                         
-                        }}
-                        onClick={() => {
-                          if (!isDisabled) {
-                            handleDateClick(day, timeSlots);
-                          }
-                        }}
-                      >
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div
-                              className={`calendardaystyle d-flex align-items-center justify-content-center rounded-square position-relative z-9999 ${
-                                !isDisabled ? "calendar-day" : ""
-                              } ${isSelecteddate(day) ? "selected" : ""}`}
-                              style={dayStyle}
-                            >
-                              {day.getDate()}
-
-                              {hasSlot && (
-                                <div
-                                  className="calendarAvalSlot"
-                                  style={{
-                                    backgroundColor:
-                                      totaldaycount === 0
-                                        ? "red"
-                                        : "rgb(33 55 96)",
-                                  }}
-                                >
-                                  {totaldaycount === 0 ? "" : totaldaycount}
-                                </div>
-                              )}
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {totaldaycount === 0 || totaldaycount === undefined
-                              ? "No slot available"
-                              : `Total Slots: ${totaldaycount}`}
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                    );
+              <div className="flex flex-col">
+                <span className="font-medium text-gray-500">Email</span>
+                <span>{data.email}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-medium text-gray-500">Mobile</span>
+                <span>{data.contact_number}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-medium text-gray-500">Date Booked</span>
+                <span>
+                  {new Date(data.date_booked).toLocaleDateString("en-US", {
+                    weekday: "short",
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
                   })}
-                </div>
-
-                {!selectedCenter && (
-                  <div className="calendar-tooltip">
-                    Please choose a center to enable calendar
-                  </div>
-                )}
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-medium text-gray-500">Time</span>
+                <span>{data.booked_time}</span>
               </div>
             </div>
           </div>
+        );
+      })()}
 
-          {/* Time Slots Panel */}
-        </div>
 
-        {/* Service Selection Section */}
-        <div className="form-section col-lg-6 col-md-12 mb-4">
-          <div className="card shadow-sm">
-            <div className="card-body Service-card-body">
-              <div className="row g-3 mb-4">
-                <div className="col-12 col-md-6">
-                  <label className="form-label fw-semibold d-flex justify-content-between">
-                    Centre
-                  </label>
-                  <select
-                    className="form-select"
-                    value={selectedCenter}
-                    onChange={handleCenterChange}
+
+
+      <div className="container-fluid p-3" style={{ marginTop: "10px" }}>
+        <div className="row custom-main-layout">
+          {/* Calendar Section */}
+          <div className="calendar-section col-lg-5 col-md-12 mb-4">
+            <div className="card border calendar-card">
+              <div className="card-header bg-white border-0">
+                <div className="d-flex justify-content-between align-items-center py-3">
+                  <h4
+                    className="mb-0 text-dark fw-normal monthhead"
+                    style={{ fontSize: "20px" }}
                   >
-                    <option value="">Select</option>
-                    {Array.isArray(center) &&
-                      center.map((item: any, index: number) => (
-                        <option key={index} value={item.code}>
-                          {item.name}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-                <div className="col-12 col-md-6">
-                  <label className="form-label fw-semibold d-flex justify-content-between">
-                    Service
-                  </label>
-
-                  <div style={{ position: "relative" }} ref={dropdownRef}>
-                    {/* Trigger */}
-                    <div
-                      className="form-select"
-                      onClick={toggleDropdown}
+                    {getMonthName()}
+                  </h4>
+                  <div className="d-flex justify-content-center align-items-center gap-2">
+                    <button
+                      className="btn text-white d-flex align-items-center justify-content-center"
                       style={{
-                        cursor: "pointer",
-                        paddingRight: "2rem", // space for arrow
+                        backgroundColor: "#e67e22",
+                        width: "40px",
+                        height: "30px",
+                        borderRadius: "5px",
+                        border: "none",
+                        fontSize: "16px",
+                        opacity: isCurrentMonth(currentDate) ? 0.5 : 1,
+                        pointerEvents: isCurrentMonth(currentDate)
+                          ? "none"
+                          : "auto",
                       }}
+                      onClick={goToPrevious}
+                      disabled={isCurrentMonth(currentDate)}
                     >
-                      {getSelectedServiceNames() || "Select Service"}
-                      <span style={{ float: "right" }}>&#9662;</span>
-                    </div>
-
-                    {dropdownOpen && (
-                      <div className="dropdown-menu show custom-dropdown">
-                        {selectedCenter && serviceList.length > 1 && (
-                          <label
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "flex-start",
-                              gap: "10px",
-                              padding: "5px",
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              // disabled={bookingType === "family"}
-                              checked={isAllSelected()}
-                              onChange={toggleSelectAll}
-                            />
-                            Select All
-                          </label>
-                        )}
-
-                        {selectedCenter && serviceList.length === 0 && (
-                          <label
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "flex-start",
-                              gap: "10px",
-                              padding: "5px",
-                            }}
-                          >
-                            <span style={{ color: "gray" }}>
-                              No Service Available for selected Centre
-                            </span>
-                          </label>
-                        )}
-
-                        {serviceList.map(
-                          (service) =>
-                            selectedCenter && (
-                              <label
-                                key={service.code}
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "flex-start",
-                                  gap: "10px",
-                                  padding: "5px",
-                                }}
-                              >
-                                <input
-                                  type="checkbox"
-                                  // disabled={bookingType === "family"}
-                                  checked={selectedServices.includes(
-                                    service.code
-                                  )}
-                                  onChange={(e) =>
-                                    handleCheckboxChange(
-                                      e,
-                                      service.code,
-                                      service.price
-                                    )
-                                  }
-                                />
-                                <span>{service.name}</span>
-                              </label>
-                            )
-                        )}
-                      </div>
-                    )}
+                      ‹
+                    </button>
+                    <button
+                      className="btn text-white px-4"
+                      style={{
+                        backgroundColor: "#e67e22",
+                        height: "30px",
+                        borderRadius: "5px",
+                        border: "none",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                      }}
+                      onClick={goToToday}
+                    >
+                      Today
+                    </button>
+                    <button
+                      className="btn text-white d-flex align-items-center justify-content-center"
+                      style={{
+                        backgroundColor: "#e67e22",
+                        width: "40px",
+                        height: "30px",
+                        borderRadius: "5px",
+                        border: "none",
+                        fontSize: "16px",
+                        opacity: isBeyond90Days(currentDate) ? 0.5 : 1,
+                        pointerEvents: isBeyond90Days(currentDate)
+                          ? "none"
+                          : "auto",
+                      }}
+                      onClick={goToNext}
+                      disabled={isBeyond90Days(currentDate)}
+                    >
+                      ›
+                    </button>
                   </div>
                 </div>
               </div>
 
-              <div className="row g-3 mb-2">
-                {/* Appointment Type */}
-                <div className="col-12 col-md-6">
-                  <label className="form-label fw-semibold">
-                    Appointment Type
-                  </label>
-                  <div className="d-flex gap-4">
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="radio"
-                        name="appointmentType"
-                        id="self"
-                        value="Self"
-                        checked={appointmentType === "Self"}
-                        onChange={(e) =>
-                          appointmentTypechnage(e.target.value, "Self")
-                        }
-                        style={{
-                          backgroundColor:
-                            appointmentType === "Self"
-                              ? "#e67e22"
-                              : "transparent",
-                          borderColor: "#e67e22",
-                        }}
-                      />
-                      <label className="form-check-label" htmlFor="self">
-                        Self
-                      </label>
-                    </div>
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="radio"
-                        name="appointmentType"
-                        id="group"
-                        value="Group"
-                        checked={appointmentType === "Group"}
-                        onChange={(e) =>
-                          appointmentTypechnage(e.target.value, "Group")
-                        }
-                        style={{
-                          backgroundColor:
-                            appointmentType === "Group"
-                              ? "#e67e22"
-                              : "transparent",
-                          borderColor: "#e67e22",
-                        }}
-                      />
-                      <label className="form-check-label" htmlFor="group">
-                        Group
-                      </label>
-                    </div>
-                  </div>
+              <div className="calendar-legend d-flex flex-row align-items-center flex-wrap gap-3">
+                <div className="d-flex align-items-center gap-2">
+                  <div
+                    className="bg-danger rounded-circle"
+                    style={{ width: "15px", height: "15px" }}
+                  ></div>
+                  <span className="text-muted small">Slot Closed</span>
+                </div>
+                <div className="d-flex align-items-center gap-2 ms-4">
+                  <div
+                    className="slotNum-success rounded-circle"
+                    style={{ width: "15px", height: "15px" }}
+                  ></div>
+                  <span className="text-muted small">Slot Available</span>
+                </div>
+              </div>
+
+              <div className="calendarmainbody card-body p-4">
+                {/* Weekday Headers */}
+                <div className="d-flex lg:mb-4 sm:mb-4">
+                  {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
+                    (day) => (
+                      <div key={day} className="flex-fill text-center">
+                        <div className="fw-semibold text-dark dayfontsize">
+                          {day}
+                        </div>
+                      </div>
+                    )
+                  )}
                 </div>
 
-                {/* Member Count (only shown if Group is selected) */}
-                {appointmentType === "Group" && (
-                  <div className="col-12 col-md-6">
-                    <label className="form-label fw-semibold d-flex justify-content-between">
-                      Member's Count
-                    </label>
-                    <div style={{ display: "flex", flexDirection: "column" }}>
-                      <input
-                        type="number"
-                        value={membercount}
-                        onChange={handleMemberCountChange}
-                        onKeyDown={(e) => {
-                          if (["e", "E", ".", "+", "-"].includes(e.key)) {
-                            e.preventDefault();
-                          }
-                          const input = e.currentTarget;
-                          if (
-                            input.value.length >= 2 &&
-                            ![
-                              "Backspace",
-                              "ArrowLeft",
-                              "ArrowRight",
-                              "Delete",
-                            ].includes(e.key)
-                          ) {
-                            e.preventDefault();
-                          }
-                        }}
-                        style={{
-                          width: "120px",
-                          border: shake ? "2px solid red" : undefined,
-                          outline: shake ? "none" : undefined,
-                        }}
-                        className={`form-control ${shake ? "input-shake" : ""}`}
-                        min={2}
-                        max={5}
-                      />
-                      {errorMessage && (
-                        <span style={{ color: "red", fontSize: "10px" }}>
-                          {errorMessage}
-                        </span>
-                      )}
-                    </div>
+                <div className="calendar-wrapper">
+                  <div
+                    className={`calendar-grid ${selectedCenter ? "active" : ""}`}
+                    style={{
+                      opacity: !selectedCenter ? 0.5 : 1,
+                      pointerEvents: !selectedCenter ? "none" : "auto",
+                      cursor: !selectedCenter ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {getCalendarDays().map((day, index) => {
+                      const isSunday = day.getDay() === 0;
+                      const past = isPastDate(day) || isSunday;
+                      const today = isToday(day);
+                      const selected = isSelected(day);
+                      const hasSlot = hasEvent(day);
+                      const totaldaycount = totalcount(day);
+                      // console.log('meeeeee-99999',day,hasSlot,'totaldaycount',totaldaycount);
+                      console.log(totaldaycount);
+
+                      const currentMonth = isCurrentMonth(day);
+                      // console.log('totaldaycount---------',day,'day',totaldaycount);
+
+                      const isDisabled =
+                        isPastDate(day) || // Disable past
+                        day.getDay() === 0 || // Disable Sundays
+                        !isWithin90DaysFromToday(day) || // Disable if not in next 90 days
+                        (totaldaycount === 0 && hasSlot); // Disable if no available slots
+
+                      const dayStyle: React.CSSProperties = {
+                        opacity: isDisabled ? 0.5 : 1,
+                        border: isDisabled ? "1px solid #ccc" : "none",
+                        cursor: isDisabled ? "not-allowed" : "pointer",
+                        borderRadius: '5px',
+                        background: today ? "orange" : "",
+                        // backgroundColor: today ? "#fe9647" : "transparent",
+                        height: '35px'
+                      };
+
+                      return (
+                        <div
+                          key={index}
+                          className="d-flex align-items-center justify-content-center position-relative calendardaybox"
+                          style={{
+                            pointerEvents: isDisabled ? "none" : "auto",
+
+                          }}
+                          onClick={() => {
+                            if (!isDisabled) {
+                              handleDateClick(day, timeSlots);
+                            }
+                          }}
+                        >
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div
+                                className={`calendardaystyle d-flex align-items-center justify-content-center rounded-square position-relative z-9999 ${!isDisabled ? "calendar-day" : ""
+                                  } ${isSelecteddate(day) ? "selected" : ""}`}
+                                style={dayStyle}
+                              >
+                                {day.getDate()}
+
+                                {hasSlot && (
+                                  <div
+                                    className="calendarAvalSlot"
+                                    style={{
+                                      backgroundColor:
+                                        totaldaycount === 0
+                                          ? "red"
+                                          : "#5ebe5e",
+                                    }}
+                                  >
+                                    {totaldaycount === 0 ? "" : totaldaycount}
+                                  </div>
+                                )}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent style={{ backgroundColor: 'rgb(33 55 96)', color: 'white', zIndex: 1000 }}>
+                              {totaldaycount === 0 || totaldaycount === undefined
+                                ? "No slot available"
+                                : `Available Slots: ${totaldaycount}`}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      );
+                    })}
                   </div>
-                )}
+
+                  {!selectedCenter && (
+                    <div className="calendar-tooltip">
+                      Please choose a center to enable calendar
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            {selectedDate && selectedCenter && (
-              <div
-                key={selectedDate.toString()}
-                className="card shadow-sm mt-3 slot-slide-in position-relative"
-                style={{
-                  border: "1px solid #dee2e6",
-                  borderRadius: "8px",
-                  overflow: "hidden",
-                }}
-              >
-                {/* 🔴 Overlay if no service selected */}
-                {selectedServices.length === 0 && (
-                  <div
-                    className="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
-                    style={{
-                      backgroundColor: "rgba(255, 255, 255, 0.85)",
-                      zIndex: 10,
-                      fontSize: "16px",
-                      fontWeight: "600",
-                      color: "red",
-                      textAlign: "center",
-                    }}
-                  >
-                    Please choose a service to book a slot
+
+            {/* <div
+              className="card border-0 shadow-sm mt-3 px-3 py-2 small"
+              style={{ backgroundColor: '#fff3f3', borderLeft: '4px solid #e74c3c', fontSize: '13px' }}
+            >
+              <div className="row g-2 align-items-center">
+                <div className="col-12 col-md-auto">
+                  <span className="text-danger fw-bold">Note:</span>
+                </div>
+                <div className="col-12 col-md">
+                  <div className="d-flex flex-wrap align-items-center">
+                    <span className="text-danger me-2">
+                      For rescheduling or cancelling appointments, please contact Customer Care -
+                    </span>
+                    <a
+                      href="tel:+919582116116"
+                      className="text-primary d-flex align-items-center fw-semibold"
+                      style={{ textDecoration: 'none' }}
+                    >
+                      <Phone className="me-2 h-4 w-4" />
+                      +91 9582-116116
+                    </a>
                   </div>
-                )}
+                </div>
+              </div>
+            </div> */}
 
-                {/* 🎯 Actual Slot Content */}
-                <div className="card-body">
-                  {(() => {
-                    const selected = new Date(selectedDate);
 
-                    const sortedSlotDates = getNextFourNonSundayDates(selected);
 
-                    // console.log('slots------?????',sortedSlotDates,'777777',slotsGroupedByDate);
 
-                    return sortedSlotDates.map((date) => {
-                      const dateKey = Object.keys(slotsGroupedByDate).find(
-                        (key) =>
-                          new Date(key).toDateString() === date.toDateString()
-                      );
-                      // console.log('slots------?????-2222',dateKey);
+            {/* Time Slots Panel */}
+          </div>
 
-                      const slots = dateKey
-                        ? Array.from(
+          {/* Service Selection Section */}
+          <div className="form-section col-lg-6 col-md-12 mb-4">
+            <div className="card shadow-sm">
+              <div className="card-body Service-card-body">
+                <div className="row g-3 mb-4">
+                  <div className="col-12 col-md-6">
+                    <label className="form-label fw-semibold d-flex justify-content-between">
+                      Centre
+                    </label>
+                    <select
+                      className="form-select"
+                      value={selectedCenter}
+                      onChange={handleCenterChange}
+                    >
+                      <option value="">Select</option>
+                      {Array.isArray(center) &&
+                        center.map((item: any, index: number) => (
+                          <option key={index} value={item.code}>
+                            {item.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <div className="col-12 col-md-6">
+                    <label className="form-label fw-semibold d-flex justify-content-between">
+                      Service
+                    </label>
+
+                    <div style={{ position: "relative" }} ref={dropdownRef}>
+                      {/* Trigger */}
+                      <div
+                        className="form-select"
+                        onClick={toggleDropdown}
+                        style={{
+                          cursor: "pointer",
+                          paddingRight: "2rem", // space for arrow
+                        }}
+                      >
+                        {getSelectedServiceNames() || "Select Service"}
+                        <span style={{ float: "right" }}>&#9662;</span>
+                      </div>
+
+                      {dropdownOpen && (
+                        <div className="dropdown-menu show custom-dropdown">
+                          {selectedCenter && serviceList.length > 1 && (
+                            <label
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "flex-start",
+                                gap: "10px",
+                                padding: "5px",
+                              }}
+                            >
+                              <input
+                                type="checkbox"
+                                // disabled={bookingType === "family"}
+                                checked={isAllSelected()}
+                                onChange={toggleSelectAll}
+                              />
+                              Select All
+                            </label>
+                          )}
+
+                          {selectedCenter && serviceList.length === 0 && (
+                            <label
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "flex-start",
+                                gap: "10px",
+                                padding: "5px",
+                              }}
+                            >
+                              <span style={{ color: "gray" }}>
+                                No Service Available for selected Centre
+                              </span>
+                            </label>
+                          )}
+
+                          {serviceList.map(
+                            (service) =>
+                              selectedCenter && (
+                                <label
+                                  key={service.code}
+                                  style={{
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "flex-start",
+                                    gap: "10px",
+                                    padding: "5px",
+                                  }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    // disabled={bookingType === "family"}
+                                    checked={selectedServices.includes(
+                                      service.code
+                                    )}
+                                    onChange={(e) =>
+                                      handleCheckboxChange(
+                                        e,
+                                        service.code,
+                                        service.price
+                                      )
+                                    }
+                                  />
+                                  <span>{service.name}</span>
+                                </label>
+                              )
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="row g-3 mb-2">
+                  {/* Appointment Type */}
+                  <div className="col-12 col-md-6">
+                    <label className="form-label fw-semibold">
+                      Appointment Type
+                    </label>
+                    <div className="d-flex gap-4">
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="radio"
+                          name="appointmentType"
+                          id="self"
+                          value="Self"
+                          checked={appointmentType === "Self"}
+                          onChange={(e) =>
+                            appointmentTypechnage(e.target.value, "Self")
+                          }
+                          style={{
+                            backgroundColor:
+                              appointmentType === "Self"
+                                ? "#e67e22"
+                                : "transparent",
+                            borderColor: "#e67e22",
+                          }}
+                        />
+                        <label className="form-check-label" htmlFor="self">
+                          Self
+                        </label>
+                      </div>
+                      <div className="form-check">
+                        <input
+                          className="form-check-input"
+                          type="radio"
+                          name="appointmentType"
+                          id="group"
+                          value="Group"
+                          checked={appointmentType === "Group"}
+                          onChange={(e) =>
+                            appointmentTypechnage(e.target.value, "Group")
+                          }
+                          style={{
+                            backgroundColor:
+                              appointmentType === "Group"
+                                ? "#e67e22"
+                                : "transparent",
+                            borderColor: "#e67e22",
+                          }}
+                        />
+                        <label className="form-check-label" htmlFor="group">
+                          Group
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Member Count (only shown if Group is selected) */}
+                  {appointmentType === "Group" && (
+                    <div className="col-12 col-md-6">
+                      <label className="form-label fw-semibold d-flex justify-content-between">
+                        Member's Count
+                      </label>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <input
+                          type="number"
+                          value={membercount}
+                          onChange={handleMemberCountChange}
+                          onKeyDown={(e) => {
+                            if (["e", "E", ".", "+", "-"].includes(e.key)) {
+                              e.preventDefault();
+                            }
+                            const input = e.currentTarget;
+                            if (
+                              input.value.length >= 2 &&
+                              ![
+                                "Backspace",
+                                "ArrowLeft",
+                                "ArrowRight",
+                                "Delete",
+                              ].includes(e.key)
+                            ) {
+                              e.preventDefault();
+                            }
+                          }}
+                          style={{
+                            width: "120px",
+                            border: shake ? "2px solid red" : undefined,
+                            outline: shake ? "none" : undefined,
+                          }}
+                          className={`form-control ${shake ? "input-shake" : ""}`}
+                          min={2}
+                          max={5}
+                        />
+                        {errorMessage && (
+                          <span style={{ color: "red", fontSize: "10px" }}>
+                            {errorMessage}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {selectedDate && selectedCenter && (
+                <div
+                  key={selectedDate.toString()}
+                  className="card shadow-sm mt-3 slot-slide-in position-relative"
+                  style={{
+                    border: "1px solid #dee2e6",
+                    borderRadius: "8px",
+                    overflow: "hidden",
+                  }}
+                >
+                  {/* 🔴 Overlay if no service selected */}
+                  {selectedServices.length === 0 && (
+                    <div
+                      className="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+                      style={{
+                        backgroundColor: "rgba(255, 255, 255, 0.85)",
+                        zIndex: 10,
+                        fontSize: "16px",
+                        fontWeight: "600",
+                        color: "red",
+                        textAlign: "center",
+                      }}
+                    >
+                      Please choose a service to book a slot
+                    </div>
+                  )}
+
+                  {/* 🎯 Actual Slot Content */}
+                  <div className="card-body">
+                    {(() => {
+                      const selected = new Date(selectedDate);
+
+                      const sortedSlotDates = getNextFourNonSundayDates(selected);
+
+                      // console.log('slots------?????',sortedSlotDates,'777777',slotsGroupedByDate);
+
+                      return sortedSlotDates.map((date) => {
+                        const dateKey = Object.keys(slotsGroupedByDate).find(
+                          (key) =>
+                            new Date(key).toDateString() === date.toDateString()
+                        );
+                        // console.log('slots------?????-2222',dateKey);
+
+                        const slots = dateKey
+                          ? Array.from(
                             new Map(
                               slotsGroupedByDate[dateKey].map((slot: any) => [
                                 slot.time,
@@ -2410,293 +2633,506 @@ const AppointmentBooking = () => {
                               ])
                             ).values()
                           )
-                        : [];
-                      // console.log('slots----------',slots);
+                          : [];
+                        // console.log('slots----------',slots);
 
-                      return (
-                        <div
-                          key={dateKey}
-                          className="mb-3"
-                          style={{
-                            display: "flex",
-                            gap: "10px",
-                            flexDirection: "column",
-                            border: "1px solid rgb(216, 188, 148)", // light orange border
-                            borderRadius: "8px",
-                            backgroundColor: "#fff",
-                            boxShadow: `
+                        return (
+                          <div
+                            key={dateKey}
+                            className="mb-3"
+                            style={{
+                              display: "flex",
+                              gap: "10px",
+                              flexDirection: "column",
+                              border: "1px solid rgb(216, 188, 148)", // light orange border
+                              borderRadius: "8px",
+                              backgroundColor: "#fff",
+                              boxShadow: `
                               0 2px 4px rgba(255, 255, 255, 0.7),     
                               0 4px 10px rgba(230, 126, 34, 0.3)   
                             `,
-                          }}
-                        >
-                          <div
-                            className="card-header bg-blue"
-                            style={{ fontSize: "15px" }}
+                            }}
                           >
-                            <h5 className="mb-0">
-                              Available Slots from{" "}
-                              {date.toLocaleDateString("en-US", {
-                                weekday: "long",
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                              })}
-                            </h5>
-                          </div>
-
-                          {slots.length > 0 &&
-                          slots.some((ele) => ele?.remaining > 0) &&
-                          slots.some(
-                            (ele) =>
-                              ele?.remaining > 0 &&
-                              !isSlotExpired(
-                                ele?.time,
-                                ele?.slotItem?.slot?.date
-                              )
-                          ) ? (
                             <div
-                              className="row g-3 px-2"
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "flex-start",
-                                padding: "10px 10px",
-                              }}
+                              className="card-header bg-blue"
+                              style={{ fontSize: "15px" }}
                             >
-                              {slots.map((slot: any, idx: number) => (
-                                <div
-                                  key={idx}
-                                  className="col-12 col-sm-6 col-md-4 mb-3 position-relative"
-                                >
-                                  <>
-                                    <span
-                                      className={`position-absolute badge ${
-                                        slot.remaining < membercount
-                                          ? "badge-disabled"
-                                          : "slotNum-success"
-                                      }`}
-                                      style={{
-                                        top: "-10px",
-                                        left: "0px",
-                                        zIndex: 1,
-                                        borderRadius: "50%",
-                                        padding: "0.4em 0.6em",
-                                      }}
-                                    >
-                                      {slot.remaining}
-                                    </span>
-
-                                    <button
-                                      className={`btn w-70 text-start btnclr ${
-                                        slot.remaining < membercount
-                                          ? "btn-outline-secondary"
-                                          : "btn-outline-primary"
-                                      }`}
-                                      onClick={() => bookTimeSlot(slot)}
-                                      disabled={
-                                        slot.remaining < membercount ||
-                                        selectedServices.length === 0
-                                      }
-                                      style={{
-                                        borderRadius: "5px",
-                                        background:
-                                          slot.remaining < membercount
-                                            ? "grey"
-                                            : "",
-                                        color:
-                                          slot.remaining < membercount
-                                            ? "white"
-                                            : "",
-                                        cursor:
-                                          slot.remaining < membercount
-                                            ? "not-allowed"
-                                            : "pointer",
-                                      }}
-                                      aria-disabled={
-                                        slot.remaining < membercount ||
-                                        selectedServices.length === 0 ||
-                                        isSlotExpired(
-                                          slot?.time,
-                                          slot?.slotItem?.slot?.date
-                                        )
-                                      }
-                                      aria-label={
-                                        slot.remaining < membercount
-                                          ? "Not enough available slots"
-                                          : "Select time slot"
-                                      }
-                                    >
-                                      {slot.time}
-                                    </button>
-                                  </>
-                                </div>
-                              ))}
+                              <h5 className="mb-0">
+                                Available Slots from{" "}
+                                {date.toLocaleDateString("en-US", {
+                                  weekday: "long",
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                })}
+                              </h5>
                             </div>
-                          ) : (
-                            <p className="text-muted fst-italic px-2 py-3">
-                              No slots for this date
-                            </p>
-                          )}
-                        </div>
-                      );
-                    });
-                  })()}
+
+
+
+
+                            {slots.length > 0 &&
+                              slots.some(
+                                (ele) =>
+                                  +ele?.remaining > 0) ? (
+                              <div
+                                className="row g-3 px-2 slottimebox"
+                              >
+                                {slots
+                                  .filter((slot: any) => +slot.remaining > 0 && !isSlotExpired(slot?.time, slot?.slotItem?.slot?.date))
+                                  .map((slot: any, idx: number) => (
+                                    <div
+                                      key={idx}
+                                      className="col-12 col-sm-6 col-md-4 mb-3 position-relative"
+                                    >
+                                      <>
+                                        <span
+                                          className={`position-absolute badge Slotcountview ${slot.remaining < membercount
+                                            ? "badge-disabled"
+                                            : "slotNum-success"
+                                            }`}
+                                        >
+                                          {slot.remaining}
+                                        </span>
+
+                                        <button
+                                          className={`btn w-70 text-start btnclr ${slot.remaining < membercount
+                                            ? "btn-outline-secondary"
+                                            : "btn-outline-primary"
+                                            }`}
+                                          onClick={rescheduledata && rescheduledata.length > 0 ? () => rescheduleSlotbook(slot) : () => bookTimeSlot(slot)}
+                                          disabled={
+                                            slot.remaining < membercount ||
+                                            selectedServices.length === 0
+                                          }
+                                          style={{
+                                            borderRadius: "5px",
+                                            background:
+                                              slot.remaining < membercount
+                                                ? "grey"
+                                                : "",
+                                            color:
+                                              slot.remaining < membercount
+                                                ? "white"
+                                                : "",
+                                            cursor:
+                                              slot.remaining < membercount
+                                                ? "not-allowed"
+                                                : "pointer",
+                                          }}
+                                          aria-disabled={
+                                            slot.remaining < membercount ||
+                                            selectedServices.length === 0 
+                                            // ||
+                                            // isSlotExpired(
+                                            //   slot?.time,
+                                            //   slot?.slotItem?.slot?.date
+                                            // )
+                                          }
+                                          aria-label={
+                                            slot.remaining < membercount
+                                              ? "Not enough available slots"
+                                              : "Select time slot"
+                                          }
+                                        >
+                                          {slot.time}
+                                        </button>
+                                      </>
+                                    </div>
+                                  ))}
+                              </div>
+                            ) : (
+                              <p className="text-muted fst-italic px-2 py-3">
+                                No slots for this date
+                              </p>
+                            )}
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Modal Dialog */}
-      {showDialog && (
-              <div
-                className="modal show d-block"
-                style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
-              >
-                <div className="modal-dialog modal-lg modal-dialog-centered">
-                  <div className="modal-content">
-                    <div className="modal-header justify-content-between">
-                      <h1
-                        style={{ fontSize: "30px", fontWeight: "bold" }}
-                        className="modal-title w-100 text-center"
-                      >
-                        Schedule New Appointment
-                      </h1>
-                      <button onClick={cancel} className="btn-custom-orange">
-                        &#10006;
-                      </button>
+        {/* Modal Dialog */}
+        {showDialog && (
+          <div
+            className="modal show d-block"
+            style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          >
+            <div className="modal-dialog modal-lg modal-dialog-centered">
+              <div className="modal-content">
+                <div className="modal-header justify-content-between">
+                  <h1
+                    style={{ fontSize: "30px", fontWeight: "bold" }}
+                    className="modal-title w-100 text-center"
+                  >
+                    Schedule New Appointment
+                  </h1>
+                  <button onClick={cancel} className="btn-custom-orange">
+                    &#10006;
+                  </button>
+                </div>
+
+                <>
+                  <div className="info-section">
+                    <div className="info-row">
+                      <div className="info-item">
+                        <label className="info-label">
+                          Selected Date <span>:</span>
+                        </label>
+                        <span className="info-value">
+                          {selectedDate ? `${formatDateToDDMMYYYY(selectedDate)}` : "No date selected"}
+                        </span>
+                      </div>
+                      <div className="info-item">
+                        <label className="info-label">
+                          Applicant Name <span>:</span>
+                        </label>
+                        <span className="info-value">
+                          {/* {appointmentType === "Group" ? members[0]?.patientName : formData?.patientName} */}
+                          {formData?.patientName}
+                        </span>
+                      </div>
+
                     </div>
 
-                    <>
-                      <div className="info-section">
-                        <div className="info-row">
-                          <div className="info-item">
-                            <label className="info-label">
-                              Selected Date <span>:</span>
-                            </label>
-                            <span className="info-value">
-                              {selectedDate ? `${formatDateToDDMMYYYY(selectedDate)}` : "No date selected"}
-                            </span>
-                          </div>
-
-                          <div className="info-item">
-                            <label className="info-label">
-                              Applicant Name <span>:</span>
-                            </label>
-                            <span className="info-value">
-                              {formData?.patientName}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Row 2 */}
-                        <div className="info-row">
-                          <div className="info-item">
-                            <label className="info-label">
-                              Selected Slot <span>:</span>
-                            </label>
-                            <span className="info-value">
-                              {selectedslottime}
-                            </span>
-                          </div>
-
-                          <div className="info-item">
-                            <label className="info-label">
-                              Passport No <span>:</span>
-                            </label>
-                            <span className="info-value">
-                              {formData?.passportNo}
-                            </span>
-                          </div>
-                        </div>
+                    {/* Row 2 */}
+                    <div className="info-row">
+                      <div className="info-item">
+                        <label className="info-label">
+                          Selected Slot <span>:</span>
+                        </label>
+                        <span className="info-value">
+                          {selectedslottime}
+                        </span>
                       </div>
-                      <div className="modal-body">
-                        {stepIndex === 0 && (
+
+                      <div className="info-item">
+                        <label className="info-label">
+                          Passport No <span>:</span>
+                        </label>
+                        <span className="info-value">
+                          {formData?.passportNo}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="modal-body">
+                    {stepIndex === 0 && (
+                      <>
+                        {appointmentType === "Group" && stepIndex === 0 ? (
                           <>
-                            {appointmentType === "Group" && stepIndex === 0 ? (
-                              <>
-                                {" "}
-                                <Accordion
-                                  type="single"
-                                  collapsible
-                                  value={openAccordion}
-                                  onValueChange={(val) => setOpenAccordion(val)}
-                                  className="w-full"
-                                >
-                                  {members.map((member, i) => (
-                                    <AccordionItem key={i} value={`item-${i}`}>
-                                      <AccordionTrigger>
-                                        <div
-                                          className={`flex items-center gap-2 ${
-                                            memberHasError[i]
-                                              ? "bg-red-100 border-l-4 border-red-500 px-2 py-1 input-shake"
-                                              : ""
-                                          }`}
-                                        >
-                                          {i === 0 ? (
-                                            <>
-                                              Primary Member Details
-                                              <span className="ml-2 rounded bg-green-600 px-2 py-0.5 text-xs text-white">
-                                                Primary
-                                              </span>
-                                            </>
-                                          ) : (
-                                            `Member ${i + 1} Details`
-                                          )}
-                                        </div>
-                                      </AccordionTrigger>
-                                      <AccordionContent>
-                                        <form>
-                                          <div className="row mb-3">
-                                            <div className="col-md-6 mb-3">
-                                            <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                              <label
-                                                htmlFor={`patientName_${i}`}
-                                                className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                                
-                                              >
-                                                Name:
-                                              </label>
-                                              <input
-                                                type="text"
-                                                className={`form-control ${
-                                                  formErrors[`patientName_${i}`]
-                                                    ? "is-invalid input-shake"
-                                                    : ""
+                            {" "}
+                            <Accordion
+                              type="single"
+                              collapsible
+                              value={openAccordion}
+                              onValueChange={(val) => setOpenAccordion(val)}
+                              className="w-full"
+                            >
+                              {members.map((member, i) => (
+                                <AccordionItem key={i} value={`item-${i}`}>
+                                  <AccordionTrigger>
+                                    <div
+                                      className={`flex items-center gap-2 ${memberHasError[i]
+                                        ? "bg-red-100 border-l-4 border-red-500 px-2 py-1 input-shake"
+                                        : ""
+                                        }`}
+                                    >
+                                      {i === 0 ? (
+                                        <>
+                                          Primary Member Details
+                                          <span className="ml-2 rounded bg-green-600 px-2 py-0.5 text-xs text-white">
+                                            Primary
+                                          </span>
+                                        </>
+                                      ) : (
+                                        `Member ${i + 1} Details`
+                                      )}
+                                    </div>
+                                  </AccordionTrigger>
+                                  <AccordionContent>
+                                    <form>
+                                      <div className="row mb-3">
+                                        <div className="col-md-6 mb-3">
+                                          <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                            <label
+                                              htmlFor={`patientName_${i}`}
+                                              className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+
+                                            >
+                                              Name
+                                            </label>
+                                            <input
+                                              type="text"
+                                              className={`form-control ${formErrors[`patientName_${i}`]
+                                                ? "is-invalid input-shake"
+                                                : ""
                                                 }`}
-                                                id={`patientName_${i}`}
-                                                name="patientName"
-                                                value={member.patientName}
-                                                onChange={(e) => handleChange(e, i)}
-                                                autoComplete="off"
-                                                placeholder={getDynamicPlaceholder(
-                                                  "patientName"
-                                                )}
-                                              />
-                                            </div>
-                                            </div>
-                                            
+                                              id={`patientName_${i}`}
+                                              name="patientName"
+                                              value={member.patientName}
+                                              onChange={(e) => handleChange(e, i)}
+                                              autoComplete="off"
+                                              placeholder={getDynamicPlaceholder(
+                                                "patientName"
+                                              )}
+                                            />
+                                          </div>
+                                        </div>
+
+                                        <div className="col-md-6 mb-3">
+                                          <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                            <label
+                                              htmlFor={`contactNumber_${i}`}
+                                              className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+
+                                            >
+                                              Contact Number
+                                            </label>
+                                            <input
+                                              type="text"
+                                              className={`form-control ${formErrors[`contactNumber_${i}`]
+                                                ? "is-invalid input-shake"
+                                                : ""
+                                                }`}
+                                              id={`contactNumber_${i}`}
+                                              name="contactNumber"
+                                              value={member.contactNumber}
+                                              maxLength={10}
+                                              onChange={(e) => {
+                                                const value = e.target.value;
+                                                if (/^\d*$/.test(value)) {
+                                                  handleChange(e, i);
+                                                }
+                                              }}
+                                              placeholder={getDynamicPlaceholder(
+                                                "contactNumber"
+                                              )}
+                                              autoComplete="off"
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <div className="row mb-3">
+                                        <div className="col-md-6 mb-3">
+                                          <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                            <label
+                                              htmlFor={`gender_${i}`}
+                                              className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+
+                                            >
+                                              Gender
+                                            </label>
+                                            <select
+                                              className={`form-control ${formErrors[`gender_${i}`]
+                                                ? "is-invalid input-shake"
+                                                : ""
+                                                }`}
+                                              name="gender"
+                                              id={`gender_${i}`}
+                                              value={member.gender}
+                                              onChange={(e) => handleChange(e, i)}
+                                            >
+                                              <option value="">Select</option>
+                                              <option value="male">Male</option>
+                                              <option value="female">Female</option>
+                                              <option value="other">Other</option>
+                                            </select>
+                                          </div>
+                                        </div>
+
+                                        <div className="col-md-6 mb-3">
+                                          <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                            <label
+                                              htmlFor={`dob_${i}`}
+                                              className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+
+                                            >
+                                              DOB
+                                            </label>
+                                            <input
+                                              type="date"
+                                              className={`form-control ${formErrors[`dob_${i}`]
+                                                ? "is-invalid input-shake"
+                                                : ""
+                                                }`}
+                                              id="dob"
+                                              name="dob"
+                                              value={member.dob}
+                                              min={getMinDOB()}
+                                              max={getMaxDOB()}
+                                              onChange={(e) => handleChange(e, i)}
+                                              style={{
+                                                cursor: "pointer",
+                                                backgroundColor: "#fff",
+                                              }}
+                                              onKeyDown={(e) => e.preventDefault()}
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <div className="row mb-3">
+                                        <div className="col-md-6 mb-3">
+                                          <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                            <label
+                                              htmlFor={`age_${i}`}
+                                              className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+
+                                            >
+                                              Age
+                                            </label>
+                                            <input
+                                              type="text"
+                                              className={`form-control ${formErrors[`age_${i}`]
+                                                ? "is-invalid input-shake"
+                                                : ""
+                                                }`}
+                                              id={`age_${i}`}
+                                              name="age"
+                                              value={member.age}
+                                              maxLength={2}
+                                              onChange={(e) => {
+                                                const value = e.target.value;
+                                                if (/^\d*$/.test(value)) {
+                                                  handleChange(e, i);
+                                                }
+                                              }}
+                                              placeholder={getDynamicPlaceholder(
+                                                "age"
+                                              )}
+                                              autoComplete="off"
+                                            />
+                                          </div>
+                                        </div>
+
+                                        <div className="col-md-6 mb-3">
+                                          <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                            <label
+                                              htmlFor={`passportNo_${i}`}
+                                              className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+
+                                            >
+                                              Passport No
+                                            </label>
+
+                                            <input
+                                              type="text"
+                                              className={`form-control ${formErrors[`passportNo_${i}`]
+                                                ? "is-invalid input-shake"
+                                                : ""
+                                                }`}
+                                              id={`passportNo_${i}`}
+                                              name="passportNo"
+                                              value={member.passportNo}
+                                              onChange={(e) => handleChange(e, i)}
+                                              maxLength={12}
+                                              placeholder={getDynamicPlaceholder(
+                                                "passportNo"
+                                              )}
+                                              autoComplete="off"
+                                            />
+                                          </div>
+
+                                        </div>
+                                      </div>
+
+                                      {i === 0 && (
+                                        <>
+                                          <div className="row mb-3">
                                             <div className="col-md-6 mb-3">
                                               <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
                                                 <label
-                                                  htmlFor={`contactNumber_${i}`}
+                                                  htmlFor={`email_${i}`}
                                                   className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                                  
+
                                                 >
-                                                  Contact Number:
+                                                  Email
+                                                </label>
+                                                <input
+                                                  type="email"
+                                                  id={`email_${i}`}
+                                                  className={`form-control ${formErrors[`email_${i}`]
+                                                    ? "is-invalid input-shake"
+                                                    : ""
+                                                    }`}
+                                                  name="email"
+                                                  value={members[i].email}
+                                                  onChange={(e) =>
+                                                    handleChange(e, i)
+                                                  }
+                                                  placeholder={getDynamicPlaceholder(
+                                                    "email"
+                                                  )}
+                                                  autoComplete="off"
+                                                />
+                                              </div>
+                                            </div>
+
+                                            <div className="col-md-6 mb-3">
+                                              <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                                <label
+                                                  className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+
+                                                >
+                                                  HAP ID
                                                 </label>
                                                 <input
                                                   type="text"
-                                                  className={`form-control ${
-                                                    formErrors[`contactNumber_${i}`]
-                                                      ? "is-invalid input-shake"
-                                                      : ""
-                                                  }`}
-                                                  id={`contactNumber_${i}`}
-                                                  name="contactNumber"
-                                                  value={member.contactNumber}
+                                                  className={`form-control ${formErrors[`hapId_${i}`]
+                                                    ? "is-invalid input-shake"
+                                                    : ""
+                                                    }`}
+                                                  id={`hapId_${i}`}
+                                                  inputMode="numeric"
+                                                  pattern="\d*"
+                                                  name="hapId"
+                                                  value={members[i].hapId}
+                                                  onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    if (/^\d*$/.test(value)) {
+                                                      handleChange(e, i);
+                                                    }
+                                                  }}
+                                                  maxLength={8}
+                                                  placeholder={getDynamicPlaceholder(
+                                                    "hapId"
+                                                  )}
+                                                  autoComplete="off"
+                                                />
+                                              </div>
+                                            </div>
+                                          </div>
+
+                                          <div className="row mb-3">
+                                            <div className="col-md-6 mb-3">
+                                              <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                                <label
+                                                  htmlFor={`alternativeNumber_${i}`}
+                                                  className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+
+                                                >
+                                                  Alternative Number
+                                                </label>
+                                                <input
+                                                  type="text"
+                                                  className={`form-control ${formErrors[
+                                                    `alternativeNumber_${i}`
+                                                  ]
+                                                    ? "is-invalid input-shake"
+                                                    : ""
+                                                    }`}
+                                                  id={`alternativeNumber_${i}`}
+                                                  name="alternativeNumber"
+                                                  value={
+                                                    members[i].alternativeNumber
+                                                  }
                                                   maxLength={10}
                                                   onChange={(e) => {
                                                     const value = e.target.value;
@@ -2705,606 +3141,393 @@ const AppointmentBooking = () => {
                                                     }
                                                   }}
                                                   placeholder={getDynamicPlaceholder(
-                                                    "contactNumber"
+                                                    "alternativeNumber"
                                                   )}
                                                   autoComplete="off"
                                                 />
                                               </div>
-                                            </div>
-                                          </div>
-
-                                          <div className="row mb-3">
-                                            <div className="col-md-6 mb-3">
-                                            <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                              <label
-                                                htmlFor={`gender_${i}`}
-                                                className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                                
-                                              >
-                                                Gender:
-                                              </label>
-                                              <select
-                                                className={`form-control ${
-                                                  formErrors[`gender_${i}`]
-                                                    ? "is-invalid input-shake"
-                                                    : ""
-                                                }`}
-                                                name="gender"
-                                                id={`gender_${i}`}
-                                                value={member.gender}
-                                                onChange={(e) => handleChange(e, i)}
-                                              >
-                                                <option value="">Select</option>
-                                                <option value="male">Male</option>
-                                                <option value="female">Female</option>
-                                                <option value="other">Other</option>
-                                              </select>
-                                            </div>
                                             </div>
 
                                             <div className="col-md-6 mb-3">
                                               <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
                                                 <label
-                                                  htmlFor={`dob_${i}`}
+                                                  htmlFor={`paymentMethod_${i}`}
                                                   className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                                  
-                                                >
-                                                  DOB:
-                                                </label>
-                                                <input
-                                                  type="date"
-                                                  className={`form-control ${
-                                                    formErrors[`dob_${i}`]
-                                                      ? "is-invalid input-shake"
-                                                      : ""
-                                                  }`}
-                                                  id="dob"
-                                                  name="dob"
-                                                  value={member.dob}
-                                                  min={getMinDOB()}
-                                                  max={getMaxDOB()}
-                                                  onChange={(e) => handleChange(e, i)}
-                                                  style={{
-                                                    cursor: "pointer",
-                                                    backgroundColor: "#fff",
-                                                  }}
-                                                  onKeyDown={(e) => e.preventDefault()}
-                                                />
-                                              </div>
-                                            </div>
-                                          </div>
 
-                                          <div className="row mb-3">
-                                            <div className="col-md-6 mb-3">
-                                            <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                              <label
-                                                htmlFor={`age_${i}`}
-                                                className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                                
-                                              >
-                                                Age:
-                                              </label>
-                                              <input
-                                                type="text"
-                                                className={`form-control ${
-                                                  formErrors[`age_${i}`]
+                                                >
+                                                  Payment Method
+                                                </label>
+                                                <select
+                                                  className={`form-control ${formErrors[`paymentMethod_${i}`]
                                                     ? "is-invalid input-shake"
                                                     : ""
-                                                }`}
-                                                id={`age_${i}`}
-                                                name="age"
-                                                value={member.age}
-                                                maxLength={2}
-                                                onChange={(e) => {
-                                                  const value = e.target.value;
-                                                  if (/^\d*$/.test(value)) {
-                                                    handleChange(e, i);
+                                                    }`}
+                                                  id={`paymentMethod_${i}`}
+                                                  name="paymentMethod"
+                                                  value={members[i].paymentMethod}
+                                                  onChange={(e) =>
+                                                    handleChange(e, i)
                                                   }
-                                                }}
-                                                placeholder={getDynamicPlaceholder(
-                                                  "age"
-                                                )}
-                                                autoComplete="off"
-                                              />
-                                            </div>
-                                            </div>
-
-                                            <div className="col-md-6 mb-3">
-                                            <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                              <label
-                                                htmlFor={`passportNo_${i}`}
-                                                className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                                
-                                              >
-                                                Passport No:
-                                              </label>
-                                        
-                                                <input
-                                                  type="text"
-                                                  className={`form-control ${
-                                                    formErrors[`passportNo_${i}`]
-                                                      ? "is-invalid input-shake"
-                                                      : ""
-                                                  }`}
-                                                  id={`passportNo_${i}`}
-                                                  name="passportNo"
-                                                  value={member.passportNo}
-                                                  onChange={(e) => handleChange(e, i)}
-                                                  maxLength={12}
-                                                  placeholder={getDynamicPlaceholder(
-                                                    "passportNo"
-                                                  )}
-                                                  autoComplete="off"
-                                                />
+                                                >
+                                                  <option value="">Select</option>
+                                                  <option value="QR">QR</option>
+                                                </select>
                                               </div>
-                                        
                                             </div>
                                           </div>
-
-                                          {i === 0 && (
-                                            <>
-                                              <div className="row mb-3">
-                                                <div className="col-md-6 mb-3">
-                                                  <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                                    <label
-                                                      htmlFor={`email_${i}`}
-                                                      className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                                      
-                                                    >
-                                                      Email:
-                                                    </label>
-                                                    <input
-                                                      type="email"
-                                                      id={`email_${i}`}
-                                                      className={`form-control ${
-                                                        formErrors[`email_${i}`]
-                                                          ? "is-invalid input-shake"
-                                                          : ""
-                                                      }`}
-                                                      name="email"
-                                                      value={members[i].email}
-                                                      onChange={(e) =>
-                                                        handleChange(e, i)
-                                                      }
-                                                      placeholder={getDynamicPlaceholder(
-                                                        "email"
-                                                      )}
-                                                      autoComplete="off"
-                                                    />
-                                                  </div>
-                                                </div>
-
-                                                <div className="col-md-6 mb-3">
-                                                  <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                                    <label
-                                                      className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                                      
-                                                    >
-                                                      HAP ID:
-                                                    </label>
-                                                    <input
-                                                      type="text"
-                                                      className={`form-control ${
-                                                        formErrors[`hapId_${i}`]
-                                                          ? "is-invalid input-shake"
-                                                          : ""
-                                                      }`}
-                                                      id={`hapId_${i}`}
-                                                      inputMode="numeric"
-                                                      pattern="\d*"
-                                                      name="hapId"
-                                                      value={members[i].hapId}
-                                                      onChange={(e) => {
-                                                        const value = e.target.value;
-                                                        if (/^\d*$/.test(value)) {
-                                                          handleChange(e, i);
-                                                        }
-                                                      }}
-                                                      maxLength={8}
-                                                      placeholder={getDynamicPlaceholder(
-                                                        "hapId"
-                                                      )}
-                                                      autoComplete="off"
-                                                    />
-                                                  </div>
-                                                </div>
-                                              </div>
-
-                                              <div className="row mb-3">
-                                                <div className="col-md-6 mb-3">
-                                                  <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                                    <label
-                                                      htmlFor={`alternativeNumber_${i}`}
-                                                      className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                                      
-                                                    >
-                                                      Alternative Number:
-                                                    </label>
-                                                    <input
-                                                      type="text"
-                                                      className={`form-control ${
-                                                        formErrors[
-                                                          `alternativeNumber_${i}`
-                                                        ]
-                                                          ? "is-invalid input-shake"
-                                                          : ""
-                                                      }`}
-                                                      id={`alternativeNumber_${i}`}
-                                                      name="alternativeNumber"
-                                                      value={
-                                                        members[i].alternativeNumber
-                                                      }
-                                                      maxLength={10}
-                                                      onChange={(e) => {
-                                                        const value = e.target.value;
-                                                        if (/^\d*$/.test(value)) {
-                                                          handleChange(e, i);
-                                                        }
-                                                      }}
-                                                      placeholder={getDynamicPlaceholder(
-                                                        "alternativeNumber"
-                                                      )}
-                                                      autoComplete="off"
-                                                    />
-                                                  </div>
-                                                </div>
-
-                                                <div className="col-md-6 mb-3">
-                                                  <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                                    <label
-                                                      htmlFor={`paymentMethod_${i}`}
-                                                      className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                                      
-                                                    >
-                                                      Payment Method:
-                                                    </label>
-                                                    <select
-                                                      className={`form-control ${
-                                                        formErrors[`paymentMethod_${i}`]
-                                                          ? "is-invalid input-shake"
-                                                          : ""
-                                                      }`}
-                                                      id={`paymentMethod_${i}`}
-                                                      name="paymentMethod"
-                                                      value={members[i].paymentMethod}
-                                                      onChange={(e) =>
-                                                        handleChange(e, i)
-                                                      }
-                                                    >
-                                                      <option value="">Select</option>
-                                                      <option value="QR">QR</option>
-                                                    </select>
-                                                  </div>
-                                                </div>
-                                              </div>
-                                            </>
-                                          )}
-                                        </form>
-                                      </AccordionContent>
-                                    </AccordionItem>
-                                  ))}
-                                </Accordion>
-                              </>
-                            ) : (
-                              <form>
-                                <div className="row mb-3">
-                                  <div className="col-md-6 mb-3">
-                                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                      <label htmlFor="patientName" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Name</label>
-                                      <input
-                                        type="text"
-                                        className={`form-control ${formErrors.patientName ? "is-invalid input-shake" : ""}`}
-                                        id="patientName"
-                                        name="patientName"
-                                        value={formData.patientName}
-                                        onChange={handleChange}
-                                        placeholder={getDynamicPlaceholder("patientName")}
-                                        autoComplete="off"
-                                      />
-                                    </div>
-                                  </div>
-
-                                  <div className="col-md-6 mb-3">
-                                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                      <label htmlFor="hapId" className="form-label label-fixed me-md-2 mb-1 mb-md-0">HAP ID</label>
-                                      <input
-                                        type="text"
-                                        className={`form-control ${formErrors.hapId ? "is-invalid input-shake" : ""}`}
-                                        id="hapId"
-                                        name="hapId"
-                                        value={formData.hapId}
-                                        onChange={(e) => {
-                                          const value = e.target.value;
-                                          if (/^\d*$/.test(value)) handleChange(e);
-                                        }}
-                                        placeholder={getDynamicPlaceholder("hapId")}
-                                        maxLength={8}
-                                        inputMode="numeric"
-                                        autoComplete="off"
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="row mb-3">
-                                  <div className="col-md-6 mb-3">
-                                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                      <label htmlFor="email" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Email</label>
-                                      <input
-                                        type="email"
-                                        className={`form-control ${formErrors.email ? "is-invalid input-shake" : ""}`}
-                                        id="email"
-                                        name="email"
-                                        value={formData.email}
-                                        onChange={handleChange}
-                                        placeholder={getDynamicPlaceholder("email")}
-                                        autoComplete="off"
-                                      />
-                                    </div>
-                                  </div>
-
-                                  <div className="col-md-6 mb-3">
-                                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                      <label htmlFor="contactNumber" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Contact Number</label>
-                                      <input
-                                        type="text"
-                                        className={`form-control ${formErrors.contactNumber ? "is-invalid input-shake" : ""}`}
-                                        id="contactNumber"
-                                        name="contactNumber"
-                                        value={formData.contactNumber}
-                                        onChange={(e) => {
-                                          const value = e.target.value;
-                                          if (/^\d*$/.test(value)) handleChange(e);
-                                        }}
-                                        maxLength={10}
-                                        placeholder={getDynamicPlaceholder("contactNumber")}
-                                        autoComplete="off"
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="row mb-3">
-                                  <div className="col-md-6 mb-3">
-                                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                      <label htmlFor="alternativeNumber" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Alternative Number</label>
-                                      <input
-                                        type="text"
-                                        className={`form-control ${formErrors.alternativeNumber ? "is-invalid input-shake" : ""}`}
-                                        id="alternativeNumber"
-                                        name="alternativeNumber"
-                                        value={formData.alternativeNumber}
-                                        onChange={(e) => {
-                                          const value = e.target.value;
-                                          if (/^\d*$/.test(value)) handleChange(e);
-                                        }}
-                                        maxLength={10}
-                                        placeholder={getDynamicPlaceholder("alternativeNumber")}
-                                        autoComplete="off"
-                                      />
-                                    </div>
-                                  </div>
-
-                                  <div className="col-md-6 mb-3">
-                                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                      <label htmlFor="gender" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Gender</label>
-                                      <select
-                                        className={`form-control ${formErrors.gender ? "is-invalid input-shake" : ""}`}
-                                        id="gender"
-                                        name="gender"
-                                        value={formData.gender}
-                                        onChange={handleChange}
-                                      >
-                                        <option value="">Select</option>
-                                        <option value="male">Male</option>
-                                        <option value="female">Female</option>
-                                        <option value="other">Other</option>
-                                      </select>
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="row mb-3">
-                                  <div className="col-md-6 mb-3">
-                                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                      <label htmlFor="dob" className="form-label label-fixed me-md-2 mb-1 mb-md-0">DOB</label>
-                                      <input
-                                        type="date"
-                                        className={`form-control ${formErrors.dob ? "is-invalid" : ""}`}
-                                        id="dob"
-                                        name="dob"
-                                        value={formData.dob}
-                                        onChange={handleChange}
-                                        min={getMinDOB()}
-                                        max={getMaxDOB()}
-                                        onKeyDown={(e) => e.preventDefault()}
-                                        style={{ backgroundColor: "#fff", cursor: "pointer" }}
-                                      />
-                                    </div>
-                                  </div>
-
-                                  <div className="col-md-6 mb-3">
-                                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                      <label htmlFor="age" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Age</label>
-                                      <input
-                                        type="text"
-                                        className={`form-control ${formErrors.age ? "is-invalid input-shake" : ""}`}
-                                        id="age"
-                                        name="age"
-                                        value={formData.age}
-                                        onChange={(e) => {
-                                          const value = e.target.value;
-                                          if (/^\d*$/.test(value)) handleChange(e);
-                                        }}
-                                        maxLength={2}
-                                        placeholder={getDynamicPlaceholder("age")}
-                                        autoComplete="off"
-                                        disabled
-                                      />
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="row mb-3">
-                                  <div className="col-md-6 mb-3">
-                                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                      <label htmlFor="passportNo" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Passport No</label>
-                                      <input
-                                        type="text"
-                                        className={`form-control ${formErrors.passportNo ? "is-invalid input-shake" : ""}`}
-                                        id="passportNo"
-                                        name="passportNo"
-                                        value={formData.passportNo}
-                                        onChange={handleChange}
-                                        maxLength={12}
-                                        placeholder={getDynamicPlaceholder("passportNo")}
-                                        autoComplete="off"
-                                      />
-                                    </div>
-                                    {formErrors.passportNo && (
-                                      <small className="text-danger mt-1 d-block text-end">eg: A123456 or AB1234567</small>
-                                    )}
-                                  </div>
-
-                                  <div className="col-md-6 mb-3">
-                                    <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                      <label htmlFor="paymentMethod" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Payment Method</label>
-                                      <select
-                                        className={`form-control ${formErrors.paymentMethod ? "is-invalid input-shake" : ""}`}
-                                        id="paymentMethod"
-                                        name="paymentMethod"
-                                        value={formData.paymentMethod}
-                                        onChange={handleChange}
-                                      >
-                                        <option value="">Select</option>
-                                        <option value="QR">QR</option>
-                                      </select>
-                                    </div>
-                                  </div>
-                                </div>
-                              </form>
-
-                            )}
+                                        </>
+                                      )}
+                                    </form>
+                                  </AccordionContent>
+                                </AccordionItem>
+                              ))}
+                            </Accordion>
                           </>
-                        )}
-
-                        {stepIndex === 1 && (
-                          <div className="payment-section container">
-                            {/* Header Section */}
-                            <div className="d-flex flex-column flex-md-row justify-content-start align-items-start gap-3 mb-4">
-                              <h1 className="h5 fw-bold mb-2 mb-md-0">Price Details :</h1>
-                              <h1 className="h5 fw-bold">Scan the QR code to pay</h1>
-                            </div>
-
-
-                            {/* Main Content Section */}
-                            <div className="row">
-                              {/* Left Column */}
-                              <div className="col-12 col-lg-6 mb-4">
-                                <div className="d-flex flex-column gap-3">
-
-                                  {/* Price */}
-                                  <div className="d-flex flex-column">
-                                    <label className="fw-bold mb-1">Price:</label>
-                                    <span className="form-control">&#8377; {formData?.totalPrice}</span>
-                                  </div>
-
-                                  {/* Payment Type */}
-                                  <div className="d-flex flex-column">
-                                    <label htmlFor="PaymentType" className="fw-bold mb-1">Payment Type:</label>
-                                    <select
-                                      id="PaymentType"
-                                      name="PaymentType"
-                                      className={`form-control ${formErrors.PaymentType ? "is-invalid input-shake" : ""}`}
-                                      value={formData.PaymentType}
-                                      onChange={handleChange}
-                                      autoComplete="off"
-                                    >
-                                      <option value="Select">Select</option>
-                                      <option>Gpay</option>
-                                      <option>PhonePay</option>
-                                      <option>Paytm</option>
-                                    </select>
-                                  </div>
-
-                                  {/* Transaction File Upload */}
-                                  <div className="d-flex flex-column">
-                                    <label className="fw-bold mb-1">Upload Transaction File:</label>
-                                    <Input
-                                      type="file"
-                                      accept=".png,.pdf"
-                                      disabled={!formData.PaymentType}
-                                      onChange={handleFileChange}
-                                      className="form-control"
-                                      style={{
-                                        cursor:
-                                          !formData.PaymentType || formData.PaymentType === ""
-                                            ? "not-allowed"
-                                            : "pointer",
-                                      }}
-                                    />
-                                  </div>
-
-                                  {/* Transaction ID */}
-                                  <div className="d-flex flex-column">
-                                    <label htmlFor="TransactionId" className="fw-bold mb-1">Transaction ID:</label>
-                                    <input
-                                      id="TransactionId"
-                                      name="TransactionId"
-                                      className={`form-control ${formErrors.TransactionId ? "is-invalid input-shake" : ""}`}
-                                      value={formData.TransactionId}
-                                      onChange={handleChange}
-                                      autoComplete="off"
-                                      placeholder={getDynamicPlaceholder("TransactionId")}
-                                    />
-                                  </div>
+                        ) : (
+                          <form>
+                            <div className="row mb-3">
+                              <div className="col-md-6 mb-3">
+                                <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                  <label htmlFor="patientName" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Name</label>
+                                  <input
+                                    type="text"
+                                    className={`form-control ${formErrors.patientName ? "is-invalid input-shake" : ""}`}
+                                    id="patientName"
+                                    name="patientName"
+                                    value={formData.patientName}
+                                    onChange={handleChange}
+                                    placeholder={getDynamicPlaceholder("patientName")}
+                                    autoComplete="off"
+                                  />
                                 </div>
                               </div>
 
-                              {/* Right Column - QR Code */}
-                              <div className="col-12 col-lg-6 d-flex justify-content-center align-items-center">
-                                <img
-                                  src={Nddiagnostics_QR_Code_1}
-                                  alt="QR Code"
-                                  className="img-fluid"
-                                  style={{ maxWidth: "250px", maxHeight: "280px", width: "100%", height: "auto" }}
+                              <div className="col-md-6 mb-3">
+                                <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                  <label htmlFor="hapId" className="form-label label-fixed me-md-2 mb-1 mb-md-0">HAP ID</label>
+                                  <input
+                                    type="text"
+                                    className={`form-control ${formErrors.hapId ? "is-invalid input-shake" : ""}`}
+                                    id="hapId"
+                                    name="hapId"
+                                    value={formData.hapId}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      if (/^\d*$/.test(value)) handleChange(e);
+                                    }}
+                                    placeholder={getDynamicPlaceholder("hapId")}
+                                    maxLength={8}
+                                    inputMode="numeric"
+                                    autoComplete="off"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="row mb-3">
+                              <div className="col-md-6 mb-3">
+                                <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                  <label htmlFor="email" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Email</label>
+                                  <input
+                                    type="email"
+                                    className={`form-control ${formErrors.email ? "is-invalid input-shake" : ""}`}
+                                    id="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                    placeholder={getDynamicPlaceholder("email")}
+                                    autoComplete="off"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="col-md-6 mb-3">
+                                <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                  <label htmlFor="contactNumber" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Contact Number</label>
+                                  <input
+                                    type="text"
+                                    className={`form-control ${formErrors.contactNumber ? "is-invalid input-shake" : ""}`}
+                                    id="contactNumber"
+                                    name="contactNumber"
+                                    value={formData.contactNumber}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      if (/^\d*$/.test(value)) handleChange(e);
+                                    }}
+                                    maxLength={10}
+                                    placeholder={getDynamicPlaceholder("contactNumber")}
+                                    autoComplete="off"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="row mb-3">
+                              <div className="col-md-6 mb-3">
+                                <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                  <label htmlFor="alternativeNumber" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Alternative Number</label>
+                                  <input
+                                    type="text"
+                                    className={`form-control ${formErrors.alternativeNumber ? "is-invalid input-shake" : ""}`}
+                                    id="alternativeNumber"
+                                    name="alternativeNumber"
+                                    value={formData.alternativeNumber}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      if (/^\d*$/.test(value)) handleChange(e);
+                                    }}
+                                    maxLength={10}
+                                    placeholder={getDynamicPlaceholder("alternativeNumber")}
+                                    autoComplete="off"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="col-md-6 mb-3">
+                                <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                  <label htmlFor="gender" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Gender</label>
+                                  <select
+                                    className={`form-control ${formErrors.gender ? "is-invalid input-shake" : ""}`}
+                                    id="gender"
+                                    name="gender"
+                                    value={formData.gender}
+                                    onChange={handleChange}
+                                  >
+                                    <option value="">Select</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="row mb-3">
+                              <div className="col-md-6 mb-3">
+                                <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                  <label htmlFor="dob" className="form-label label-fixed me-md-2 mb-1 mb-md-0">DOB</label>
+                                  <input
+                                    type="date"
+                                    className={`form-control ${formErrors.dob ? "is-invalid" : ""}`}
+                                    id="dob"
+                                    name="dob"
+                                    value={formData.dob}
+                                    onChange={handleChange}
+                                    min={getMinDOB()}
+                                    max={getMaxDOB()}
+                                    onKeyDown={(e) => e.preventDefault()}
+                                    style={{ backgroundColor: "#fff", cursor: "pointer" }}
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="col-md-6 mb-3">
+                                <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                  <label htmlFor="age" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Age</label>
+                                  <input
+                                    type="text"
+                                    className={`form-control ${formErrors.age ? "is-invalid input-shake" : ""}`}
+                                    id="age"
+                                    name="age"
+                                    value={formData.age}
+                                    onChange={(e) => {
+                                      const value = e.target.value;
+                                      if (/^\d*$/.test(value)) handleChange(e);
+                                    }}
+                                    maxLength={2}
+                                    placeholder={getDynamicPlaceholder("age")}
+                                    autoComplete="off"
+                                    disabled
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="row mb-3">
+                              <div className="col-md-6 mb-3">
+                                <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                  <label htmlFor="passportNo" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Passport No</label>
+                                  <input
+                                    type="text"
+                                    className={`form-control ${formErrors.passportNo ? "is-invalid input-shake" : ""}`}
+                                    id="passportNo"
+                                    name="passportNo"
+                                    value={formData.passportNo}
+                                    onChange={handleChange}
+                                    maxLength={12}
+                                    placeholder={getDynamicPlaceholder("passportNo")}
+                                    autoComplete="off"
+                                  />
+                                </div>
+                                {formErrors.passportNo && (
+                                  <small className="text-danger mt-1 d-block text-end">eg: A123456 or AB1234567</small>
+                                )}
+                              </div>
+
+                              <div className="col-md-6 mb-3">
+                                <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                  <label htmlFor="paymentMethod" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Payment Method</label>
+                                  <select
+                                    className={`form-control ${formErrors.paymentMethod ? "is-invalid input-shake" : ""}`}
+                                    id="paymentMethod"
+                                    name="paymentMethod"
+                                    value={formData.paymentMethod}
+                                    onChange={handleChange}
+                                  >
+                                    <option value="">Select</option>
+                                    <option value="QR">QR</option>
+                                  </select>
+                                </div>
+                              </div>
+                            </div>
+                          </form>
+
+                        )}
+                      </>
+                    )}
+
+                    {stepIndex === 1 && (
+                      <div className="payment-section container">
+                        {/* Header Section */}
+                        <div className="d-flex flex-column flex-md-row justify-content-start align-items-start gap-3 mb-4">
+                          <h1 className="h5 fw-bold mb-2 mb-md-0">Price Details :</h1>
+                          <h1 className="h5 fw-bold">Scan the QR code to pay</h1>
+                        </div>
+
+
+                        {/* Main Content Section */}
+                        <div className="row">
+                          {/* Left Column */}
+                          <div className="col-12 col-lg-6 mb-4">
+                            <div className="d-flex flex-column gap-3">
+
+                              {/* Price */}
+                              <div className="d-flex flex-column">
+                                <label className="fw-bold mb-1">Price:</label>
+                                <span className="form-control">&#8377; {formData?.totalPrice}</span>
+                              </div>
+
+                              {/* Payment Type */}
+                              {/* <div className="d-flex flex-column">
+                                <label htmlFor="PaymentType" className="fw-bold mb-1">Payment Type:</label>
+                                <select
+                                  id="PaymentType"
+                                  name="PaymentType"
+                                  className={`form-control ${formErrors.PaymentType ? "is-invalid input-shake" : ""}`}
+                                  value={formData.PaymentType}
+                                  onChange={handleChange}
+                                  autoComplete="off"
+                                >
+                                  <option value="Select">Select</option>
+                                  <option>Gpay</option>
+                                  <option>PhonePay</option>
+                                  <option>Paytm</option>
+                                </select>
+                              </div> */}
+
+                              {/* Transaction File Upload */}
+                              {/* <div className="d-flex flex-column">
+                                <label className="fw-bold mb-1">Upload Transaction File:</label>
+                                <Input
+                                  type="file"
+                                  accept=".png,.pdf"
+                                  disabled={!formData.PaymentType}
+                                  onChange={handleFileChange}
+                                  className="form-control"
+                                  style={{
+                                    cursor:
+                                      !formData.PaymentType || formData.PaymentType === ""
+                                        ? "not-allowed"
+                                        : "pointer",
+                                  }}
+                                />
+                              </div> */}
+
+                              {/* Transaction ID */}
+                              <div className="d-flex flex-column">
+                                <label htmlFor="TransactionId" className="fw-bold mb-1">Transaction ID:</label>
+                                <input
+                                  id="TransactionId"
+                                  name="TransactionId"
+                                  className={`form-control ${formErrors.TransactionId ? "is-invalid input-shake" : ""}`}
+                                  value={formData.TransactionId}
+                                  onChange={handleChange}
+                                  autoComplete="off"
+                                  placeholder={getDynamicPlaceholder("TransactionId")}
                                 />
                               </div>
                             </div>
                           </div>
-                        )}
 
+                          {/* Right Column - QR Code */}
+                          <div className="col-12 col-lg-6 d-flex justify-content-center align-items-center">
+                            <img
+                              src={Nddiagnostics_QR_Code_1}
+                              alt="QR Code"
+                              className="img-fluid"
+                              style={{ maxWidth: "250px", maxHeight: "280px", width: "100%", height: "auto" }}
+                            />
+                          </div>
+                        </div>
                       </div>
-                    </>
+                    )}
 
-                    <div className="modal-footer d-flex justify-content-end gap-2">
-                      <button className="btn-custom-orange" onClick={clear}>
-                        Clear
-                      </button>
-                      <button className="btn-custom-orange" onClick={cancel}>
-                        Cancel
-                      </button>
-                      {stepIndex > 0 && (
-                        <button className="btn-custom-orange" onClick={prevStep}>
-                          Prev
-                        </button>
-                      )}
-                      {stepIndex === 0 && (
-                        <button className="btn-custom-orange" onClick={nextStep}>
-                          Next
-                        </button>
-                      )}
-                      {stepIndex === 1 && (
-                        <button className="btn-custom-orange" onClick={onSubmit}>
-                          Save
-                        </button>
-                      )}
+                  </div>
+                </>
+                <div
+                  className="card border-0 shadow-sm mt-3 px-3 py-2"
+                  style={{ backgroundColor: '#fff3f3', borderLeft: '4px solid #e74c3c' }}
+                >
+                  <div className="row g-2 align-items-center">
+                    <div className="col-12 col-md-auto">
+                      <span className="text-danger fw-bold">Note:</span>
+                    </div>
+                    <div className="col-12 col-md">
+                      <div className="d-flex flex-wrap align-items-center">
+                        <span className="text-danger me-2">
+                          For rescheduling or cancelling appointments, please contact Customer Care -
+                        </span>
+                        <a
+                          href="tel:+919582116116"
+                          className="text-primary d-flex align-items-center fw-semibold"
+                          style={{ textDecoration: 'none' }}
+                        >
+                          <Phone className="me-2 h-4 w-4" />
+                          +91 9582-116116
+                        </a>
+                      </div>
                     </div>
                   </div>
                 </div>
+                <div className="modal-footer d-flex justify-content-end gap-2">
+                  <button className="btn-custom-orange" onClick={clear}>
+                    Clear
+                  </button>
+                  <button className="btn-custom-orange" onClick={cancel}>
+                    Cancel
+                  </button>
+                  {stepIndex > 0 && (
+                    <button className="btn-custom-orange" onClick={prevStep}>
+                      Prev
+                    </button>
+                  )}
+                  {stepIndex === 0 && (
+                    <button className="btn-custom-orange" onClick={nextStep}>
+                      Next
+                    </button>
+                  )}
+                  {stepIndex === 1 && (
+                    <button className="btn-custom-orange" onClick={onSubmit}>
+                      Save
+                    </button>
+                  )}
+                </div>
               </div>
-            )}
-    </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 
