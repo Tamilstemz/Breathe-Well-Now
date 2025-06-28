@@ -8,19 +8,19 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import doctorImage from "@assets/newpic1_1749587017199.png";
-import CryptoJS from "crypto-js";
 import {
   CalendarCheck,
   CalendarSearch,
   CheckCircle,
   RefreshCcw,
   Search,
-  X
+  X,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import httpClient from "../../../api/httpClient";
 import { environment } from "../../../environment/environment";
+import { decrypt, encrypt } from "../../../utils/crypto-util";
 import successImg from "../../assests/successImg.png";
 
 interface AppointmentData {
@@ -131,32 +131,26 @@ export default function Hero() {
     const encrypted = localStorage.getItem("appointments");
     if (!encrypted) return [];
 
+    const decrypted = decrypt(encrypted);
     try {
-      const bytes = CryptoJS.AES.decrypt(encrypted, environment.SECRET_KEY);
-      const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-      return JSON.parse(decrypted);
+      return decrypted ? JSON.parse(decrypted) : [];
     } catch (error) {
-      console.error("Decryption error:", error);
+      console.error("Decryption JSON parse error:", error);
       return [];
     }
   };
-
   useEffect(() => {
     const encrypted = localStorage.getItem("Newslot");
 
     if (encrypted) {
       try {
-        const decrypted = CryptoJS.AES.decrypt(
-          encrypted,
-          environment.SECRET_KEY
-        ).toString(CryptoJS.enc.Utf8);
-        console.log();
+        const decrypted = decrypt(encrypted);
+        if (!decrypted) throw new Error("Decryption returned null");
 
         const parsedData = JSON.parse(decrypted);
         console.log("parsedData111--------", parsedData);
 
-        let Appoinment = getDecryptedAppointmentsdata();
-
+        const Appoinment = getDecryptedAppointmentsdata();
         console.log("parsedData222-------", Appoinment);
 
         setAppointmentData(Appoinment);
@@ -165,8 +159,6 @@ export default function Hero() {
         setotpButtontype("Reschedule");
         setOtpVisible(true);
         setOtpError("");
-
-        // setRescheduledAppointments(parsedData);
       } catch (error) {
         console.error("Error decrypting or parsing Newslot data:", error);
       }
@@ -198,12 +190,11 @@ export default function Hero() {
     const encrypted = localStorage.getItem("appointments");
     if (!encrypted) return [];
 
+    const decrypted = decrypt(encrypted);
     try {
-      const bytes = CryptoJS.AES.decrypt(encrypted, environment.SECRET_KEY);
-      const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-      return JSON.parse(decrypted);
+      return decrypted ? JSON.parse(decrypted) : [];
     } catch (error) {
-      console.error("Decryption error:", error);
+      console.error("Decryption JSON parse error:", error);
       return [];
     }
   };
@@ -224,11 +215,7 @@ export default function Hero() {
     existing.push(item);
 
     // Encrypt and save to localStorage
-    const encrypted = CryptoJS.AES.encrypt(
-      JSON.stringify(existing),
-      environment.SECRET_KEY
-    ).toString();
-
+    const encrypted = encrypt(JSON.stringify(existing));
     localStorage.setItem("appointments", encrypted);
 
     // Navigate and scroll
@@ -1174,11 +1161,15 @@ export default function Hero() {
                         onClick={
                           otpButtontype === "Reschedule"
                             ? () => {
+                                localStorage.removeItem("appointments");
                                 navigate(
                                   `${environment.BASE_PATH}AppointmentBooking`
                                 );
                               }
-                            : () => setOtpVisible(false)
+                            : () => {
+                                localStorage.removeItem("appointments");
+                                setOtpVisible(false);
+                              }
                         }
                       >
                         Back
