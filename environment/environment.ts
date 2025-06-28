@@ -46,7 +46,7 @@ export const environment = {
 
 
 
-  //   TOKEN_API: "http://127.0.0.1:8001/api/auth/token",
+  // TOKEN_API: "http://127.0.0.1:8001/api/auth/token",
   // APPLICANT_CRUD_API:
   //   "http://127.0.0.1:8001/transaction/applicant/details",
   // APPOINMENT_SAVE_API:
@@ -66,8 +66,11 @@ export const environment = {
   //   "http://127.0.0.1:8001/transaction/appointment-report",
 
   // APPOINMENT_REPORT_Cancel:
-  //   "http://127.0.0.1:8001/transaction/appointment/cancel"
+  //   "http://127.0.0.1:8001/transaction/appointment/cancel",
 
-
-
+OTP_API:
+    "http://127.0.0.1:8001/notification/GenerateOTP",
+OTP_VALIDATE_API:
+    "http://127.0.0.1:8001/notification/validate-otp",
+    OTP_TIMER_DURATION: 300,
 };
