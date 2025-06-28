@@ -1,4 +1,5 @@
 export const environment = {
+
   production: false,
   // apiUrl: "http://localhost:3000/api",
   // TOKEN_API: "https://ndhealthcheck.com/appointment-service/api/auth/token",
@@ -11,6 +12,7 @@ export const environment = {
   // APPLICANT_RECEIPT_API:"https://ndhealthcheck.com/appointment-service/transaction/invoice/pdf/",
 
   apiUrl: "http://localhost:3000/api",
+
   // TOKEN_API: "https://ndhealthcheck.com/appointment-service/api/auth/token",
   // APPLICANT_CRUD_API:
   //   "https://ndhealthcheck.com/appointment-service/transaction/applicant/details",
@@ -24,8 +26,9 @@ export const environment = {
   //   "https://ndhealthcheck.com/appointment-service/master/service?status=1&application=1",
   // APPLICANT_WITH_APPT_API:
   //   "https://ndhealthcheck.com/appointment-service/transaction/applicant-appointment/details",
-  // APPLICANT_RECEIPT_API:
-  //   "https://ndhealthcheck.com/appointment-service/transaction/invoice/pdf/",
+  
+  // APPLICANT_RECEIPT_API: (appointmentId: string) =>
+  //   `https://ndhealthcheck.com/appointment-service/transaction/invoice/pdf/${appointmentId}/download`,
 
   // APPOINMENT_REPORT_API:
   //   "https://ndhealthcheck.com/appointment-service/transaction/appointment-report",
