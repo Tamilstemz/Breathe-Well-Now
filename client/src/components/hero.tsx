@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { CalendarCheck, CalendarSearch, CheckCircle, RefreshCcw, X, Info} from "lucide-react";
+import { CalendarCheck, CalendarSearch, CheckCircle, RefreshCcw, X, Info } from "lucide-react";
 import doctorImage from "@assets/newpic1_1749587017199.png";
 import { useNavigate } from "react-router-dom";
 import { environment } from "../../../environment/environment";
@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import CryptoJS from "crypto-js";
+import httpClient from "../../../api/httpClient";
+import successImg from "../../assests/successImg.png";
 
 
 
@@ -27,6 +29,25 @@ interface AppointmentData {
   contact_number: string;
   Newslot?: any; // Optional: Add any other fields you need from the object
 }
+
+type ApplicantResData = {
+  id?: number;
+  fullname?: string;
+  email?: string;
+  contact_number?: string;
+  passport_number?: string;
+  hap_id?: string;
+  age?: number;
+  dob?: string;
+  gender?: string;
+  appointment_id?: number;
+  reference?: string;
+  department?: string;
+  service?: string;
+  date?: string;
+  time?: string;
+  applicant_number?: string;
+};
 
 export default function Hero() {
 
@@ -49,6 +70,9 @@ export default function Hero() {
   const [contactValue, setContactValue] = useState("");
   const [appointmentData, setAppointmentData] = useState<AppointmentData[]>([]);
 
+  const [newappointmentSlot, setNewAppointmentSlot] = useState<any[]>([]);
+
+
   const [otpButtontype, setotpButtontype] = useState('Reschedule')
   const [otpVisible, setOtpVisible] = useState(false);
   const [otp, setOtp] = useState("");
@@ -65,7 +89,26 @@ export default function Hero() {
   // };
 
 
+  const [successModule, setsuccessModule] = useState(false)
+  const [appicantResdata, setAppicantResdata] = useState<ApplicantResData>({});
 
+
+
+
+
+  const getDecryptedAppointmentsdata = (): any[] => {
+    const encrypted = localStorage.getItem("appointments");
+    if (!encrypted) return [];
+
+    try {
+      const bytes = CryptoJS.AES.decrypt(encrypted, environment.SECRET_KEY);
+      const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+      return JSON.parse(decrypted);
+    } catch (error) {
+      console.error("Decryption error:", error);
+      return [];
+    }
+  };
 
 
   useEffect(() => {
@@ -77,11 +120,18 @@ export default function Hero() {
           encrypted,
           environment.SECRET_KEY
         ).toString(CryptoJS.enc.Utf8);
+        console.log();
 
         const parsedData = JSON.parse(decrypted);
-        console.log('parsedData--------', parsedData);
+        console.log('parsedData111--------', parsedData);
 
-        setAppointmentData(parsedData)
+        let Appoinment = getDecryptedAppointmentsdata()
+
+        console.log('parsedData222-------', Appoinment);
+
+
+        setAppointmentData(Appoinment)
+        setNewAppointmentSlot(parsedData)
         setShowAppointmentModal(true)
         setotpButtontype('Reschedule')
         setOtpVisible(true);
@@ -138,11 +188,6 @@ export default function Hero() {
 
   const handleRescheduleClick = (item: any) => {
 
-    // setotpButtontype('Reschedule')
-    // setOtpVisible(true);
-    // setOtp("998999");
-    // setOtpError("");
-
     // Get and filter out any existing appointment with same ID
 
     let existing = getDecryptedAppointments().filter(
@@ -183,53 +228,90 @@ export default function Hero() {
       return;
     }
 
-    const rescheduleConfirm = window.confirm(
-      "Are you sure you want to reschedule this appointment?"
-    );
+    if (newappointmentSlot && item) {
 
-    if (!rescheduleConfirm) return;
+      const rescheduleConfirm = window.confirm(
+        "Are you sure you want to reschedule this appointment?"
+      );
 
-    try {
-      // 1. Remove related localStorage entries
-      localStorage.removeItem("appointments");
-      localStorage.removeItem("Newslot");
+      if (!rescheduleConfirm) return;
 
-      // 2. Build the cancellation payload
-      const payload = {
-        booked_time: item.booked_time,
-        booking_status: 3, // 2 = Cancelled
-        date_booked: item.date_booked,
-        id: item.id,
-        visa_number: item.visa_number,
-        otp: otp, // Assuming backend requires OTP
-      };
+      try {
 
-      // 3. Send the POST request
-      const response = await fetch(environment.APPOINMENT_REPORT_Cancel, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+        const payload = {
+          booked_time: item.booked_time,
+          booking_status: 3,
+          date_booked: item.date_booked,
+          id: item.id,
+          visa_number: item.visa_number,
+          otp: otp,
+        };
 
-      const result = await response.json();
-      console.log("Cancellation response:", result);
 
-      // 4. Handle response
-      if (result.status === 1) {
-      
-        
+        console.log('payload---vvv', payload);
+        console.log('payload---vvv-222222222', newappointmentSlot);
 
-        setShowAppointmentModal(false);
-        setAppointmentData([]);
-      } else {
-        setOtpError(result.message || "Cancellation failed. Try again.");
+
+
+        const response = await fetch(environment.APPOINMENT_REPORT_Cancel, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const result = await response.json();
+        console.log("Cancellation response:", result);
+
+        console.log('payload---vvv-33333', appointmentData);
+
+
+        if (result.status === 1) {
+
+          const res = await httpClient.post(
+            environment.APPLICANT_WITH_APPT_API,
+            newappointmentSlot
+          );
+
+          const responseData = res.data.data;
+
+          console.log('payload---vvv-44444', responseData);
+
+
+          if (res.data.status === 1) {
+            localStorage.removeItem("appointments");
+            localStorage.removeItem("Newslot");
+
+            setShowAppointmentModal(false);
+            setAppointmentData([]);
+
+            setsuccessModule(true)
+            if (responseData?.[0]) {
+              const applicant = responseData[0].applicant || {};
+              const booking = responseData[0].appointments?.bookings?.[0] || {};
+              const applicantNumber = responseData[0].applicant_number || "";
+
+              setAppicantResdata({
+                ...applicant,
+                ...booking,
+                applicant_number: applicantNumber,
+              });
+            }
+
+
+          }
+        } else {
+          setOtpError(result.message || "Cancellation failed. Try again.");
+        }
+
+      } catch (error) {
+        console.error("Cancellation error:", error);
+        setOtpError("Something went wrong. Please try again.");
       }
-    } catch (error) {
-      console.error("Cancellation error:", error);
-      setOtpError("Something went wrong. Please try again.");
+
     }
+
   };
 
 
@@ -383,7 +465,7 @@ export default function Hero() {
                 Schedule Examination
               </Button>
 
-              {/* <Button
+              <Button
                 onClick={() => setOpenModal(true)}
                 variant="outline"
                 size="lg"
@@ -391,17 +473,17 @@ export default function Hero() {
               >
                 <CalendarSearch className="mr-2 h-5 w-5" />
                 Track Appointment
-              </Button> */}
+              </Button>
 
-            <Button
-            onClick={() => scrollToSection("about")}
-            variant="outline"
-            size="lg"
-            className="border-2 border-brand-orange text-brand-orange hover:card-gradient-orange hover:text-white hover:border-transparent font-semibold text-lg transition-all duration-300 hover:scale-105"
-          >
-            <Info className="mr-2 h-5 w-5" />
-            Learn More
-          </Button>
+              {/* <Button
+              onClick={() => scrollToSection("about")}
+              variant="outline"
+              size="lg"
+              className="border-2 border-brand-orange text-brand-orange hover:card-gradient-orange hover:text-white hover:border-transparent font-semibold text-lg transition-all duration-300 hover:scale-105"
+            >
+              <Info className="mr-2 h-5 w-5" />
+              Learn More
+            </Button> */}
             </div>
           </div>
 
@@ -413,6 +495,10 @@ export default function Hero() {
             />
           </div>
         </div>
+      
+      
+    
+      
       </div>
 
       {/* Modal for Track Appointment */}
@@ -504,39 +590,55 @@ export default function Hero() {
                     </div>
                   </div>
 
+
+
+                  <div className="grid grid-cols-2 gap-4" >
+                    <div>
+                    <div className="text-gray-500">Reference Number</div>
+                    <div className="font-medium">{item.applicant_number}</div>
+                    </div>
+
+                    <div>
+                    <div className="text-gray-500">Mobile Number</div>
+                    <div className="font-medium">{item.contact_number}</div>
+                    </div>
+                  </div>
+
                   <div>
                     <div className="text-gray-500">Examination Type</div>
                     <div className="font-medium">{item.service__name}</div>
                   </div>
 
-                  <div>
-                    <div className="text-gray-500">Reference Number</div>
-                    <div className="font-medium">{item.applicant_number}</div>
-                  </div>
-
-                  {item && item?.Newslot &&
+                  {newappointmentSlot && newappointmentSlot.length > 0 &&
                     <>
                       <div className="flex justify-between items-center">
                         <div className="font-semibold">Reschedule Appointment Details</div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <div className="text-gray-500">Date</div>
-                          <div className="font-medium">
-                            {new Date(item?.Newslot?.slotItem?.slot?.date).toLocaleDateString("en-US", {
-                              weekday: "short",
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                            })}
-                          </div>
+                      {newappointmentSlot.map((newitem, index) => (
+                        <div key={index} >
+                          {Array.isArray(newitem.slot_booking) &&
+                            newitem.slot_booking.map((slot: any, sIdx: any) => (
+                              <div key={sIdx} style={{ display: 'flex', justifyContent: 'space-between' }} >
+                                <div>
+                                  <div className="text-gray-500">Date</div>
+                                  <div className="font-medium">
+                                    {new Date(slot.date_booked).toLocaleDateString("en-US", {
+                                      weekday: "short",
+                                      year: "numeric",
+                                      month: "short",
+                                      day: "numeric",
+                                    })}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div className="text-gray-500">Time</div>
+                                  <div className="font-medium">{slot.booked_time}</div>
+                                </div>
+                              </div>
+                            ))}
                         </div>
-                        <div>
-                          <div className="text-gray-500">Time</div>
-                          <div className="font-medium">{item?.Newslot?.time}</div>
-                        </div>
-                      </div>
+                      ))}
                     </>
                   }
 
@@ -575,13 +677,13 @@ export default function Hero() {
                       </div>
 
                       <div className="flex justify-between gap-2 pt-3">
-                        <Button variant="outline" className="w-full" onClick={otpButtontype === 'Reschedule' ? () => {navigate(`${environment.BASE_PATH}AppointmentBooking`)} : () => setOtpVisible(false)}>
+                        <Button variant="outline" className="w-full" onClick={otpButtontype === 'Reschedule' ? () => { navigate(`${environment.BASE_PATH}AppointmentBooking`) } : () => setOtpVisible(false)}>
                           Back
                         </Button>
                         {otpButtontype === 'Reschedule' ? <Button
                           className="w-full bg-orange-500 text-white font-semibold"
                           disabled={!/^\d{6}$/.test(otp)}
-                          onClick={() =>handleConfirmReschedule(item)}
+                          onClick={() => handleConfirmReschedule(item)}
                         >
                           Confirm Reschedule
                         </Button> :
@@ -611,7 +713,177 @@ export default function Hero() {
             </DialogContent>
           </Dialog>)}
 
+      {successModule && (
+        <div className="modal fade show d-block" tabIndex={-1} role="dialog" 
+          style={{ 
+          position: 'fixed',
+          top: -100,
+          left: 0,
+          zIndex: 1050,
+          height: '100vh',
+          background: 'rgba(0,0,0,0.6)',
+          display: 'flex',
+          justifyContent: 'center',
+          paddingTop: '100px',
+          paddingBottom: '40px',
+          overflowY: 'auto',
+          }} >
+          <div className="modal-dialog modal-dialog-centered" role="document" style={{ maxWidth: '550px', width: '100%' }}>
+            <div className="modal-content border-0" style={{
+              borderRadius: '16px',
+              overflow: 'hidden',
+              boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
+              background: 'linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%)'
+            }}>
+              <div className="position-relative">
+                {/* Header - Compact Blue Gradient */}
+                <div className="p-4 text-white" style={{
+                  background: 'linear-gradient(135deg, #f2994a 0%, #f27121 100%)',
+                  //  background: 'linear-gradient(135deg, #4b6cb7 0%, #182848 100%)',
+                  borderTopLeftRadius: '16px',
+                  borderTopRightRadius: '16px',
+                }}>
+                  <div className="d-flex align-items-center">
+                    <div>
+                      <h4 className="mb-1 fw-bold" style={{ letterSpacing: '0.3px', fontSize: '1.4rem' }}>
+                        {appicantResdata.gender === 'male' ? 'Mr.' : 'Ms.'} {appicantResdata.fullname}
+                      </h4>
+                      <div className="d-flex align-items-center mt-1">
+                        <i className="bi bi-check-circle-fill me-2 fs-6"></i>
+                        <span style={{ fontSize: '0.95rem', opacity: 0.9 }}>Reschedule Appointment Booked</span>
+                      </div>
+                    </div>
+                    <div className="ms-auto bg-white bg-opacity-20 rounded-circle p-2">
+                      <i className="bi bi-calendar-check fs-4"></i>
+                    </div>
+                  </div>
+                </div>
 
+                {/* Body - Compact Card Design */}
+                <div className="p-3 p-lg-4" style={{ minHeight: '200px' }}>
+                  <div className="row g-3">
+                    {[
+                      { label: "Applicant Number", value: appicantResdata.applicant_number },
+                      { label: "Date", value: appicantResdata.date },
+                      { label: "Time", value: appicantResdata.time },
+                      { label: "Reference", value: appicantResdata.reference }
+                    ].map((item, index) => (
+                      <div className="col-md-6" key={index}>
+                        <div className="p-2 rounded" style={{
+                          background: '#f8faff',
+                          border: '1px solid #e0e8ff',
+                          boxShadow: '0 2px 8px rgba(75, 108, 183, 0.08)'
+                        }}>
+                          <label className="fw-semibold text-muted small mb-1" style={{ color: '#5a6b8c', fontSize: '0.8rem' }}>
+                            {item.label}
+                          </label>
+                          <div className="text-dark fw-bold mt-1" style={{
+                            fontSize: '1rem',
+                            color: '#2d3a5a'
+                          }}>
+                            {item.value}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Confetti + Image - Medium Size */}
+                <div className="confetti-burst-container" style={{ height: '220px', margin: '15px 0' }}>
+                  {Array.from({ length: 80 }).map((_, i) => {
+                    const angle = Math.random() * 2 * Math.PI;
+                    const distance = 150 + Math.random() * 80;
+                    const x = Math.cos(angle) * distance;
+                    const y = Math.sin(angle) * distance * 1.1;
+                    const rotate = Math.random() * 720;
+                    return (
+                      <div
+                        key={i}
+                        className={`confetti-piece color-${i % 5}`}
+                        style={{
+                          ['--transform' as any]: `translate(${x}px, ${y}px) rotate(${rotate}deg)`,
+                          width: `${8 + Math.random() * 6}px`,
+                          height: `${8 + Math.random() * 6}px`,
+                          borderRadius: Math.random() > 0.5 ? '2px' : '50%'
+                        }}
+                      />
+                    );
+                  })}
+
+                  <div className="d-flex flex-column align-items-center justify-content-center position-relative z-2"
+                    style={{ height: '220px' }}>
+                    <div className="position-absolute" style={{
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)'
+                    }}>
+                      <img
+                        src={successImg}
+                        alt="Success"
+                        className="img-fluid"
+                        style={{
+                          width: "160px",
+                          height: "160px",
+                          objectFit: 'contain',
+                          display: 'block',
+                          margin: '0 auto'
+                        }}
+                      />
+                      <h4
+                        className="fw-bold mt-3 text-center"
+                        style={{
+                          background: 'linear-gradient(135deg, #4b6cb7 0%, #2ecc71 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          fontSize: '1.5rem',
+                          whiteSpace: 'nowrap', // prevent line break
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        Appointment Rescheduled successfully!
+                      </h4>
+
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer - Compact Button */}
+                <div className="px-3 pb-3 pt-2" style={{ background: 'rgba(246, 248, 255, 0.8)' }}>
+                  <div className="d-flex gap-2 flex-wrap">
+
+
+                    <button
+                      className="btn fw-bold flex-fill py-2"
+                      style={{
+                        // background: 'linear-gradient(135deg, #4b6cb7 0%, #182848 100%)',
+                        background: 'linear-gradient(135deg, #f2994a 0%, #f27121 100%)',
+                        color: 'white',
+                        fontSize: '1rem',
+                        letterSpacing: '0.3px',
+                        borderRadius: '10px',
+                        border: 'none',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
+                      onClick={() => {
+                        setsuccessModule(false);
+                        navigate('/');
+                      }}
+                    >
+                      <i className="bi bi-house-door me-2"></i>
+                      Return to Home
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+        )}
 
 
     </section>

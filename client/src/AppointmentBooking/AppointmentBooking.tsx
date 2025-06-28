@@ -25,6 +25,8 @@ import { Input } from "@/components/ui/input";
 
 import { useToast } from "@/hooks/use-toast";
 import Nddiagnostics_QR_Code_1 from "../../assests/Nddiagnostics QR Code_1.png";
+import successImg from "../../assests/successImg.png";
+
 import {
   Accordion,
   AccordionContent,
@@ -171,6 +173,28 @@ type FormDataType = {
   PaymentType: string;
 };
 
+
+type ApplicantResData = {
+  id?: number;
+  fullname?: string;
+  email?: string;
+  contact_number?: string;
+  passport_number?: string;
+  hap_id?: string;
+  age?: number;
+  dob?: string;
+  gender?: string;
+  appointment_id?: number;
+  reference?: string;
+  department?: string;
+  service?: string;
+  date?: string;
+  time?: string;
+  applicant_number?: string;
+};
+
+
+
 const AppointmentBooking = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -236,7 +260,7 @@ const AppointmentBooking = () => {
     dob: "",
     TransactionId: "",
     servicecode: [],
-    totalPrice: 100,
+    totalPrice: 0,
     PaymentType: "",
   });
   const [members, setMembers] = useState<any[]>([
@@ -255,13 +279,26 @@ const AppointmentBooking = () => {
       dob: "",
       TransactionId: "",
       servicecode: [],
-      totalPrice: 100,
+      totalPrice: 0,
       slot_booking: [],
       PaymentType: "",
     },
   ]);
 
-  console.log('formData[11111]', formData);
+
+  const [successModule, setsuccessModule] = useState(false)
+  const [appicantResdata, setAppicantResdata] = useState<ApplicantResData>({});
+
+
+
+
+  console.log('serviceList-----------111', serviceList);
+
+  // console.log('members-----------222', members);
+
+
+
+
 
 
   // --------------------------- Reschedule -----------------------------
@@ -528,6 +565,8 @@ const AppointmentBooking = () => {
       }
     }
 
+
+
     if (!slot.available) return;
     const slotDateStr = slot.slotItem.slot.date; // "YYYY-MM-DD"
     const slotDateObj = new Date(slotDateStr);
@@ -696,8 +735,8 @@ const AppointmentBooking = () => {
       paymentMethod: "QR",
       dob: "",
       TransactionId: "",
-      servicecode: [environment.DEFAULT_SERVICE_CODE],
-      totalPrice: 0,
+      servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
+      totalPrice:serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
       PaymentType: "",
     });
     setMembers([
@@ -715,8 +754,8 @@ const AppointmentBooking = () => {
         paymentMethod: "",
         dob: "",
         TransactionId: "",
-        servicecode: [environment.DEFAULT_SERVICE_CODE],
-        totalPrice: 0,
+        servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
+        totalPrice:serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
         slot_booking: [],
       },
     ]);
@@ -805,8 +844,8 @@ const AppointmentBooking = () => {
     } else {
       setFormData((prev) => ({
         ...prev,
-        servicecode: [environment.DEFAULT_SERVICE_CODE],
-        totalPrice: 0,
+        servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
+        totalPrice:serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
       }));
     }
   };
@@ -1220,7 +1259,7 @@ const AppointmentBooking = () => {
         if (!passportNo.trim()) {
           errors[`passportNo_${index}`] = "Passport Number is required.";
           hasError = true;
-        } else if (!/^[A-Z0-9]{6,9}$/.test(passportNo)) {
+        } else if (!/^[A-Z0-9]{6,12}$/.test(passportNo)) {
           errors[`passportNo_${index}`] =
             "6-9 characters, uppercase letters/numbers only.";
           hasError = true;
@@ -1408,6 +1447,9 @@ const AppointmentBooking = () => {
 
       const servicedetail = members[0]?.servicecode;
 
+      const servicetotalPrice =  serviceList[0] ?  parseInt(serviceList[0]?.price) : 100
+
+
       const updatedMembers = Array.from({ length: value }, () => ({
         patientName: "",
         hapId: "",
@@ -1423,9 +1465,14 @@ const AppointmentBooking = () => {
         dob: "",
         TransactionId: "",
         servicecode: servicedetail,
-        totalPrice: 0,
+        totalPrice: servicetotalPrice,
         slot_booking: [],
       }));
+
+      setFormData((prev)=>({
+        ...prev,
+        totalPrice:value * servicetotalPrice,
+      }))
 
       setMembers(updatedMembers);
     } else {
@@ -1589,11 +1636,31 @@ const AppointmentBooking = () => {
       );
 
       const responseData = res.data.data;
+
+      console.log('vvv---responseData', responseData);
+
+
       if (res.data.status === 1) {
+
+        setsuccessModule(true)
+        if (responseData?.[0]) {
+          const applicant = responseData[0].applicant || {};
+          const booking = responseData[0].appointments?.bookings?.[0] || {};
+          const applicantNumber = responseData[0].applicant_number || "";
+
+          setAppicantResdata({
+            ...applicant,
+            ...booking,
+            applicant_number: applicantNumber,
+          });
+        }
+
         const invoiceUrls1: any[] = [];
         const allSuccessful = responseData.every((applicant: any) => {
           const appointments = applicant?.appointments;
           const booking = appointments?.bookings?.[0];
+
+
 
           if (
             appointments?.status === 1 &&
@@ -1601,16 +1668,14 @@ const AppointmentBooking = () => {
             booking?.appointment_id
           ) {
             const appointmentId = booking.appointment_id;
-            invoiceUrls1.push(
-              `https://ndhealthcheck.com/appointment-service/transaction/invoice/pdf/${appointmentId}`
-            );
+            invoiceUrls1.push(environment.APPLICANT_RECEIPT_API(appointmentId));
             return true;
           }
 
           return false;
         });
         setinvoiceUrls(invoiceUrls1);
-        downloadPDFsSilently(invoiceUrls1);
+        // downloadPDFsSilently(invoiceUrls1);
         if (allSuccessful) {
           const firstBooking = responseData[0]?.appointments?.bookings?.[0];
           const applicantNumber = responseData[0]?.applicant_number;
@@ -1620,12 +1685,12 @@ const AppointmentBooking = () => {
           const message = `Applicant ${applicantNumber} booked on ${bookedDate} at ${bookedTime}`;
           console.log(message);
           // showToast("success", message);
-          toast({
-            title: "success",
-            description: message,
-            variant: "success",
-            duration: 4000,
-          });
+          // toast({
+          //   title: "success",
+          //   description: message,
+          //   variant: "success",
+          //   duration: 4000,
+          // });
           setShowDialog(false);
           setStepIndex(0);
 
@@ -1643,8 +1708,8 @@ const AppointmentBooking = () => {
             paymentMethod: "QR",
             dob: "",
             TransactionId: "",
-            servicecode: [environment.DEFAULT_SERVICE_CODE],
-            totalPrice: 0,
+            servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
+            totalPrice:serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
             PaymentType: "",
           });
           setMembers([
@@ -1662,8 +1727,8 @@ const AppointmentBooking = () => {
               paymentMethod: "",
               dob: "",
               TransactionId: "",
-              servicecode: [environment.DEFAULT_SERVICE_CODE],
-              totalPrice: 0,
+              servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
+              totalPrice:serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
               slot_booking: [],
             },
           ]);
@@ -1687,7 +1752,6 @@ const AppointmentBooking = () => {
 
       // ✅ You can now use invoiceUrls wherever needed
 
-      setShowDialog1(true);
     } catch (error) {
       console.error("Submission Error:", error);
       // toast.error("An error occurred while submitting the form.");
@@ -1713,8 +1777,8 @@ const AppointmentBooking = () => {
       paymentMethod: "QR",
       dob: "",
       TransactionId: "",
-      servicecode: [environment.DEFAULT_SERVICE_CODE],
-      totalPrice: 0,
+      servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
+      totalPrice:serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
       PaymentType: "",
     });
 
@@ -1883,6 +1947,7 @@ const AppointmentBooking = () => {
   ) => {
     const { name, value } = e.target;
 
+      // console.log('vvvvvv----11111', value, '000----000', index);
 
     if (appointmentType === "Self") {
       let updatedData = { ...formData, [name]: value };
@@ -1924,13 +1989,17 @@ const AppointmentBooking = () => {
       });
 
       // console.log('formData-----',formData);
-    } else if (appointmentType === "Group" && typeof index === "number") {
+    } else if (appointmentType === "Group") {
 
-      console.log('vvvvvv----222', value, '000----000', index);
+
+
+      // console.log('vvvvvv----222', value, '000----000', index);
 
 
       const updatedMembers = [...members];
-      updatedMembers[index][name] = value;
+      if (typeof index === "number" && index >= 0) {
+        updatedMembers[index][name] = value;
+      }
 
       // Name validation: letters + space only
       if (name === "patientName") {
@@ -1939,7 +2008,7 @@ const AppointmentBooking = () => {
       }
 
       // Auto-calculate age from DOB
-      if (name === "dob" && value) {
+      if (name === "dob" && value && typeof index === "number") {
         updatedMembers[index].age = calculateAge(value);
       }
 
@@ -1966,7 +2035,29 @@ const AppointmentBooking = () => {
       setFormData(updatedData);
       console.log(members);
     }
+
   };
+
+
+  const downloadAllInvoices = () => {
+  invoiceUrls.forEach((url, index) => {
+    setTimeout(() => {
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = '';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }, index * 1000); // wait 1 second between each download to avoid browser block
+  });
+
+  // After all downloads triggered, navigate to home
+  setTimeout(() => {
+    setsuccessModule(false);
+    navigate('/');
+  }, invoiceUrls.length * 1000 + 500);
+};
+
 
 
 
@@ -1994,6 +2085,11 @@ const AppointmentBooking = () => {
     let update_data = getDecryptedAppointments()
     if (update_data && update_data.length > 0) {
       setRescheduledata(update_data)
+
+
+
+
+
     }
     // console.log('update_data______000', update_data);
 
@@ -2007,15 +2103,55 @@ const AppointmentBooking = () => {
     console.log('Reschedule Slot Selected:', slot);
 
     if (rescheduledata && rescheduledata.length > 0 && slot) {
+
+      let selectdate = slot?.slotItem?.slot?.date
+
+      let selectTime = slot?.time
+
       const rescheduleConfirm = window.confirm(
-        `You are about to reschedule your appointment to:\n\nDate: ${slot?.slotItem?.slot?.date}\nTime: ${slot?.time}\n\nDo you want to proceed?`
+        `You are about to reschedule your appointment to:\n\nDate: ${selectdate}\nTime: ${selectTime}\n\nDo you want to proceed?`
       );
 
-      if (rescheduleConfirm) {
-        const newAppointment = {
-          ...rescheduledata[0],
-          Newslot: slot,
-        };
+      if (rescheduleConfirm ) {
+
+        let singledata =rescheduledata[0]
+
+        console.log('singledata----+++',singledata)
+
+        let finalData = [
+          {
+            type: "I",
+            applicant_number: singledata.applicant_number,
+            fullname: singledata.patient_name,
+            email: singledata.email,
+            contact_number: singledata.contact_number,
+            hap_id: singledata.hap_id,
+            relationship: "Self",
+            passport_number: singledata.passport_number,
+            center: selectedCenter,
+            transaction_id: singledata.transaction_id,
+            payment_method: singledata.payment_method,
+            transaction_amt:singledata.transaction_amt,
+            slot_booking: [
+              {
+                action_date: formatDateToYYYYMMDDNew(new Date()),
+                date_booked: formatDateToYYYYMMDDNew(selectdate),
+
+                booked_time: selectTime,
+                booking_from: 3,
+                booking_status: 1,
+
+                department: "AU",
+                description: "Test Service",
+                service_code: formData.servicecode,
+              },
+            ],
+          },
+        ];
+
+        console.log('finalData--------',finalData);
+        
+
 
         // 1. Get encrypted data from localStorage
         const encryptedData = localStorage.getItem("Newslot");
@@ -2034,26 +2170,24 @@ const AppointmentBooking = () => {
         }
 
         // 2. Check if appointment with same ID exists
-        const index = newSlotData.findIndex((item) => item.id === newAppointment.id);
+        const incomingApplicant = finalData[0];
+          const existingIndex = newSlotData.findIndex(
+            (item) => item.applicant_number === incomingApplicant.applicant_number
+          );
 
-        if (index !== -1) {
-          // Replace existing item
-          newSlotData[index] = newAppointment;
-        } else {
-          // Push new appointment
-          newSlotData.push(newAppointment);
-        }
+        if (existingIndex !== -1) {
+            newSlotData[existingIndex] = incomingApplicant; // Replace
+          } else {
+            newSlotData.push(incomingApplicant); // Add
+          }
 
-        // 3. Encrypt updated data
         const reEncrypted = CryptoJS.AES.encrypt(
           JSON.stringify(newSlotData),
           environment.SECRET_KEY
         ).toString();
 
-        // 4. Save to localStorage
         localStorage.setItem("Newslot", reEncrypted);
 
-        // 5. Redirect or notify
         navigate(environment.BASE_PATH);
         setTimeout(() => {
           window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2581,6 +2715,7 @@ const AppointmentBooking = () => {
                 </div>
               </div>
 
+
               {selectedDate && selectedCenter && (
                 <div
                   key={selectedDate.toString()}
@@ -2648,9 +2783,9 @@ const AppointmentBooking = () => {
                               borderRadius: "8px",
                               backgroundColor: "#fff",
                               boxShadow: `
-                              0 2px 4px rgba(255, 255, 255, 0.7),     
-                              0 4px 10px rgba(230, 126, 34, 0.3)   
-                            `,
+                                0 2px 4px rgba(255, 255, 255, 0.7),     
+                                0 4px 10px rgba(230, 126, 34, 0.3)   
+                              `,
                             }}
                           >
                             <div
@@ -2671,10 +2806,10 @@ const AppointmentBooking = () => {
 
 
 
-                            {slots.length > 0 &&
-                              slots.some(
-                                (ele) =>
-                                  +ele?.remaining > 0) ? (
+                              {slots.length > 0 &&
+                              slots.filter(
+                                (slot: any) => +slot.remaining > 0 && !isSlotExpired(slot?.time, slot?.slotItem?.slot?.date)
+                              ).length > 0  ? (
                               <div
                                 className="row g-3 px-2 slottimebox"
                               >
@@ -2722,7 +2857,7 @@ const AppointmentBooking = () => {
                                           }}
                                           aria-disabled={
                                             slot.remaining < membercount ||
-                                            selectedServices.length === 0 
+                                            selectedServices.length === 0
                                             // ||
                                             // isSlotExpired(
                                             //   slot?.time,
@@ -3526,7 +3661,195 @@ const AppointmentBooking = () => {
             </div>
           </div>
         )}
+
+
       </div>
+
+      {successModule && (
+        <div className="modal fade show d-block" tabIndex={-1} role="dialog" style={{ background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="modal-dialog modal-dialog-centered" role="document" style={{ maxWidth: '550px', width: '100%' }}>
+            <div className="modal-content border-0" style={{
+              borderRadius: '16px',
+              overflow: 'hidden',
+              boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
+              background: 'linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%)'
+            }}>
+              <div className="position-relative">
+                {/* Header - Compact Blue Gradient */}
+                <div className="p-4 text-white" style={{
+                  background: 'linear-gradient(135deg, #f2994a 0%, #f27121 100%)',
+                  //  background: 'linear-gradient(135deg, #4b6cb7 0%, #182848 100%)',
+                  borderTopLeftRadius: '16px',
+                  borderTopRightRadius: '16px',
+                }}>
+                  <div className="d-flex align-items-center">
+                    <div>
+                      <h4 className="mb-1 fw-bold" style={{ letterSpacing: '0.3px', fontSize: '1.4rem' }}>
+                        {appicantResdata.gender === 'male' ? 'Mr.' : 'Ms.'} {appicantResdata.fullname}
+                      </h4>
+                      <div className="d-flex align-items-center mt-1">
+                        <i className="bi bi-check-circle-fill me-2 fs-6"></i>
+                        <span style={{ fontSize: '0.95rem', opacity: 0.9 }}>Appointment Booked</span>
+                      </div>
+                    </div>
+                    <div className="ms-auto bg-white bg-opacity-20 rounded-circle p-2">
+                      <i className="bi bi-calendar-check fs-4"></i>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Body - Compact Card Design */}
+                <div className="p-3 p-lg-4" style={{ minHeight: '200px' }}>
+                  <div className="row g-3">
+                    {[
+                      { label: "Applicant Number", value: appicantResdata.applicant_number },
+                      { label: "Date", value: appicantResdata.date },
+                      { label: "Time", value: appicantResdata.time },
+                      { label: "Reference", value: appicantResdata.reference }
+                    ].map((item, index) => (
+                      <div className="col-md-6" key={index}>
+                        <div className="p-2 rounded" style={{
+                          background: '#f8faff',
+                          border: '1px solid #e0e8ff',
+                          boxShadow: '0 2px 8px rgba(75, 108, 183, 0.08)'
+                        }}>
+                          <label className="fw-semibold text-muted small mb-1" style={{ color: '#5a6b8c', fontSize: '0.8rem' }}>
+                            {item.label}
+                          </label>
+                          <div className="text-dark fw-bold mt-1" style={{
+                            fontSize: '1rem',
+                            color: '#2d3a5a'
+                          }}>
+                            {item.value}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Confetti + Image - Medium Size */}
+                <div className="confetti-burst-container" style={{ height: '220px', margin: '15px 0' }}>
+                  {Array.from({ length: 80 }).map((_, i) => {
+                    const angle = Math.random() * 2 * Math.PI;
+                    const distance = 150 + Math.random() * 80;
+                    const x = Math.cos(angle) * distance;
+                    const y = Math.sin(angle) * distance * 1.1;
+                    const rotate = Math.random() * 720;
+                    return (
+                      <div
+                        key={i}
+                        className={`confetti-piece color-${i % 5}`}
+                        style={{
+                          ['--transform' as any]: `translate(${x}px, ${y}px) rotate(${rotate}deg)`,
+                          width: `${8 + Math.random() * 6}px`,
+                          height: `${8 + Math.random() * 6}px`,
+                          borderRadius: Math.random() > 0.5 ? '2px' : '50%'
+                        }}
+                      />
+                    );
+                  })}
+
+                  <div className="d-flex flex-column align-items-center justify-content-center position-relative z-2"
+                      style={{ height: '220px' }}>
+                    <div className="position-absolute" style={{
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)'
+                    }}>
+                      <img
+                        src={successImg}
+                        alt="Success"
+                        className="img-fluid"
+                        style={{
+                          width: "160px",
+                          height: "160px",
+                          objectFit: 'contain',
+                          display: 'block',
+                          margin: '0 auto'
+                        }}
+                      />
+                      <h4
+                      className="fw-bold mt-3 text-center"
+                      style={{
+                        background: 'linear-gradient(135deg, #4b6cb7 0%, #2ecc71 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        fontSize: '1.5rem',
+                        whiteSpace: 'nowrap', // prevent line break
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                    >
+                      Appointment saved successfully!
+                    </h4>
+
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer - Compact Button */}
+                <div className="px-3 pb-3 pt-2" style={{ background: 'rgba(246, 248, 255, 0.8)' }}>
+                  <div className="d-flex gap-2 flex-wrap">
+                    
+                    <button
+                        className="btn fw-bold flex-fill py-2 text-decoration-none"
+                        style={{
+                          background: 'linear-gradient(135deg, #f2994a 0%, #f27121 100%)',
+                          color: 'white',
+                          fontSize: '1rem',
+                          letterSpacing: '0.3px',
+                          borderRadius: '10px',
+                          border: 'none',
+                          display: 'inline-block',
+                          transition: 'all 0.3s ease'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                        onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
+                        onClick={downloadAllInvoices}
+                      >
+                        <i className="bi bi-download me-2"></i>
+                        Download Invoice
+                      </button>
+
+
+
+                    <button
+                      className="btn fw-bold flex-fill py-2"
+                      style={{
+                        // background: 'linear-gradient(135deg, #4b6cb7 0%, #182848 100%)',
+                        background: 'linear-gradient(135deg, #f2994a 0%, #f27121 100%)',
+                        color: 'white',
+                        fontSize: '1rem',
+                        letterSpacing: '0.3px',
+                        borderRadius: '10px',
+                        border: 'none',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
+                      onClick={() => {
+                        setsuccessModule(false);
+                        navigate('/');
+                      }}
+                    >
+                      <i className="bi bi-house-door me-2"></i>
+                      Return to Home
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
+
+
+
+
     </>
   );
 };
