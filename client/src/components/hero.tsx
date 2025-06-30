@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import doctorImage from "@assets/newpic1_1749587017199.png";
 import {
@@ -20,7 +21,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import httpClient from "../../../api/httpClient";
 import { environment } from "../../../environment/environment";
-import { decrypt, encrypt } from "../../../utils/crypto-util";
+import { encrypt } from "../../../utils/crypto-util";
 import successImg from "../../assests/successImg.png";
 
 interface AppointmentData {
@@ -78,6 +79,7 @@ export default function Hero() {
   const [appointmentData, setAppointmentData] = useState<AppointmentData[]>([]);
 
   const [newappointmentSlot, setNewAppointmentSlot] = useState<any[]>([]);
+  const [appointmentType, setappointmentType] = useState("");
 
   const [otpButtontype, setotpButtontype] = useState("Reschedule");
   const [otpVisible, setOtpVisible] = useState(false);
@@ -90,6 +92,8 @@ export default function Hero() {
   const [resendDisabled, setResendDisabled] = useState(true);
   const [timerVisible, setTimerVisible] = useState(true);
   const [appointmentCancelBtn, setAppointmentCancelBtn] = useState(false);
+  const [selectedApplicants, setSelectedApplicants] = useState<any[]>([]);
+
   const [errors, setErrors] = useState<{
     searchValue?: string;
     contactValue?: string;
@@ -131,34 +135,55 @@ export default function Hero() {
     const encrypted = localStorage.getItem("appointments");
     if (!encrypted) return [];
 
-    const decrypted = decrypt(encrypted);
     try {
-      return decrypted ? JSON.parse(decrypted) : [];
+      const bytes = CryptoJS.AES.decrypt(encrypted, environment.SECRET_KEY);
+      const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+      return JSON.parse(decrypted);
     } catch (error) {
-      console.error("Decryption JSON parse error:", error);
+      console.error("Decryption error:", error);
       return [];
     }
   };
+
   useEffect(() => {
     const encrypted = localStorage.getItem("Newslot");
 
     if (encrypted) {
       try {
-        const decrypted = decrypt(encrypted);
-        if (!decrypted) throw new Error("Decryption returned null");
+        const decrypted = CryptoJS.AES.decrypt(
+          encrypted,
+          environment.SECRET_KEY
+        ).toString(CryptoJS.enc.Utf8);
+        console.log();
 
         const parsedData = JSON.parse(decrypted);
         console.log("parsedData111--------", parsedData);
 
-        const Appoinment = getDecryptedAppointmentsdata();
+        let Appoinment = getDecryptedAppointmentsdata();
+
         console.log("parsedData222-------", Appoinment);
 
+        const appointmentType = localStorage.getItem("appointmentType");
+
+        setappointmentType(appointmentType ?? "");
         setAppointmentData(Appoinment);
         setNewAppointmentSlot(parsedData);
+
+        const filteredSelectedApplicants = Appoinment.filter((item: any) =>
+          parsedData.some(
+            (a: any) => a.applicant_number === item.applicant_number
+          )
+        );
+
+        // Set selected applicants
+        setSelectedApplicants(filteredSelectedApplicants);
+
         setShowAppointmentModal(true);
         setotpButtontype("Reschedule");
         setOtpVisible(true);
         setOtpError("");
+
+        // setRescheduledAppointments(parsedData);
       } catch (error) {
         console.error("Error decrypting or parsing Newslot data:", error);
       }
@@ -186,57 +211,86 @@ export default function Hero() {
     setOpenModal(true);
   };
 
-  const getDecryptedAppointments = (): any[] => {
+  const getDecryptedAppointments = () => {
     const encrypted = localStorage.getItem("appointments");
     if (!encrypted) return [];
 
-    const decrypted = decrypt(encrypted);
     try {
-      return decrypted ? JSON.parse(decrypted) : [];
-    } catch (error) {
-      console.error("Decryption JSON parse error:", error);
+      const bytes = CryptoJS.AES.decrypt(encrypted, environment.SECRET_KEY);
+      return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+    } catch (e) {
+      console.error("Decryption failed", e);
       return [];
     }
   };
 
+  const handleCheckboxToggle = (item: any) => {
+    setSelectedApplicants((prev) => {
+      const exists = prev.find(
+        (a) => a.applicant_number === item.applicant_number
+      );
+      return exists
+        ? prev.filter((a) => a.applicant_number !== item.applicant_number)
+        : [...prev, item];
+    });
+  };
+
   const handleRescheduleClick = async (item: any) => {
     setotpButtontype("Reschedule");
-    const otpdata = {
-      applicant_number: appointmentData[0]?.applicant_number,
-      contact_number: appointmentData[0]?.contact_number,
-      otp_type: "RescheduleOTP",
-      center_id: appointmentData[0]?.center_id,
-      newtype: "new",
-    };
+    if (appointmentType === "Group") {
+      console.log("Group----item", item); // item is an array of appointments
 
-    const res = await httpClient.post(environment.OTP_API, otpdata);
-    console.log("OTP Response:", res);
-    toast({
-      title: "success",
-      description: res.data.message,
-      variant: "success",
-      duration: 4000,
-    });
-    startTimer();
-    // setotpButtontype("Reschedule");
-    setOtpVisible(true);
-    setOtpError("");
+      // Remove existing appointments from localStorage
+      let existing = getDecryptedAppointments().filter(
+        (appt: any) => !item.some((i: any) => i.id === appt.id)
+      );
 
-    let existing = getDecryptedAppointments().filter(
-      (appt) => appt.id !== item.id
-    );
+      // Add new group appointments
+      existing = [...existing, ...item];
 
-    // Add the new appointment
-    existing.push(item);
+      // Encrypt and save
+      const encrypted = CryptoJS.AES.encrypt(
+        JSON.stringify(existing),
+        environment.SECRET_KEY
+      ).toString();
 
-    // Encrypt and save to localStorage
-    const encrypted = encrypt(JSON.stringify(existing));
-    localStorage.setItem("appointments", encrypted);
+      localStorage.setItem("appointments", encrypted);
 
-    // Navigate and scroll
-    setOtpVisible(true);
-    // navigate(`${environment.BASE_PATH}AppointmentBooking`);
-    // setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
+      localStorage.setItem("appointmentType", appointmentType);
+
+      // Navigate and scroll
+      navigate(`${environment.BASE_PATH}AppointmentBooking`);
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
+    } else {
+      const otpdata = {
+        applicant_number: appointmentData[0]?.applicant_number,
+        contact_number: appointmentData[0]?.contact_number,
+        otp_type: "RescheduleOTP",
+        center_id: appointmentData[0]?.center_id,
+        newtype: "new",
+      };
+
+      const res = await httpClient.post(environment.OTP_API, otpdata);
+      console.log("OTP Response:", res);
+      toast({
+        title: "success",
+        description: res.data.message,
+        variant: "success",
+        duration: 4000,
+      });
+      startTimer();
+      // setotpButtontype("Reschedule");
+      setOtpVisible(true);
+      setOtpError("");
+
+      let existing = getDecryptedAppointments().filter(
+        (appt: any) => appt.id !== item.id
+      );
+      existing.push(item);
+      const encrypted = encrypt(JSON.stringify(existing));
+      localStorage.setItem("appointments", encrypted);
+      setOtpVisible(true);
+    }
   };
 
   const handleChange = (
@@ -399,14 +453,33 @@ export default function Hero() {
       if (!rescheduleConfirm) return;
 
       try {
-        const payload = {
-          booked_time: item.booked_time,
-          booking_status: 3,
-          date_booked: item.date_booked,
-          id: item.id,
-          visa_number: item.visa_number,
-          otp: otp,
-        };
+        let payload = {};
+
+        if (appointmentType === "Group") {
+          const groupdata = selectedApplicants.map((item) => ({
+            booked_time: item.booked_time,
+            booking_status: 3,
+            date_booked: item.date_booked,
+            id: item.id,
+            visa_number: item.visa_number,
+            otp: otp,
+          }));
+
+          payload = {
+            appointmentType: appointmentType,
+            groupdata: groupdata,
+            booking_status: 3,
+          };
+        } else {
+          payload = {
+            booked_time: item.booked_time,
+            booking_status: 3,
+            date_booked: item.date_booked,
+            id: item.id,
+            visa_number: item.visa_number,
+            otp: otp,
+          };
+        }
 
         const response = await fetch(environment.APPOINMENT_REPORT_Cancel, {
           method: "POST",
@@ -479,14 +552,32 @@ export default function Hero() {
 
   const handleCancelAppointment = async (item: any) => {
     try {
-      const payload = {
-        booked_time: item.booked_time,
-        booking_status: 2, // 2 = Cancelled
-        date_booked: item.date_booked,
-        id: item.id,
-        visa_number: item.visa_number,
-        otp: otp, // Include OTP for backend verification if needed
-      };
+      let payload = {};
+      if (appointmentType === "Group") {
+        const groupdata = selectedApplicants.map((item) => ({
+          booked_time: item.booked_time,
+          booking_status: 2,
+          date_booked: item.date_booked,
+          id: item.id,
+          visa_number: item.visa_number,
+          otp: otp,
+        }));
+
+        payload = {
+          appointmentType: appointmentType,
+          groupdata: groupdata,
+          booking_status: 2,
+        };
+      } else {
+        payload = {
+          booked_time: item.booked_time,
+          booking_status: 2, // 2 = Cancelled
+          date_booked: item.date_booked,
+          id: item.id,
+          visa_number: item.visa_number,
+          otp: otp, // Include OTP for backend verification if needed
+        };
+      }
 
       const response = await fetch(environment.APPOINMENT_REPORT_Cancel, {
         method: "POST",
@@ -672,24 +763,23 @@ export default function Hero() {
                 onChange={(e) => setSearchType(e.target.value)}
               >
                 <option value="">Choose your ID type</option>
-                <option value="hap">HAP ID</option>
                 <option value="passport">Passport Number</option>
                 <option value="referenceId">Reference Number</option>
               </select>
             </div>
+
             <div>
               <label className="block mb-1 text-sm font-medium">
-                {searchType === "hap"
-                  ? "HAP ID"
-                  : searchType === "passport"
-                  ? "Passport Number"
-                  : "Reference ID"}
+                {searchType === "passport" ? "Passport Number" : "Reference ID"}
               </label>
               <input
                 type="text"
-                className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                  errors.searchValue ? "border-red-500" : ""
+                }`}
                 placeholder="Enter your ID"
                 value={searchValue}
+                maxLength={12}
                 onChange={(e) =>
                   setSearchValue(
                     searchType === "passport"
@@ -698,19 +788,38 @@ export default function Hero() {
                   )
                 }
               />
+              {errors.searchValue && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.searchValue}
+                </p>
+              )}
             </div>
+
             <div>
               <label className="block mb-1 text-sm font-medium">
-                Mobile Number
+                {contactType === "email" ? "Email ID" : "Mobile Number"}
               </label>
               <input
-                type="tel"
-                className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                placeholder="Enter your mobile number"
+                type={contactType === "email" ? "email" : "tel"}
+                className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                  errors.contactValue ? "border-red-500" : ""
+                }`}
+                placeholder={
+                  contactType === "email"
+                    ? "Enter your email"
+                    : "Enter your mobile number"
+                }
                 value={contactValue}
+                maxLength={10}
                 onChange={(e) => setContactValue(e.target.value)}
               />
+              {errors.contactValue && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.contactValue}
+                </p>
+              )}
             </div>
+
             <Button
               onClick={handleTrackBooking}
               className="w-full card-gradient-blue text-white font-semibold transition-none"
@@ -736,268 +845,217 @@ export default function Hero() {
               </DialogDescription>
             </DialogHeader>
 
-            {appointmentData.map((item, index) => (
-              <div key={index} className="space-y-4 mt-2 text-sm">
-                <div className="flex justify-between items-center">
-                  <div className="font-semibold">Appointment Details</div>
-                  <div className="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
-                    <CheckCircle className="w-4 h-4" />{" "}
-                    {bookingStatusMap[parseInt(item.booking_status)] ||
-                      "Unknown"}
-                  </div>
-                </div>
-
-                {successModule && (
-                  <div
-                    className="modal fade show d-block"
-                    tabIndex={-1}
-                    role="dialog"
-                    style={{
-                      position: "fixed",
-                      top: -100,
-                      left: 0,
-                      zIndex: 1050,
-                      height: "100vh",
-                      background: "rgba(0,0,0,0.6)",
-                      display: "flex",
-                      justifyContent: "center",
-                      paddingTop: "100px",
-                      paddingBottom: "40px",
-                      overflowY: "auto",
-                    }}
-                  >
-                    <div
-                      className="modal-dialog modal-dialog-centered"
-                      role="document"
-                      style={{ maxWidth: "550px", width: "100%" }}
-                    >
-                      <div
-                        className="modal-content border-0"
-                        style={{
-                          borderRadius: "16px",
-                          overflow: "hidden",
-                          boxShadow: "0 10px 30px rgba(0, 0, 0, 0.2)",
-                          background:
-                            "linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%)",
-                        }}
-                      >
-                        <div className="position-relative">
-                          {/* Header - Compact Blue Gradient */}
-                          <div
-                            className="p-4 text-white"
-                            style={{
-                              background:
-                                "linear-gradient(135deg, #f2994a 0%, #f27121 100%)",
-                              //  background: 'linear-gradient(135deg, #4b6cb7 0%, #182848 100%)',
-                              borderTopLeftRadius: "16px",
-                              borderTopRightRadius: "16px",
-                            }}
-                          >
-                            <div className="d-flex align-items-center">
-                              <div>
-                                <h4
-                                  className="mb-1 fw-bold"
-                                  style={{
-                                    letterSpacing: "0.3px",
-                                    fontSize: "1.4rem",
-                                  }}
-                                >
-                                  {appicantResdata.gender === "male"
-                                    ? "Mr."
-                                    : "Ms."}{" "}
-                                  {appicantResdata.fullname}
-                                </h4>
-                                <div className="d-flex align-items-center mt-1">
-                                  <i className="bi bi-check-circle-fill me-2 fs-6"></i>
-                                  <span
-                                    style={{
-                                      fontSize: "0.95rem",
-                                      opacity: 0.9,
-                                    }}
-                                  >
-                                    Reschedule Appointment Booked
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="ms-auto bg-white bg-opacity-20 rounded-circle p-2">
-                                <i className="bi bi-calendar-check fs-4"></i>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Body - Compact Card Design */}
-                          <div
-                            className="p-3 p-lg-4"
-                            style={{ minHeight: "200px" }}
-                          >
-                            <div className="row g-3">
-                              {[
+            {appointmentType === "Group"
+              ? appointmentData.length > 0 && (
+                  <div className="table-responsive">
+                    {/* === Original Appointments Table === */}
+                    <table className="table table-bordered text-center align-middle">
+                      <thead className="table-light">
+                        <tr>
+                          <th>Select</th>
+                          <th>ID</th>
+                          <th>Name</th>
+                          <th>Passport Number</th>
+                          <th>Date</th>
+                          <th>Time</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {appointmentData.map((item, index) => (
+                          <tr key={`original-${index}`}>
+                            <td>
+                              <input
+                                type="checkbox"
+                                value={item.applicant_number}
+                                checked={selectedApplicants.some(
+                                  (a) =>
+                                    a.applicant_number === item.applicant_number
+                                )}
+                                onChange={() => handleCheckboxToggle(item)}
+                              />
+                            </td>
+                            <td>{item.applicant_number}</td>
+                            <td>{item.patient_name}</td>
+                            <td>{item.passport_number}</td>
+                            <td>
+                              {new Date(item.date_booked).toLocaleDateString(
+                                "en-US",
                                 {
-                                  label: "Applicant Number",
-                                  value: appicantResdata.applicant_number,
-                                },
-                                { label: "Date", value: appicantResdata.date },
-                                { label: "Time", value: appicantResdata.time },
-                                {
-                                  label: "Reference",
-                                  value: appicantResdata.reference,
-                                },
-                              ].map((item, index) => (
-                                <div className="col-md-6" key={index}>
-                                  <div
-                                    className="p-2 rounded"
-                                    style={{
-                                      background: "#f8faff",
-                                      border: "1px solid #e0e8ff",
-                                      boxShadow:
-                                        "0 2px 8px rgba(75, 108, 183, 0.08)",
-                                    }}
-                                  >
-                                    <label
-                                      className="fw-semibold text-muted small mb-1"
-                                      style={{
-                                        color: "#5a6b8c",
-                                        fontSize: "0.8rem",
-                                      }}
-                                    >
-                                      {item.label}
-                                    </label>
-                                    <div
-                                      className="text-dark fw-bold mt-1"
-                                      style={{
-                                        fontSize: "1rem",
-                                        color: "#2d3a5a",
-                                      }}
-                                    >
-                                      {item.value}
-                                    </div>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Confetti + Image - Medium Size */}
-                          <div
-                            className="confetti-burst-container"
-                            style={{ height: "220px", margin: "15px 0" }}
-                          >
-                            {Array.from({ length: 80 }).map((_, i) => {
-                              const angle = Math.random() * 2 * Math.PI;
-                              const distance = 150 + Math.random() * 80;
-                              const x = Math.cos(angle) * distance;
-                              const y = Math.sin(angle) * distance * 1.1;
-                              const rotate = Math.random() * 720;
-                              return (
-                                <div
-                                  key={i}
-                                  className={`confetti-piece color-${i % 5}`}
-                                  style={{
-                                    ["--transform" as any]: `translate(${x}px, ${y}px) rotate(${rotate}deg)`,
-                                    width: `${8 + Math.random() * 6}px`,
-                                    height: `${8 + Math.random() * 6}px`,
-                                    borderRadius:
-                                      Math.random() > 0.5 ? "2px" : "50%",
-                                  }}
-                                />
-                              );
-                            })}
-
-                            <div
-                              className="d-flex flex-column align-items-center justify-content-center position-relative z-2"
-                              style={{ height: "220px" }}
-                            >
-                              <div
-                                className="position-absolute"
-                                style={{
-                                  top: "50%",
-                                  left: "50%",
-                                  transform: "translate(-50%, -50%)",
-                                }}
-                              >
-                                <img
-                                  src={successImg}
-                                  alt="Success"
-                                  className="img-fluid"
-                                  style={{
-                                    width: "160px",
-                                    height: "160px",
-                                    objectFit: "contain",
-                                    display: "block",
-                                    margin: "0 auto",
-                                  }}
-                                />
-                                <h4
-                                  className="fw-bold mt-3 text-center"
-                                  style={{
-                                    background:
-                                      "linear-gradient(135deg, #4b6cb7 0%, #2ecc71 100%)",
-                                    WebkitBackgroundClip: "text",
-                                    WebkitTextFillColor: "transparent",
-                                    fontSize: "1.5rem",
-                                    whiteSpace: "nowrap", // prevent line break
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                  }}
-                                >
-                                  Appointment Rescheduled successfully!
-                                </h4>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Footer - Compact Button */}
-                          <div
-                            className="px-3 pb-3 pt-2"
-                            style={{ background: "rgba(246, 248, 255, 0.8)" }}
-                          >
-                            <div className="d-flex gap-2 flex-wrap">
-                              <button
-                                className="btn fw-bold flex-fill py-2"
-                                style={{
-                                  // background: 'linear-gradient(135deg, #4b6cb7 0%, #182848 100%)',
-                                  background:
-                                    "linear-gradient(135deg, #f2994a 0%, #f27121 100%)",
-                                  color: "white",
-                                  fontSize: "1rem",
-                                  letterSpacing: "0.3px",
-                                  borderRadius: "10px",
-                                  border: "none",
-                                  transition: "all 0.3s ease",
-                                }}
-                                onMouseEnter={(e) =>
-                                  (e.currentTarget.style.transform =
-                                    "translateY(-2px)")
+                                  weekday: "short",
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
                                 }
-                                onMouseLeave={(e) =>
-                                  (e.currentTarget.style.transform = "none")
-                                }
-                                onClick={() => {
-                                  setsuccessModule(false);
-                                  navigate("/");
-                                }}
-                              >
-                                <i className="bi bi-house-door me-2"></i>
-                                Return to Home
-                              </button>
-                            </div>
-                          </div>
+                              )}
+                            </td>
+                            <td>{item.booked_time}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    {/* === Rescheduled Appointments Table === */}
+                    {newappointmentSlot?.length > 0 && (
+                      <>
+                        <div className="mt-4 mb-2 text-start font-semibold text-blue-600">
+                          Reschedule Appointment Details
                         </div>
-                      </div>
-                    </div>
+
+                        <table className="table table-bordered text-center align-middle bg-gray-50">
+                          <thead className="table-light">
+                            <tr>
+                              <th>S.No.</th>
+                              <th>Name</th>
+                              <th>Date</th>
+                              <th>Time</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {newappointmentSlot.map(
+                              (newitem, index) =>
+                                Array.isArray(newitem.slot_booking) &&
+                                newitem.slot_booking.map(
+                                  (slot: any, sIdx: any) => (
+                                    <tr key={`new-${index}-${sIdx}`}>
+                                      <td>{index + 1}</td>
+                                      <td>
+                                        {newitem.fullname ||
+                                          newitem.patient_name}
+                                      </td>
+                                      <td>
+                                        {new Date(
+                                          slot.date_booked
+                                        ).toLocaleDateString("en-US", {
+                                          weekday: "short",
+                                          year: "numeric",
+                                          month: "short",
+                                          day: "numeric",
+                                        })}
+                                      </td>
+                                      <td>{slot.booked_time}</td>
+                                    </tr>
+                                  )
+                                )
+                            )}
+                          </tbody>
+                        </table>
+                      </>
+                    )}
+
+                    {/* ACTION SECTION */}
+                    {!otpVisible ? (
+                      selectedApplicants.length > 0 &&
+                      selectedApplicants.every(
+                        (item) => parseInt(item.booking_status) === 1
+                      ) && (
+                        <div className="flex justify-between gap-2 pt-4">
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() =>
+                              handleRescheduleClick(selectedApplicants)
+                            }
+                          >
+                            <RefreshCcw className="w-4 h-4 mr-1" />
+                            Reschedule
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            className="w-full"
+                            onClick={() => handlecancelAppointmentDetails()}
+                          >
+                            <X className="w-4 h-4 mr-1" />
+                            Cancel
+                          </Button>
+                        </div>
+                      )
+                    ) : (
+                      <>
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            Enter the OTP sent to your mobile number to{" "}
+                            {otpButtontype === "Reschedule"
+                              ? "reschedule your booking:"
+                              : "cancel your booking:"}
+                          </p>
+                          <Input
+                            type="text"
+                            inputMode="numeric"
+                            pattern="\d*"
+                            placeholder="Enter 6-digit OTP"
+                            value={otp}
+                            onChange={(
+                              e: React.ChangeEvent<HTMLInputElement>
+                            ) => {
+                              const onlyDigits = e.target.value.replace(
+                                /\D/g,
+                                ""
+                              );
+                              // if (onlyDigits.length <= 6) setOtp(onlyDigits);
+                            }}
+                            className="mt-2 text-center tracking-widest font-semibold text-lg"
+                          />
+                          {otpError && (
+                            <div className="text-red-600 text-xs mt-1">
+                              {otpError}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex justify-between gap-2 pt-3">
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={
+                              otpButtontype === "Reschedule"
+                                ? () => {
+                                    navigate(
+                                      `${environment.BASE_PATH}AppointmentBooking`
+                                    );
+                                  }
+                                : () => setOtpVisible(false)
+                            }
+                          >
+                            Back
+                          </Button>
+                          {otpButtontype === "Reschedule" ? (
+                            <Button
+                              className="w-full bg-orange-500 text-white font-semibold"
+                              // disabled={!/^\d{6}$/.test(otp)}
+                              onClick={() =>
+                                handleConfirmReschedule(selectedApplicants)
+                              }
+                            >
+                              Confirm Reschedule
+                            </Button>
+                          ) : (
+                            <Button
+                              className="w-full bg-orange-500 text-white font-semibold"
+                              // disabled={!/^\d{6}$/.test(otp)}
+                              onClick={() =>
+                                handleCancelAppointment(selectedApplicants)
+                              }
+                            >
+                              Cancel Appointment
+                            </Button>
+                          )}
+                        </div>
+
+                        <div className="text-center text-sm underline text-muted-foreground hover:text-black cursor-pointer pt-2">
+                          Resend OTP
+                        </div>
+                      </>
+                    )}
                   </div>
-                )}
-
-                <div>
-                  <div className="text-gray-500">Reference Number</div>
-                  <div className="font-medium">{item.applicant_number}</div>
-                </div>
-
-                {item && item?.Newslot && (
-                  <>
+                )
+              : appointmentData.map((item, index) => (
+                  <div key={index} className="space-y-4 mt-2 text-sm">
                     <div className="flex justify-between items-center">
-                      <div className="font-semibold">
-                        Reschedule Appointment Details
+                      <div className="font-semibold">Appointment Details</div>
+                      <div className="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
+                        <CheckCircle className="w-4 h-4" />{" "}
+                        {bookingStatusMap[parseInt(item.booking_status)] ||
+                          "Unknown"}
                       </div>
                     </div>
 
@@ -1005,192 +1063,474 @@ export default function Hero() {
                       <div>
                         <div className="text-gray-500">Date</div>
                         <div className="font-medium">
-                          {new Date(
-                            item?.Newslot?.slotItem?.slot?.date
-                          ).toLocaleDateString("en-US", {
-                            weekday: "short",
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          })}
+                          {new Date(item.date_booked).toLocaleDateString(
+                            "en-US",
+                            {
+                              weekday: "short",
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            }
+                          )}
                         </div>
                       </div>
                       <div>
                         <div className="text-gray-500">Time</div>
-                        <div className="font-medium">{item?.Newslot?.time}</div>
+                        <div className="font-medium">{item.booked_time}</div>
                       </div>
                     </div>
-                  </>
-                )}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <div className="text-gray-500">Reference Number</div>
+                        <div className="font-medium">
+                          {item.applicant_number}
+                        </div>
+                      </div>
 
-                {!otpVisible ? (
-                  parseInt(item.booking_status) === 1 ? (
-                    <div className="flex justify-between gap-2 pt-4">
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => handleRescheduleClick(item)}
-                      >
-                        <RefreshCcw className="w-4 h-4 mr-1" />
-                        Reschedule
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        className="w-full"
-                        onClick={handlecancelAppointmentDetails}
-                      >
-                        <X className="w-4 h-4 mr-1" />
-                        Cancel
-                      </Button>
+                      <div>
+                        <div className="text-gray-500">Mobile Number</div>
+                        <div className="font-medium">{item.contact_number}</div>
+                      </div>
                     </div>
-                  ) : null
-                ) : (
-                  <>
-                    <p className="otpSubheading">
-                      We’ve sent a 6-digit code to{" "}
-                      {appointmentData[0]?.contact_number}
-                    </p>
 
-                    <div className="inputContainer">
-                      {otp.map((digit, i) => (
-                        <input
-                          key={i}
-                          type="text"
-                          inputMode="numeric"
-                          maxLength={1}
-                          pattern="\d*"
-                          value={digit}
-                          onChange={(e) => handleChange(e, i)}
-                          onKeyDown={(e) => handleKeyDown(e, i)}
-                          className={`otp-input ${
-                            otpErrorActive ? "error" : ""
-                          }`}
-                          disabled={appointmentCancelBtn}
-                        />
-                      ))}
+                    <div>
+                      <div className="text-gray-500">Examination Type</div>
+                      <div className="font-medium">{item.service__name}</div>
                     </div>
-                    {timerVisible && (
-                      <p className="countdown-timer">
-                        ⏳ OTP expires in: <strong>{formatTimer()}</strong>
-                      </p>
+
+                    {newappointmentSlot && newappointmentSlot.length > 0 && (
+                      <>
+                        <div className="flex justify-between items-center">
+                          <div className="font-semibold">
+                            Reschedule Appointment Details
+                          </div>
+                        </div>
+
+                        {newappointmentSlot.map((newitem, index) => (
+                          <div key={index}>
+                            {Array.isArray(newitem.slot_booking) &&
+                              newitem.slot_booking.map(
+                                (slot: any, sIdx: any) => (
+                                  <div
+                                    key={sIdx}
+                                    style={{
+                                      display: "flex",
+                                      justifyContent: "space-between",
+                                    }}
+                                  >
+                                    <div>
+                                      <div className="text-gray-500">Date</div>
+                                      <div className="font-medium">
+                                        {new Date(
+                                          slot.date_booked
+                                        ).toLocaleDateString("en-US", {
+                                          weekday: "short",
+                                          year: "numeric",
+                                          month: "short",
+                                          day: "numeric",
+                                        })}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <div className="text-gray-500">Time</div>
+                                      <div className="font-medium">
+                                        {slot.booked_time}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )
+                              )}
+                          </div>
+                        ))}
+                      </>
                     )}
-                    {otpError && (
-                      <div className="otp-error">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="error-icon"
-                          viewBox="0 0 20 20"
-                          fill="red"
-                          width="20"
-                          height="20"
+                    {!otpVisible ? (
+                      parseInt(item.booking_status) === 1 ? (
+                        <div className="flex justify-between gap-2 pt-4">
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => handleRescheduleClick(item)}
+                          >
+                            <RefreshCcw className="w-4 h-4 mr-1" />
+                            Reschedule
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            className="w-full"
+                            onClick={handlecancelAppointmentDetails}
+                          >
+                            <X className="w-4 h-4 mr-1" />
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : null
+                    ) : (
+                      <>
+                        <p className="otpSubheading">
+                          We’ve sent a 6-digit code to{" "}
+                          {appointmentData[0]?.contact_number}
+                        </p>
+
+                        <div className="inputContainer">
+                          {otp.map((digit, i) => (
+                            <input
+                              key={i}
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={1}
+                              pattern="\d*"
+                              value={digit}
+                              onChange={(e) => handleChange(e, i)}
+                              onKeyDown={(e) => handleKeyDown(e, i)}
+                              className={`otp-input ${
+                                otpErrorActive ? "error" : ""
+                              }`}
+                              disabled={appointmentCancelBtn}
+                            />
+                          ))}
+                        </div>
+                        {timerVisible && (
+                          <p className="countdown-timer">
+                            ⏳ OTP expires in: <strong>{formatTimer()}</strong>
+                          </p>
+                        )}
+                        {otpError && (
+                          <div className="otp-error">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="error-icon"
+                              viewBox="0 0 20 20"
+                              fill="red"
+                              width="20"
+                              height="20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-5h2v2h-2v-2zm0-6h2v5h-2V7z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            <span>{otpError}</span>
+                          </div>
+                        )}
+                        {successmsg && (
+                          <div className="otp-success">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="success-icon"
+                              viewBox="0 0 20 20"
+                              fill="green"
+                              width="20"
+                              height="20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            <span>{successmsg}</span>
+                          </div>
+                        )}
+
+                        <button
+                          className="verifyButton"
+                          onClick={handleValidateOtp}
                         >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-5h2v2h-2v-2zm0-6h2v5h-2V7z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <span>{otpError}</span>
-                      </div>
-                    )}
-                    {successmsg && (
-                      <div className="otp-success">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="success-icon"
-                          viewBox="0 0 20 20"
-                          fill="green"
-                          width="20"
-                          height="20"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <span>{successmsg}</span>
-                      </div>
+                          Verify
+                        </button>
+
+                        <p className="resendNote">
+                          Didn’t receive code?
+                          <button
+                            type="button"
+                            className="resendBtn"
+                            disabled={resendDisabled}
+                            onClick={handleResendOtp}
+                          >
+                            Resend Code
+                          </button>
+                        </p>
+
+                        <div className="flex justify-between gap-2 pt-3">
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={
+                              otpButtontype === "Reschedule"
+                                ? () => {
+                                    localStorage.removeItem("appointments");
+                                    navigate(
+                                      `${environment.BASE_PATH}AppointmentBooking`
+                                    );
+                                  }
+                                : () => {
+                                    localStorage.removeItem("appointments");
+                                    setOtpVisible(false);
+                                  }
+                            }
+                          >
+                            Back
+                          </Button>
+                          {otpButtontype === "Reschedule" ? (
+                            <Button
+                              className="w-full bg-orange-500 text-white font-semibold"
+                              // disabled={!/^\d{6}$/.test(otp)}
+                              onClick={() => handleConfirmReschedule(item)}
+                            >
+                              Confirm Reschedule
+                            </Button>
+                          ) : (
+                            <Button
+                              className={`w-full font-semibold transition duration-300 ${
+                                appointmentCancelBtn
+                                  ? "bg-orange-500 text-white cursor-pointer hover:bg-orange-600"
+                                  : "bg-gray-400 text-white cursor-not-allowed"
+                              }`}
+                              disabled={!appointmentCancelBtn}
+                              onClick={() => handleCancelAppointment(item)}
+                            >
+                              Cancel Appointment
+                            </Button>
+                          )}
+                        </div>
+
+                        <div className="text-center text-sm underline text-muted-foreground hover:text-black cursor-pointer pt-2">
+                          Resend OTP
+                        </div>
+                      </>
                     )}
 
-                    <button
-                      className="verifyButton"
-                      onClick={handleValidateOtp}
+                    <div
+                      className="text-center text-sm text-muted-foreground pt-4 underline cursor-pointer hover:text-black"
+                      onClick={moveToTracking}
                     >
-                      Verify
-                    </button>
-
-                    <p className="resendNote">
-                      Didn’t receive code?
-                      <button
-                        type="button"
-                        className="resendBtn"
-                        disabled={resendDisabled}
-                        onClick={handleResendOtp}
-                      >
-                        Resend Code
-                      </button>
-                    </p>
-
-                    <div className="flex justify-between gap-2 pt-3">
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={
-                          otpButtontype === "Reschedule"
-                            ? () => {
-                                localStorage.removeItem("appointments");
-                                navigate(
-                                  `${environment.BASE_PATH}AppointmentBooking`
-                                );
-                              }
-                            : () => {
-                                localStorage.removeItem("appointments");
-                                setOtpVisible(false);
-                              }
-                        }
-                      >
-                        Back
-                      </Button>
-                      {otpButtontype === "Reschedule" ? (
-                        <Button
-                          className="w-full bg-orange-500 text-white font-semibold"
-                          // disabled={!/^\d{6}$/.test(otp)}
-                          onClick={() => handleConfirmReschedule(item)}
-                        >
-                          Confirm Reschedule
-                        </Button>
-                      ) : (
-                        <Button
-                          className={`w-full font-semibold transition duration-300 ${
-                            appointmentCancelBtn
-                              ? "bg-orange-500 text-white cursor-pointer hover:bg-orange-600"
-                              : "bg-gray-400 text-white cursor-not-allowed"
-                          }`}
-                          disabled={!appointmentCancelBtn}
-                          onClick={() => handleCancelAppointment(item)}
-                        >
-                          Cancel Appointment
-                        </Button>
-                      )}
+                      Track Another Booking
                     </div>
+                  </div>
+                ))}
 
-                    <div className="text-center text-sm underline text-muted-foreground hover:text-black cursor-pointer pt-2">
-                      Resend OTP
-                    </div>
-                  </>
-                )}
-
-                <div
-                  className="text-center text-sm text-muted-foreground pt-4 underline cursor-pointer hover:text-black"
-                  onClick={moveToTracking}
-                >
-                  Track Another Booking
-                </div>
-              </div>
-            ))}
+            {}
           </DialogContent>
         </Dialog>
+      )}
+      {successModule && (
+        <div
+          className="modal fade show d-block"
+          tabIndex={-1}
+          role="dialog"
+          style={{
+            position: "fixed",
+            top: -100,
+            left: 0,
+            zIndex: 1050,
+            height: "100vh",
+            background: "rgba(0,0,0,0.6)",
+            display: "flex",
+            justifyContent: "center",
+            paddingTop: "100px",
+            paddingBottom: "40px",
+            overflowY: "auto",
+          }}
+        >
+          <div
+            className="modal-dialog modal-dialog-centered"
+            role="document"
+            style={{ maxWidth: "550px", width: "100%" }}
+          >
+            <div
+              className="modal-content border-0"
+              style={{
+                borderRadius: "16px",
+                overflow: "hidden",
+                boxShadow: "0 10px 30px rgba(0, 0, 0, 0.2)",
+                background: "linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%)",
+              }}
+            >
+              <div className="position-relative">
+                {/* Header - Compact Blue Gradient */}
+                <div
+                  className="p-4 text-white"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #f2994a 0%, #f27121 100%)",
+                    //  background: 'linear-gradient(135deg, #4b6cb7 0%, #182848 100%)',
+                    borderTopLeftRadius: "16px",
+                    borderTopRightRadius: "16px",
+                  }}
+                >
+                  <div className="d-flex align-items-center">
+                    <div>
+                      <h4
+                        className="mb-1 fw-bold"
+                        style={{ letterSpacing: "0.3px", fontSize: "1.4rem" }}
+                      >
+                        {appicantResdata.gender === "male" ? "Mr." : "Ms."}{" "}
+                        {appicantResdata.fullname}
+                      </h4>
+                      <div className="d-flex align-items-center mt-1">
+                        <i className="bi bi-check-circle-fill me-2 fs-6"></i>
+                        <span style={{ fontSize: "0.95rem", opacity: 0.9 }}>
+                          Reschedule Appointment Booked
+                        </span>
+                      </div>
+                    </div>
+                    <div className="ms-auto bg-white bg-opacity-20 rounded-circle p-2">
+                      <i className="bi bi-calendar-check fs-4"></i>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Body - Compact Card Design */}
+                <div className="p-3 p-lg-4" style={{ minHeight: "200px" }}>
+                  <div className="row g-3">
+                    {[
+                      {
+                        label: "Applicant Number",
+                        value: appicantResdata.applicant_number,
+                      },
+                      { label: "Date", value: appicantResdata.date },
+                      { label: "Time", value: appicantResdata.time },
+                      { label: "Reference", value: appicantResdata.reference },
+                    ].map((item, index) => (
+                      <div className="col-md-6" key={index}>
+                        <div
+                          className="p-2 rounded"
+                          style={{
+                            background: "#f8faff",
+                            border: "1px solid #e0e8ff",
+                            boxShadow: "0 2px 8px rgba(75, 108, 183, 0.08)",
+                          }}
+                        >
+                          <label
+                            className="fw-semibold text-muted small mb-1"
+                            style={{ color: "#5a6b8c", fontSize: "0.8rem" }}
+                          >
+                            {item.label}
+                          </label>
+                          <div
+                            className="text-dark fw-bold mt-1"
+                            style={{
+                              fontSize: "1rem",
+                              color: "#2d3a5a",
+                            }}
+                          >
+                            {item.value}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Confetti + Image - Medium Size */}
+                <div
+                  className="confetti-burst-container"
+                  style={{ height: "220px", margin: "15px 0" }}
+                >
+                  {Array.from({ length: 80 }).map((_, i) => {
+                    const angle = Math.random() * 2 * Math.PI;
+                    const distance = 150 + Math.random() * 80;
+                    const x = Math.cos(angle) * distance;
+                    const y = Math.sin(angle) * distance * 1.1;
+                    const rotate = Math.random() * 720;
+                    return (
+                      <div
+                        key={i}
+                        className={`confetti-piece color-${i % 5}`}
+                        style={{
+                          ["--transform" as any]: `translate(${x}px, ${y}px) rotate(${rotate}deg)`,
+                          width: `${8 + Math.random() * 6}px`,
+                          height: `${8 + Math.random() * 6}px`,
+                          borderRadius: Math.random() > 0.5 ? "2px" : "50%",
+                        }}
+                      />
+                    );
+                  })}
+
+                  <div
+                    className="d-flex flex-column align-items-center justify-content-center position-relative z-2"
+                    style={{ height: "220px" }}
+                  >
+                    <div
+                      className="position-absolute"
+                      style={{
+                        top: "50%",
+                        left: "50%",
+                        transform: "translate(-50%, -50%)",
+                      }}
+                    >
+                      <img
+                        src={successImg}
+                        alt="Success"
+                        className="img-fluid"
+                        style={{
+                          width: "160px",
+                          height: "160px",
+                          objectFit: "contain",
+                          display: "block",
+                          margin: "0 auto",
+                        }}
+                      />
+                      <h4
+                        className="fw-bold mt-3 text-center"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #4b6cb7 0%, #2ecc71 100%)",
+                          WebkitBackgroundClip: "text",
+                          WebkitTextFillColor: "transparent",
+                          fontSize: "1.5rem",
+                          whiteSpace: "nowrap", // prevent line break
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        Appointment Rescheduled successfully!
+                      </h4>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer - Compact Button */}
+                <div
+                  className="px-3 pb-3 pt-2"
+                  style={{ background: "rgba(246, 248, 255, 0.8)" }}
+                >
+                  <div className="d-flex gap-2 flex-wrap">
+                    <button
+                      className="btn fw-bold flex-fill py-2"
+                      style={{
+                        // background: 'linear-gradient(135deg, #4b6cb7 0%, #182848 100%)',
+                        background:
+                          "linear-gradient(135deg, #f2994a 0%, #f27121 100%)",
+                        color: "white",
+                        fontSize: "1rem",
+                        letterSpacing: "0.3px",
+                        borderRadius: "10px",
+                        border: "none",
+                        transition: "all 0.3s ease",
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.transform = "translateY(-2px)")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.transform = "none")
+                      }
+                      onClick={() => {
+                        setsuccessModule(false);
+                        navigate("/");
+                      }}
+                    >
+                      <i className="bi bi-house-door me-2"></i>
+                      Return to Home
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );
