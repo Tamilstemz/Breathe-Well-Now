@@ -304,11 +304,13 @@ const AppointmentBooking = () => {
   // --------------------------- Reschedule -----------------------------
 
   const [rescheduledata, setRescheduledata] = useState<any[]>([])
+  const [reappointmentType, setreappointmentType] = useState('')
+
 
   const navigate = useNavigate()
 
 
-  console.log('formData[222222]', rescheduledata);
+  console.log('formData[222222]', rescheduledata, '=======', reappointmentType);
 
 
 
@@ -736,7 +738,7 @@ const AppointmentBooking = () => {
       dob: "",
       TransactionId: "",
       servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
-      totalPrice:serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
+      totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
       PaymentType: "",
     });
     setMembers([
@@ -755,7 +757,7 @@ const AppointmentBooking = () => {
         dob: "",
         TransactionId: "",
         servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
-        totalPrice:serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
+        totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
         slot_booking: [],
       },
     ]);
@@ -845,7 +847,7 @@ const AppointmentBooking = () => {
       setFormData((prev) => ({
         ...prev,
         servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
-        totalPrice:serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
+        totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
       }));
     }
   };
@@ -1447,7 +1449,7 @@ const AppointmentBooking = () => {
 
       const servicedetail = members[0]?.servicecode;
 
-      const servicetotalPrice =  serviceList[0] ?  parseInt(serviceList[0]?.price) : 100
+      const servicetotalPrice = serviceList[0] ? parseInt(serviceList[0]?.price) : 100
 
 
       const updatedMembers = Array.from({ length: value }, () => ({
@@ -1469,9 +1471,9 @@ const AppointmentBooking = () => {
         slot_booking: [],
       }));
 
-      setFormData((prev)=>({
+      setFormData((prev) => ({
         ...prev,
-        totalPrice:value * servicetotalPrice,
+        totalPrice: value * servicetotalPrice,
       }))
 
       setMembers(updatedMembers);
@@ -1560,6 +1562,7 @@ const AppointmentBooking = () => {
 
       let finalData;
 
+
       if (appointmentType === "Group") {
         finalData = members.map((member, index) => ({
           type: "I",
@@ -1581,6 +1584,7 @@ const AppointmentBooking = () => {
           status: 1,
           created_by: 1,
           center: selectedCenter,
+          appointmentType: appointmentType,
           slot_booking: member.slot_booking.map((slot: any) => ({
             ...slot,
             servicecode: selectedService,
@@ -1610,6 +1614,7 @@ const AppointmentBooking = () => {
             status: 1,
             created_by: 1,
             center: selectedCenter,
+            appointmentType: appointmentType,
             slot_booking: [
               {
                 action_date: formatDateToYYYYMMDDNew(new Date()),
@@ -1709,7 +1714,7 @@ const AppointmentBooking = () => {
             dob: "",
             TransactionId: "",
             servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
-            totalPrice:serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
+            totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
             PaymentType: "",
           });
           setMembers([
@@ -1728,7 +1733,7 @@ const AppointmentBooking = () => {
               dob: "",
               TransactionId: "",
               servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
-              totalPrice:serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
+              totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
               slot_booking: [],
             },
           ]);
@@ -1778,7 +1783,7 @@ const AppointmentBooking = () => {
       dob: "",
       TransactionId: "",
       servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
-      totalPrice:serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
+      totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
       PaymentType: "",
     });
 
@@ -1947,7 +1952,7 @@ const AppointmentBooking = () => {
   ) => {
     const { name, value } = e.target;
 
-      // console.log('vvvvvv----11111', value, '000----000', index);
+    // console.log('vvvvvv----11111', value, '000----000', index);
 
     if (appointmentType === "Self") {
       let updatedData = { ...formData, [name]: value };
@@ -2040,23 +2045,23 @@ const AppointmentBooking = () => {
 
 
   const downloadAllInvoices = () => {
-  invoiceUrls.forEach((url, index) => {
-    setTimeout(() => {
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = '';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }, index * 1000); // wait 1 second between each download to avoid browser block
-  });
+    invoiceUrls.forEach((url, index) => {
+      setTimeout(() => {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = '';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }, index * 1000); // wait 1 second between each download to avoid browser block
+    });
 
-  // After all downloads triggered, navigate to home
-  setTimeout(() => {
-    setsuccessModule(false);
-    navigate('/');
-  }, invoiceUrls.length * 1000 + 500);
-};
+    // After all downloads triggered, navigate to home
+    setTimeout(() => {
+      setsuccessModule(false);
+      navigate('/');
+    }, invoiceUrls.length * 1000 + 500);
+  };
 
 
 
@@ -2084,7 +2089,17 @@ const AppointmentBooking = () => {
 
     let update_data = getDecryptedAppointments()
     if (update_data && update_data.length > 0) {
+
+      const appointmentType = localStorage.getItem("appointmentType");
+      setreappointmentType(appointmentType ?? "")
       setRescheduledata(update_data)
+      console.log('update_data', update_data);
+
+      if (appointmentType === 'Group') {
+        setAppointmentType('Group')
+        setmembercount(update_data?.length || 0)
+      }
+
 
 
 
@@ -2112,87 +2127,169 @@ const AppointmentBooking = () => {
         `You are about to reschedule your appointment to:\n\nDate: ${selectdate}\nTime: ${selectTime}\n\nDo you want to proceed?`
       );
 
-      if (rescheduleConfirm ) {
+      if (rescheduleConfirm) {
 
-        let singledata =rescheduledata[0]
+        console.log('rescheduledata------------???', rescheduledata);
 
-        console.log('singledata----+++',singledata)
+        if (appointmentType === 'Group') {
+          let finalData: any[] = [];
 
-        let finalData = [
-          {
-            type: "I",
-            applicant_number: singledata.applicant_number,
-            fullname: singledata.patient_name,
-            email: singledata.email,
-            contact_number: singledata.contact_number,
-            hap_id: singledata.hap_id,
-            relationship: "Self",
-            passport_number: singledata.passport_number,
-            center: selectedCenter,
-            transaction_id: singledata.transaction_id,
-            payment_method: singledata.payment_method,
-            transaction_amt:singledata.transaction_amt,
-            slot_booking: [
-              {
-                action_date: formatDateToYYYYMMDDNew(new Date()),
-                date_booked: formatDateToYYYYMMDDNew(selectdate),
+          rescheduledata.forEach((item: any, index: number) => {
+            finalData.push({
+              type: "I",
+              applicant_number: item.applicant_number,
+              fullname: item.patient_name,
+              email: item.email,
+              contact_number: item.contact_number,
+              hap_id: item.hap_id,
+              relationship: index === 0 ? "Self" : "Family", // or "Dependent"
+              passport_number: item.passport_number,
+              center: selectedCenter,
+              transaction_id: item.transaction_id,
+              payment_method: item.payment_method,
+              transaction_amt: item.transaction_amt,
+              slot_booking: [
+                {
+                  action_date: formatDateToYYYYMMDDNew(new Date()),
+                  date_booked: formatDateToYYYYMMDDNew(selectdate),
+                  booked_time: selectTime,
+                  booking_from: 3,
+                  booking_status: 1,
+                  department: "AU",
+                  description: "Test Service",
+                  service_code: formData.servicecode,
+                },
+              ],
+            });
+          });
 
-                booked_time: selectTime,
-                booking_from: 3,
-                booking_status: 1,
+          console.log("finalData (Group)--------", finalData);
 
-                department: "AU",
-                description: "Test Service",
-                service_code: formData.servicecode,
-              },
-            ],
-          },
-        ];
+          // 1. Get encrypted data from localStorage
+          const encryptedData = localStorage.getItem("Newslot");
+          let newSlotData: any[] = [];
 
-        console.log('finalData--------',finalData);
-        
-
-
-        // 1. Get encrypted data from localStorage
-        const encryptedData = localStorage.getItem("Newslot");
-        let newSlotData: any[] = [];
-
-        if (encryptedData) {
-          try {
-            const decryptedData = CryptoJS.AES.decrypt(
-              encryptedData,
-              environment.SECRET_KEY
-            ).toString(CryptoJS.enc.Utf8);
-            newSlotData = JSON.parse(decryptedData);
-          } catch (error) {
-            console.error("Failed to decrypt 'Newslot' data:", error);
+          if (encryptedData) {
+            try {
+              const decryptedData = CryptoJS.AES.decrypt(
+                encryptedData,
+                environment.SECRET_KEY
+              ).toString(CryptoJS.enc.Utf8);
+              newSlotData = JSON.parse(decryptedData);
+            } catch (error) {
+              console.error("Failed to decrypt 'Newslot' data:", error);
+            }
           }
-        }
 
-        // 2. Check if appointment with same ID exists
-        const incomingApplicant = finalData[0];
+          // 2. Merge new group data into stored data (replace if applicant_number matches)
+          finalData.forEach((incomingApplicant) => {
+            const existingIndex = newSlotData.findIndex(
+              (item) => item.applicant_number === incomingApplicant.applicant_number
+            );
+
+            if (existingIndex !== -1) {
+              newSlotData[existingIndex] = incomingApplicant; // Replace
+            } else {
+              newSlotData.push(incomingApplicant); // Add
+            }
+          });
+
+          // 3. Re-encrypt and store
+          const reEncrypted = CryptoJS.AES.encrypt(
+            JSON.stringify(newSlotData),
+            environment.SECRET_KEY
+          ).toString();
+
+          localStorage.setItem("Newslot", reEncrypted);
+
+          // 4. Navigate and scroll
+          navigate(environment.BASE_PATH);
+          setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }, 50);
+
+        }
+        else {
+
+          let singledata = rescheduledata[0]
+
+          console.log('singledata----+++', singledata)
+          let finalData = [
+            {
+              type: "I",
+              applicant_number: singledata.applicant_number,
+              fullname: singledata.patient_name,
+              email: singledata.email,
+              contact_number: singledata.contact_number,
+              hap_id: singledata.hap_id,
+              relationship: "Self",
+              passport_number: singledata.passport_number,
+              center: selectedCenter,
+              transaction_id: singledata.transaction_id,
+              payment_method: singledata.payment_method,
+              transaction_amt: singledata.transaction_amt,
+              slot_booking: [
+                {
+                  action_date: formatDateToYYYYMMDDNew(new Date()),
+                  date_booked: formatDateToYYYYMMDDNew(selectdate),
+
+                  booked_time: selectTime,
+                  booking_from: 3,
+                  booking_status: 1,
+
+                  department: "AU",
+                  description: "Test Service",
+                  service_code: formData.servicecode,
+                },
+              ],
+            },
+          ];
+
+          console.log('finalData--------', finalData);
+
+
+
+          // 1. Get encrypted data from localStorage
+          const encryptedData = localStorage.getItem("Newslot");
+          let newSlotData: any[] = [];
+
+          if (encryptedData) {
+            try {
+              const decryptedData = CryptoJS.AES.decrypt(
+                encryptedData,
+                environment.SECRET_KEY
+              ).toString(CryptoJS.enc.Utf8);
+              newSlotData = JSON.parse(decryptedData);
+            } catch (error) {
+              console.error("Failed to decrypt 'Newslot' data:", error);
+            }
+          }
+
+          // 2. Check if appointment with same ID exists
+          const incomingApplicant = finalData[0];
           const existingIndex = newSlotData.findIndex(
             (item) => item.applicant_number === incomingApplicant.applicant_number
           );
 
-        if (existingIndex !== -1) {
+          if (existingIndex !== -1) {
             newSlotData[existingIndex] = incomingApplicant; // Replace
           } else {
             newSlotData.push(incomingApplicant); // Add
           }
 
-        const reEncrypted = CryptoJS.AES.encrypt(
-          JSON.stringify(newSlotData),
-          environment.SECRET_KEY
-        ).toString();
+          const reEncrypted = CryptoJS.AES.encrypt(
+            JSON.stringify(newSlotData),
+            environment.SECRET_KEY
+          ).toString();
 
-        localStorage.setItem("Newslot", reEncrypted);
+          localStorage.setItem("Newslot", reEncrypted);
 
-        navigate(environment.BASE_PATH);
-        setTimeout(() => {
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }, 50);
+          navigate(environment.BASE_PATH);
+          setTimeout(() => {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }, 50);
 
+        }
       }
     }
   };
@@ -2209,14 +2306,11 @@ const AppointmentBooking = () => {
 
   return (
     <>
-      {rescheduledata && rescheduledata.length > 0 && (() => {
-        const data = rescheduledata[0];
-
-        return (
-          <div className="bg-white p-4 shadow rounded-lg border border-gray-200 mb-6">
-            <h2 className="text-lg font-semibold mb-4 text-blue-700">Appointment Details</h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-8 gap-4 text-sm text-gray-700">
+      {rescheduledata && rescheduledata.length > 0 && (
+        <div className="bg-white p-4 shadow rounded-lg border border-gray-200 mb-6">
+          <h2 className="text-lg font-semibold mb-4 text-blue-700">Appointment Details</h2>
+          {rescheduledata.map((data: any, index: number) => (
+            <div key={index} className="grid grid-cols-1 md:grid-cols-8 gap-4 text-sm text-gray-700" style={{ marginTop: '15px' }}>
               <div className="flex flex-col">
                 <span className="font-medium text-gray-500">Applicant Number</span>
                 <span>{data.applicant_number}</span>
@@ -2256,10 +2350,11 @@ const AppointmentBooking = () => {
                 <span className="font-medium text-gray-500">Time</span>
                 <span>{data.booked_time}</span>
               </div>
-            </div>
-          </div>
-        );
-      })()}
+            </div>))}
+        </div>
+
+      )}
+
 
 
 
@@ -2806,10 +2901,10 @@ const AppointmentBooking = () => {
 
 
 
-                              {slots.length > 0 &&
+                            {slots.length > 0 &&
                               slots.filter(
                                 (slot: any) => +slot.remaining > 0 && !isSlotExpired(slot?.time, slot?.slotItem?.slot?.date)
-                              ).length > 0  ? (
+                              ).length > 0 ? (
                               <div
                                 className="row g-3 px-2 slottimebox"
                               >
@@ -3751,7 +3846,7 @@ const AppointmentBooking = () => {
                   })}
 
                   <div className="d-flex flex-column align-items-center justify-content-center position-relative z-2"
-                      style={{ height: '220px' }}>
+                    style={{ height: '220px' }}>
                     <div className="position-absolute" style={{
                       top: '50%',
                       left: '50%',
@@ -3770,19 +3865,19 @@ const AppointmentBooking = () => {
                         }}
                       />
                       <h4
-                      className="fw-bold mt-3 text-center"
-                      style={{
-                        background: 'linear-gradient(135deg, #4b6cb7 0%, #2ecc71 100%)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        fontSize: '1.5rem',
-                        whiteSpace: 'nowrap', // prevent line break
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis'
-                      }}
-                    >
-                      Appointment saved successfully!
-                    </h4>
+                        className="fw-bold mt-3 text-center"
+                        style={{
+                          background: 'linear-gradient(135deg, #4b6cb7 0%, #2ecc71 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          fontSize: '1.5rem',
+                          whiteSpace: 'nowrap', // prevent line break
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                      >
+                        Appointment saved successfully!
+                      </h4>
 
                     </div>
                   </div>
@@ -3791,26 +3886,26 @@ const AppointmentBooking = () => {
                 {/* Footer - Compact Button */}
                 <div className="px-3 pb-3 pt-2" style={{ background: 'rgba(246, 248, 255, 0.8)' }}>
                   <div className="d-flex gap-2 flex-wrap">
-                    
+
                     <button
-                        className="btn fw-bold flex-fill py-2 text-decoration-none"
-                        style={{
-                          background: 'linear-gradient(135deg, #f2994a 0%, #f27121 100%)',
-                          color: 'white',
-                          fontSize: '1rem',
-                          letterSpacing: '0.3px',
-                          borderRadius: '10px',
-                          border: 'none',
-                          display: 'inline-block',
-                          transition: 'all 0.3s ease'
-                        }}
-                        onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                        onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
-                        onClick={downloadAllInvoices}
-                      >
-                        <i className="bi bi-download me-2"></i>
-                        Download Invoice
-                      </button>
+                      className="btn fw-bold flex-fill py-2 text-decoration-none"
+                      style={{
+                        background: 'linear-gradient(135deg, #f2994a 0%, #f27121 100%)',
+                        color: 'white',
+                        fontSize: '1rem',
+                        letterSpacing: '0.3px',
+                        borderRadius: '10px',
+                        border: 'none',
+                        display: 'inline-block',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
+                      onClick={downloadAllInvoices}
+                    >
+                      <i className="bi bi-download me-2"></i>
+                      Download Invoice
+                    </button>
 
 
 
