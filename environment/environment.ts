@@ -39,7 +39,7 @@ export const environment = {
 
   BASE_PATH: "/",
   DEFAULT_SERVICE_CODE: "APPT",
-  SECRET_KEY: "Ndhelthcheck_@key", 
+  SECRET_KEY: "Ndhelthcheck_@key", // Define your secret key for encryption/decryption
 
   // -----------local API
 

@@ -86,7 +86,7 @@ export default function Hero() {
   const [successmsg, setsuccessmsg] = useState("");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [otpErrorActive, setOtpErrorActive] = useState(false);
-  const [timer, setTimer] = useState(environment.OTP_TIMER_DURATION); // 5 minutes in seconds
+  const [timer, setTimer] = useState(environment.OTP_TIMER_DURATION); // 2 minutes in seconds
   const [resendDisabled, setResendDisabled] = useState(true);
   const [timerVisible, setTimerVisible] = useState(true);
   const [appointmentCancelBtn, setAppointmentCancelBtn] = useState(false);
@@ -102,24 +102,24 @@ export default function Hero() {
   // };
 
   useEffect(() => {
+    startTimer(); // auto trigger only once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
     if (!resendDisabled) return;
 
     return () => clearInterval(intervalRef.current as NodeJS.Timeout);
   }, [resendDisabled]);
 
   const startTimer = () => {
-    if (intervalRef.current) clearInterval(intervalRef.current); // Clear previous
+    if (intervalRef.current) clearInterval(intervalRef.current); // Clear any existing timer
 
-    setTimer(environment.OTP_TIMER_DURATION); // e.g., 300 seconds
-    setResendDisabled(true); // Block resend during countdown
-    setTimerVisible(true); // Show the timer
+    setTimer(environment.OTP_TIMER_DURATION); // reset to 2 minutes
 
     intervalRef.current = setInterval(() => {
       setTimer((prev) => {
         if (prev <= 1) {
           clearInterval(intervalRef.current as NodeJS.Timeout);
-          setResendDisabled(false); // Enable resend
-          setTimerVisible(false); // Hide timer after 5 mins
           return 0;
         }
         return prev - 1;
@@ -199,28 +199,13 @@ export default function Hero() {
     }
   };
 
-  const handleRescheduleClick = async (item: any) => {
-    setotpButtontype("Reschedule");
-    const otpdata = {
-      applicant_number: appointmentData[0]?.applicant_number,
-      contact_number: appointmentData[0]?.contact_number,
-      otp_type: "RescheduleOTP",
-      center_id: appointmentData[0]?.center_id,
-      newtype: "new",
-    };
+  const handleRescheduleClick = (item: any) => {
+    // setotpButtontype('Reschedule')
+    // setOtpVisible(true);
+    // setOtp("998999");
+    // setOtpError("");
 
-    const res = await httpClient.post(environment.OTP_API, otpdata);
-    console.log("OTP Response:", res);
-    toast({
-      title: "success",
-      description: res.data.message,
-      variant: "success",
-      duration: 4000,
-    });
-    startTimer();
-    // setotpButtontype("Reschedule");
-    setOtpVisible(true);
-    setOtpError("");
+    // Get and filter out any existing appointment with same ID
 
     let existing = getDecryptedAppointments().filter(
       (appt) => appt.id !== item.id
@@ -234,9 +219,8 @@ export default function Hero() {
     localStorage.setItem("appointments", encrypted);
 
     // Navigate and scroll
-    setOtpVisible(true);
-    // navigate(`${environment.BASE_PATH}AppointmentBooking`);
-    // setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
+    navigate(`${environment.BASE_PATH}AppointmentBooking`);
+    setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
   };
 
   const handleChange = (
@@ -285,15 +269,10 @@ export default function Hero() {
   };
 
   const handleValidateOtp = async () => {
-    console.log("otpButtontype:", otpButtontype);
-
     const payload = {
       phone_number: appointmentData[0]?.contact_number,
-      applicant_number: appointmentData[0]?.applicant_number,
       otp: otp.join(""), // Combine the 6 digits
-      otp_type: otpButtontype === "Reschedule" ? "RescheduleOTP" : "CancelOTP",
     };
-    console.log(payload);
 
     try {
       const res = await httpClient.post(environment.OTP_VALIDATE_API, payload);
@@ -305,10 +284,7 @@ export default function Hero() {
           variant: "success",
           duration: 4000,
         });
-        if (otpButtontype !== "Reschedule") {
-          setAppointmentCancelBtn(true);
-        }
-
+        setAppointmentCancelBtn(true);
         setsuccessmsg(res.data.message);
         setTimerVisible(false);
       } else {
@@ -337,7 +313,7 @@ export default function Hero() {
     const otpdata1 = {
       applicant_number: appointmentData[0]?.applicant_number,
       contact_number: appointmentData[0]?.contact_number,
-      otp_type: otpButtontype === "Reschedule" ? "RescheduleOTP" : "CancelOTP",
+      otp_type: "CancelOTP",
       center_id: appointmentData[0]?.center_id,
       newtype: "resend",
     };
@@ -379,7 +355,6 @@ export default function Hero() {
       variant: "success",
       duration: 4000,
     });
-    startTimer();
     setotpButtontype("cancel");
     setOtpVisible(true);
     setOtpError("");
@@ -466,17 +441,6 @@ export default function Hero() {
     }
   };
 
-  const resetAppointmentState = () => {
-    setShowAppointmentModal(false);
-    setAppointmentData([]);
-    localStorage.removeItem("appointments");
-    localStorage.removeItem("Newslot");
-    setOtpVisible(false);
-    setOtpError("");
-    setOtp(["", "", "", "", "", ""]);
-    setAppointmentCancelBtn(false);
-  };
-
   const handleCancelAppointment = async (item: any) => {
     try {
       const payload = {
@@ -508,7 +472,8 @@ export default function Hero() {
           duration: 4000,
         });
         // Optionally close modal or refresh data here
-        resetAppointmentState();
+        setShowAppointmentModal(false);
+        setAppointmentData([]);
       } else {
         setOtpError(result.message || "Cancellation failed. Try again.");
       }
@@ -722,12 +687,7 @@ export default function Hero() {
       </Dialog>
 
       {showAppointmentModal && appointmentData.length > 0 && (
-        <Dialog
-          open={true}
-          onOpenChange={(open) => {
-            if (!open) resetAppointmentState();
-          }}
-        >
+        <Dialog open={true} onOpenChange={() => setShowAppointmentModal(false)}>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Booking Details</DialogTitle>
@@ -1046,6 +1006,68 @@ export default function Hero() {
                   ) : null
                 ) : (
                   <>
+                    {/* <div>
+                      <p className="text-sm text-muted-foreground">
+                        Enter the OTP sent to your mobile number to{" "}
+                        {otpButtontype === "Reschedule"
+                          ? "reschedule your booking:"
+                          : "Cancel your booking:"}
+                      </p>
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="\d*"
+                        placeholder="Enter 6-digit OTP"
+                        value={otp}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const onlyDigits = e.target.value.replace(/\D/g, "");
+                          if (onlyDigits.length <= 6) setOtp(onlyDigits);
+                        }}
+                        className="mt-2 text-center tracking-widest font-semibold text-lg"
+                      />
+                      <button onClick={handleValidateOtp}>Verify OTP</button>
+                      {otpError && (
+                        <div className="text-red-600 text-xs mt-1">
+                          {otpError}
+                        </div>
+                      )}
+                    </div> */}
+                    {/* <div className="mt-4 max-w-sm mx-auto bg-white dark:bg-gray-900 shadow-md rounded-xl p-6 text-center">
+                      <h6 className="text-sm font-semibold mb-4 text-gray-800 dark:text-white">
+                        {" "}
+                        Enter the OTP sent to your mobile number to{" "}
+                        {otpButtontype === "Reschedule"
+                          ? "reschedule your booking:"
+                          : "Cancel your booking:"}
+                      </h6>
+
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="\d*"
+                        placeholder="Enter 6-digit OTP"
+                        value={otp}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const onlyDigits = e.target.value.replace(/\D/g, "");
+                          if (onlyDigits.length <= 6) setOtp(onlyDigits);
+                        }}
+                        className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-center tracking-widest font-semibold text-lg text-gray-800 dark:text-white bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+                      />
+
+                      <button
+                        onClick={handleValidateOtp}
+                        className="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition shadow"
+                      >
+                        Verify OTP
+                      </button>
+
+                      {otpError && (
+                        <p className="mt-3 text-red-600 text-sm font-medium">
+                          {otpError}
+                        </p>
+                      )}
+                    </div> */}
+
                     <p className="otpSubheading">
                       We’ve sent a 6-digit code to{" "}
                       {appointmentData[0]?.contact_number}
