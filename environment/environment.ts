@@ -54,7 +54,7 @@ export const environment = {
   APPLICANT_WITH_APPT_API:
     "http://127.0.0.1:8001/transaction/applicant-appointment/details",
   APPLICANT_RECEIPT_API: (appointmentId: string) =>
-    `http://127.0.0.1:8001/transaction/invoice/pdf/${appointmentId}`,
+    `http://127.0.0.1:8001/transaction/invoice/pdf/${appointmentId}/download`,
   APPOINMENT_REPORT_API: "http://127.0.0.1:8001/transaction/appointment-report",
 
   APPOINMENT_REPORT_Cancel:

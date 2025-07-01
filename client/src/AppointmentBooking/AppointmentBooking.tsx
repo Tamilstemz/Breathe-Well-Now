@@ -1,27 +1,18 @@
-import React, { useState, useRef, useEffect } from "react";
-import { environment } from "../../../environment/environment";
+import React, { useEffect, useRef, useState } from "react";
 import httpClient from "../../../api/httpClient";
-import { array, string } from "zod";
+import { environment } from "../../../environment/environment";
 // import Calendar from "react-calendar"; // for basic calendar
-import FullCalendar from "@fullcalendar/react"; // for full-featured calendar
 import "./AppointmentBooking.css";
-import dummyqr from "../../assests/dummyqr.jpg";
 // import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { ToastContainer, toast } from "material-react-toastify";
-import { showToast } from "../components/ToastContainer/Toast";
 // import {
 //   Accordion,
 //   AccordionSummary,
 //   AccordionDetails,
 //   Typography,
 // } from "@mui/material";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 // import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
-import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { Input } from "@/components/ui/input";
 
 import { useToast } from "@/hooks/use-toast";
 import Nddiagnostics_QR_Code_1 from "../../assests/Nddiagnostics QR Code_1.png";
@@ -33,16 +24,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
-import { isSlotExpired } from "../components/commonfunctions";
 import {
   Tooltip,
-  TooltipTrigger,
   TooltipContent,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import CryptoJS from "crypto-js";
-import { useNavigate } from "react-router-dom";
 import { Phone } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { isSlotExpired } from "../components/commonfunctions";
 
 
 type Service = {
@@ -1589,6 +1579,7 @@ const AppointmentBooking = () => {
           status: 1,
           created_by: 1,
           center: selectedCenter,
+          appointmentType: appointmentType,
           slot_booking: member.slot_booking.map((slot: any) => ({
             ...slot,
             servicecode: selectedService,
@@ -1618,11 +1609,11 @@ const AppointmentBooking = () => {
             status: 1,
             created_by: 1,
             center: selectedCenter,
+            appointmentType: appointmentType,
             slot_booking: [
               {
                 action_date: formatDateToYYYYMMDDNew(new Date()),
                 date_booked: formatDateToYYYYMMDDNew(selectedDate),
-
                 booked_time: selectedslottime,
                 booking_from: 3,
                 booking_status: 1,
@@ -2146,6 +2137,7 @@ const AppointmentBooking = () => {
               transaction_id: item.transaction_id,
               payment_method: item.payment_method,
               transaction_amt: item.transaction_amt,
+              appointmentType: appointmentType,
               slot_booking: [
                 {
                   action_date: formatDateToYYYYMMDDNew(new Date()),
@@ -2224,6 +2216,7 @@ const AppointmentBooking = () => {
               transaction_id: singledata.transaction_id,
               payment_method: singledata.payment_method,
               transaction_amt: singledata.transaction_amt,
+              appointmentType: appointmentType,
               slot_booking: [
                 {
                   action_date: formatDateToYYYYMMDDNew(new Date()),
