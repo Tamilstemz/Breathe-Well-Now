@@ -1,18 +1,27 @@
-import React, { useEffect, useRef, useState } from "react";
-import httpClient from "../../../api/httpClient";
+import React, { useState, useRef, useEffect } from "react";
 import { environment } from "../../../environment/environment";
+import httpClient from "../../../api/httpClient";
+import { array, string } from "zod";
 // import Calendar from "react-calendar"; // for basic calendar
+import FullCalendar from "@fullcalendar/react"; // for full-featured calendar
 import "./AppointmentBooking.css";
+import dummyqr from "../../assests/dummyqr.jpg";
 // import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { ToastContainer, toast } from "material-react-toastify";
+import { showToast } from "../components/ToastContainer/Toast";
 // import {
 //   Accordion,
 //   AccordionSummary,
 //   AccordionDetails,
 //   Typography,
 // } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 // import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "framer-motion";
+import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { Input } from "@/components/ui/input";
 
 import { useToast } from "@/hooks/use-toast";
 import Nddiagnostics_QR_Code_1 from "../../assests/Nddiagnostics QR Code_1.png";
@@ -24,15 +33,17 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import { isSlotExpired } from "../components/commonfunctions";
 import {
   Tooltip,
-  TooltipContent,
   TooltipTrigger,
+  TooltipContent,
 } from "@/components/ui/tooltip";
 import CryptoJS from "crypto-js";
-import { Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { isSlotExpired } from "../components/commonfunctions";
+import { Phone } from "lucide-react";
+
 
 type Service = {
   id: number;
@@ -162,6 +173,7 @@ type FormDataType = {
   PaymentType: string;
 };
 
+
 type ApplicantResData = {
   id?: number;
   fullname?: string;
@@ -180,6 +192,8 @@ type ApplicantResData = {
   time?: string;
   applicant_number?: string;
 };
+
+
 
 const AppointmentBooking = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -271,28 +285,33 @@ const AppointmentBooking = () => {
     },
   ]);
 
-  const [successModule, setsuccessModule] = useState(false);
+
+  const [successModule, setsuccessModule] = useState(false)
   const [appicantResdata, setAppicantResdata] = useState<ApplicantResData>({});
 
-  console.log("serviceList-----------111", serviceList);
+
+
+
+  console.log('serviceList-----------111', serviceList);
 
   // console.log('members-----------222', members);
 
+
+
+
+
+
   // --------------------------- Reschedule -----------------------------
 
-  const [rescheduledata, setRescheduledata] = useState<any[]>([])
-  const [reappointmentType, setreappointmentType] = useState('')
+  const [rescheduledata, setRescheduledata] = useState<any[]>([]);
+
+  const navigate = useNavigate()
+
+
+  console.log('formData[222222]', rescheduledata);
 
 
 
-
-
-  console.log('formData[222222]', rescheduledata, '=======', reappointmentType);
-
-
-  const navigate = useNavigate();
-
-  console.log("formData[222222]", rescheduledata);
 
   const [memberValidated, setMemberValidated] = useState<boolean[]>(() =>
     Array(members.length).fill(false)
@@ -322,17 +341,21 @@ const AppointmentBooking = () => {
     };
   }, [showDialog]);
 
+
   useEffect(() => {
     if (serviceList && serviceList.length === 1) {
+
       const oneCodes = serviceList[0];
 
-      console.log("serviceList[0]", oneCodes);
+      console.log('serviceList[0]', oneCodes);
+
 
       setFormData((prev) => ({
         ...prev,
         servicecode: [oneCodes?.code], // <-- fix here
         totalPrice: parseInt(oneCodes?.price),
       }));
+
     }
   }, [serviceList]);
 
@@ -542,6 +565,8 @@ const AppointmentBooking = () => {
       }
     }
 
+
+
     if (!slot.available) return;
     const slotDateStr = slot.slotItem.slot.date; // "YYYY-MM-DD"
     const slotDateObj = new Date(slotDateStr);
@@ -710,7 +735,9 @@ const AppointmentBooking = () => {
       paymentMethod: "QR",
       dob: "",
       TransactionId: "",
-      servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
+      servicecode: serviceList[0]
+        ? [serviceList[0].code]
+        : [environment.DEFAULT_SERVICE_CODE],
       totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
       PaymentType: "",
     });
@@ -729,7 +756,9 @@ const AppointmentBooking = () => {
         paymentMethod: "",
         dob: "",
         TransactionId: "",
-        servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
+        servicecode: serviceList[0]
+          ? [serviceList[0].code]
+          : [environment.DEFAULT_SERVICE_CODE],
         totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
         slot_booking: [],
       },
@@ -819,7 +848,9 @@ const AppointmentBooking = () => {
     } else {
       setFormData((prev) => ({
         ...prev,
-        servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
+        servicecode: serviceList[0]
+          ? [serviceList[0].code]
+          : [environment.DEFAULT_SERVICE_CODE],
         totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
       }));
     }
@@ -1200,7 +1231,7 @@ const AppointmentBooking = () => {
           dob,
           passportNo,
           gender,
-          paymentMethod,
+          paymentMethod
         } = member;
 
         if (!patientName.trim()) {
@@ -1211,12 +1242,8 @@ const AppointmentBooking = () => {
         if (!email.trim() && index === 0) {
           errors[`email_${index}`] = "Email is required.";
           hasError = true;
-        } else if (
-          !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) &&
-          index === 0
-        ) {
-          errors[`email_${index}`] =
-            "Enter a valid email (e.g., name@example.com)";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) && index === 0) {
+          errors[`email_${index}`] = "Enter a valid email (e.g., name@example.com)";
           hasError = true;
         }
 
@@ -1248,6 +1275,7 @@ const AppointmentBooking = () => {
           errors[`hapId_${index}`] = "Must be exactly 8 digits.";
           hasError = true;
         }
+
 
         if (index === 0) {
           if (!contactNumber.trim()) {
@@ -1292,7 +1320,8 @@ const AppointmentBooking = () => {
         passportNo,
         gender,
         hapId,
-        paymentMethod,
+        paymentMethod
+
       } = formData;
 
       if (!paymentMethod.trim())
@@ -1424,8 +1453,9 @@ const AppointmentBooking = () => {
 
       const servicedetail = members[0]?.servicecode;
 
-      const servicetotalPrice = serviceList[0] ? parseInt(serviceList[0]?.price) : 100
-
+      const servicetotalPrice = serviceList[0]
+        ? parseInt(serviceList[0]?.price)
+        : 100;
 
       const updatedMembers = Array.from({ length: value }, () => ({
         patientName: "",
@@ -1446,10 +1476,10 @@ const AppointmentBooking = () => {
         slot_booking: [],
       }));
 
-      setFormData((prev) => ({
+      setFormData((prev)=>({
         ...prev,
         totalPrice: value * servicetotalPrice,
-      }))
+      }));
 
       setMembers(updatedMembers);
     } else {
@@ -1498,7 +1528,7 @@ const AppointmentBooking = () => {
       setFormData((prev) => ({
         ...prev,
         TransactionId: "",
-        PaymentType: "",
+        PaymentType: '',
         // Keep servicecode and totalPrice
       }));
 
@@ -1506,7 +1536,7 @@ const AppointmentBooking = () => {
         prevMembers.map((member) => ({
           ...member,
           TransactionId: "",
-          PaymentType: "",
+          PaymentType: '',
           // Keep servicecode, slot_booking, totalPrice
         }))
       );
@@ -1559,7 +1589,6 @@ const AppointmentBooking = () => {
           status: 1,
           created_by: 1,
           center: selectedCenter,
-          appointmentType: appointmentType,
           slot_booking: member.slot_booking.map((slot: any) => ({
             ...slot,
             servicecode: selectedService,
@@ -1589,7 +1618,6 @@ const AppointmentBooking = () => {
             status: 1,
             created_by: 1,
             center: selectedCenter,
-            appointmentType: appointmentType,
             slot_booking: [
               {
                 action_date: formatDateToYYYYMMDDNew(new Date()),
@@ -1617,10 +1645,12 @@ const AppointmentBooking = () => {
 
       const responseData = res.data.data;
 
-      console.log("vvv---responseData", responseData);
+      console.log('vvv---responseData', responseData);
+
 
       if (res.data.status === 1) {
-        setsuccessModule(true);
+
+        setsuccessModule(true)
         if (responseData?.[0]) {
           const applicant = responseData[0].applicant || {};
           const booking = responseData[0].appointments?.bookings?.[0] || {};
@@ -1637,6 +1667,8 @@ const AppointmentBooking = () => {
         const allSuccessful = responseData.every((applicant: any) => {
           const appointments = applicant?.appointments;
           const booking = appointments?.bookings?.[0];
+
+
 
           if (
             appointments?.status === 1 &&
@@ -1684,7 +1716,9 @@ const AppointmentBooking = () => {
             paymentMethod: "QR",
             dob: "",
             TransactionId: "",
-            servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
+            servicecode: serviceList[0]
+              ? [serviceList[0].code]
+              : [environment.DEFAULT_SERVICE_CODE],
             totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
             PaymentType: "",
           });
@@ -1703,8 +1737,12 @@ const AppointmentBooking = () => {
               paymentMethod: "",
               dob: "",
               TransactionId: "",
-              servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
-              totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
+              servicecode: serviceList[0]
+                ? [serviceList[0].code]
+                : [environment.DEFAULT_SERVICE_CODE],
+              totalPrice: serviceList[0]
+                ? parseInt(serviceList[0]?.price)
+                : 100,
               slot_booking: [],
             },
           ]);
@@ -1727,6 +1765,7 @@ const AppointmentBooking = () => {
       }
 
       // ✅ You can now use invoiceUrls wherever needed
+
     } catch (error) {
       console.error("Submission Error:", error);
       // toast.error("An error occurred while submitting the form.");
@@ -1752,7 +1791,9 @@ const AppointmentBooking = () => {
       paymentMethod: "QR",
       dob: "",
       TransactionId: "",
-      servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
+      servicecode: serviceList[0]
+        ? [serviceList[0].code]
+        : [environment.DEFAULT_SERVICE_CODE],
       totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
       PaymentType: "",
     });
@@ -1922,7 +1963,7 @@ const AppointmentBooking = () => {
   ) => {
     const { name, value } = e.target;
 
-    // console.log('vvvvvv----11111', value, '000----000', index);
+      // console.log('vvvvvv----11111', value, '000----000', index);
 
     if (appointmentType === "Self") {
       let updatedData = { ...formData, [name]: value };
@@ -1965,7 +2006,11 @@ const AppointmentBooking = () => {
 
       // console.log('formData-----',formData);
     } else if (appointmentType === "Group") {
+
+
+
       // console.log('vvvvvv----222', value, '000----000', index);
+
 
       const updatedMembers = [...members];
       if (typeof index === "number" && index >= 0) {
@@ -2006,14 +2051,16 @@ const AppointmentBooking = () => {
       setFormData(updatedData);
       console.log(members);
     }
+
   };
+
 
   const downloadAllInvoices = () => {
     invoiceUrls.forEach((url, index) => {
       setTimeout(() => {
-        const link = document.createElement('a');
+        const link = document.createElement("a");
         link.href = url;
-        link.download = '';
+        link.download = "";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -2023,15 +2070,12 @@ const AppointmentBooking = () => {
     // After all downloads triggered, navigate to home
     setTimeout(() => {
       setsuccessModule(false);
-      navigate('/');
+      navigate("/");
     }, invoiceUrls.length * 1000 + 500);
   };
 
-
-
-
-
   //------------------------------------update
+
 
   const getDecryptedAppointments = (): any[] => {
     const encrypted = localStorage.getItem("appointments");
@@ -2047,24 +2091,14 @@ const AppointmentBooking = () => {
     }
   };
 
+
   useEffect(() => {
-    let update_data = getDecryptedAppointments();
+
+    let update_data = getDecryptedAppointments()
     if (update_data && update_data.length > 0) {
-
       const appointmentType = localStorage.getItem("appointmentType");
-      setreappointmentType(appointmentType ?? "")
-      setRescheduledata(update_data)
-      console.log('update_data', update_data);
-
-      if (appointmentType === 'Group') {
-        setAppointmentType('Group')
-        setmembercount(update_data?.length || 0)
-      }
-
-
-
-
-
+      setRescheduledata(update_data);
+      console.log("update_data", update_data);
 
       if (appointmentType === "Group") {
         setAppointmentType("Group");
@@ -2072,25 +2106,30 @@ const AppointmentBooking = () => {
       }
     }
     // console.log('update_data______000', update_data);
-  }, []);
+
+  }, [])
+
+
+
 
   const rescheduleSlotbook = (slot: any) => {
-    console.log("Reschedule Slot Selected:", slot);
+
+    console.log('Reschedule Slot Selected:', slot);
 
     if (rescheduledata && rescheduledata.length > 0 && slot) {
-      let selectdate = slot?.slotItem?.slot?.date;
 
-      let selectTime = slot?.time;
+      let selectdate = slot?.slotItem?.slot?.date
+
+      let selectTime = slot?.time
 
       const rescheduleConfirm = window.confirm(
         `You are about to reschedule your appointment to:\n\nDate: ${selectdate}\nTime: ${selectTime}\n\nDo you want to proceed?`
       );
 
       if (rescheduleConfirm) {
+        console.log("rescheduledata------------???", rescheduledata);
 
-        console.log('rescheduledata------------???', rescheduledata);
-
-        if (appointmentType === 'Group') {
+        if (appointmentType === "Group") {
           let finalData: any[] = [];
 
           rescheduledata.forEach((item: any, index: number) => {
@@ -2143,7 +2182,8 @@ const AppointmentBooking = () => {
           // 2. Merge new group data into stored data (replace if applicant_number matches)
           finalData.forEach((incomingApplicant) => {
             const existingIndex = newSlotData.findIndex(
-              (item) => item.applicant_number === incomingApplicant.applicant_number
+              (item) =>
+                item.applicant_number === incomingApplicant.applicant_number
             );
 
             if (existingIndex !== -1) {
@@ -2166,13 +2206,10 @@ const AppointmentBooking = () => {
           setTimeout(() => {
             window.scrollTo({ top: 0, behavior: "smooth" });
           }, 50);
+        } else {
+          let singledata = rescheduledata[0];
 
-        }
-        else {
-
-          let singledata = rescheduledata[0]
-
-          console.log('singledata----+++', singledata)
+          console.log("singledata----+++", singledata);
           let finalData = [
             {
               type: "I",
@@ -2192,85 +2229,93 @@ const AppointmentBooking = () => {
                   action_date: formatDateToYYYYMMDDNew(new Date()),
                   date_booked: formatDateToYYYYMMDDNew(selectdate),
 
-                  booked_time: selectTime,
-                  booking_from: 3,
-                  booking_status: 1,
+                booked_time: selectTime,
+                booking_from: 3,
+                booking_status: 1,
 
-                  department: "AU",
-                  description: "Test Service",
-                  service_code: formData.servicecode,
-                },
-              ],
-            },
-          ];
+                department: "AU",
+                description: "Test Service",
+                service_code: formData.servicecode,
+              },
+            ],
+          },
+        ];
 
-          console.log('finalData--------', finalData);
+          console.log("finalData--------", finalData);
 
+        // 1. Get encrypted data from localStorage
+        const encryptedData = localStorage.getItem("Newslot");
+        let newSlotData: any[] = [];
 
-
-          // 1. Get encrypted data from localStorage
-          const encryptedData = localStorage.getItem("Newslot");
-          let newSlotData: any[] = [];
-
-          if (encryptedData) {
-            try {
-              const decryptedData = CryptoJS.AES.decrypt(
-                encryptedData,
-                environment.SECRET_KEY
-              ).toString(CryptoJS.enc.Utf8);
-              newSlotData = JSON.parse(decryptedData);
-            } catch (error) {
-              console.error("Failed to decrypt 'Newslot' data:", error);
-            }
+        if (encryptedData) {
+          try {
+            const decryptedData = CryptoJS.AES.decrypt(
+              encryptedData,
+              environment.SECRET_KEY
+            ).toString(CryptoJS.enc.Utf8);
+            newSlotData = JSON.parse(decryptedData);
+          } catch (error) {
+            console.error("Failed to decrypt 'Newslot' data:", error);
           }
+        }
 
-          // 2. Check if appointment with same ID exists
-          const incomingApplicant = finalData[0];
+        // 2. Check if appointment with same ID exists
+        const incomingApplicant = finalData[0];
           const existingIndex = newSlotData.findIndex(
-            (item) =>
-              item.applicant_number === incomingApplicant.applicant_number
+            (item) => item.applicant_number === incomingApplicant.applicant_number
           );
 
-          if (existingIndex !== -1) {
+        if (existingIndex !== -1) {
             newSlotData[existingIndex] = incomingApplicant; // Replace
           } else {
             newSlotData.push(incomingApplicant); // Add
           }
 
-          const reEncrypted = CryptoJS.AES.encrypt(
-            JSON.stringify(newSlotData),
-            environment.SECRET_KEY
-          ).toString();
+        const reEncrypted = CryptoJS.AES.encrypt(
+          JSON.stringify(newSlotData),
+          environment.SECRET_KEY
+        ).toString();
 
-          localStorage.setItem("Newslot", reEncrypted);
+        localStorage.setItem("Newslot", reEncrypted);
 
           navigate(environment.BASE_PATH);
           setTimeout(() => {
             window.scrollTo({ top: 0, behavior: "smooth" });
           }, 50);
-
         }
       }
     }
   };
 
+
+
+
+
+
+
+
+
+
+
   return (
     <>
       {rescheduledata && rescheduledata.length > 0 && (
         <div className="bg-white p-4 shadow rounded-lg border border-gray-200 mb-6">
-          <h2 className="text-lg font-semibold mb-4 text-blue-700">Appointment Details</h2>
+          <h2 className="text-lg font-semibold mb-4 text-blue-700">
+            Appointment Details
+          </h2>
           {rescheduledata.map((data: any, index: number) => (
-            <div key={index} className="grid grid-cols-1 md:grid-cols-8 gap-4 text-sm text-gray-700" style={{ marginTop: '15px' }}>
+            <div
+              key={index}
+              className="grid grid-cols-1 md:grid-cols-8 gap-4 text-sm text-gray-700"
+              style={{ marginTop: "15px" }}
+            >
               <div className="flex flex-col">
-                <span className="font-medium text-gray-500">
-                  Applicant Number
-                </span>
+                <span className="font-medium text-gray-500">Applicant Number</span>
                 <span>{data.applicant_number}</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-medium text-gray-500">
-                  Applicant Name
-                </span>
+                <span className="font-medium text-gray-500">Applicant Name</span>
                 <span>{data.patient_name}</span>
               </div>
               <div className="flex flex-col">
@@ -2278,9 +2323,7 @@ const AppointmentBooking = () => {
                 <span>{data.hap_id}</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-medium text-gray-500">
-                  Passport Number
-                </span>
+                <span className="font-medium text-gray-500">Passport Number</span>
                 <span>{data.passport_number}</span>
               </div>
               <div className="flex flex-col">
@@ -2306,14 +2349,10 @@ const AppointmentBooking = () => {
                 <span className="font-medium text-gray-500">Time</span>
                 <span>{data.booked_time}</span>
               </div>
-            </div>))}
+            </div>
+          ))}
         </div>
-
       )}
-
-
-
-
 
       <div className="container-fluid p-3" style={{ marginTop: "10px" }}>
         <div className="row custom-main-layout">
@@ -2418,9 +2457,7 @@ const AppointmentBooking = () => {
 
                 <div className="calendar-wrapper">
                   <div
-                    className={`calendar-grid ${
-                      selectedCenter ? "active" : ""
-                    }`}
+                    className={`calendar-grid ${selectedCenter ? "active" : ""}`}
                     style={{
                       opacity: !selectedCenter ? 0.5 : 1,
                       pointerEvents: !selectedCenter ? "none" : "auto",
@@ -2450,10 +2487,10 @@ const AppointmentBooking = () => {
                         opacity: isDisabled ? 0.5 : 1,
                         border: isDisabled ? "1px solid #ccc" : "none",
                         cursor: isDisabled ? "not-allowed" : "pointer",
-                        borderRadius: "5px",
+                        borderRadius: '5px',
                         background: today ? "orange" : "",
                         // backgroundColor: today ? "#fe9647" : "transparent",
-                        height: "35px",
+                        height: '35px'
                       };
 
                       return (
@@ -2462,6 +2499,7 @@ const AppointmentBooking = () => {
                           className="d-flex align-items-center justify-content-center position-relative calendardaybox"
                           style={{
                             pointerEvents: isDisabled ? "none" : "auto",
+
                           }}
                           onClick={() => {
                             if (!isDisabled) {
@@ -2472,9 +2510,8 @@ const AppointmentBooking = () => {
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <div
-                                className={`calendardaystyle d-flex align-items-center justify-content-center rounded-square position-relative z-9999 ${
-                                  !isDisabled ? "calendar-day" : ""
-                                } ${isSelecteddate(day) ? "selected" : ""}`}
+                                className={`calendardaystyle d-flex align-items-center justify-content-center rounded-square position-relative z-9999 ${!isDisabled ? "calendar-day" : ""
+                                  } ${isSelecteddate(day) ? "selected" : ""}`}
                                 style={dayStyle}
                               >
                                 {day.getDate()}
@@ -2484,7 +2521,9 @@ const AppointmentBooking = () => {
                                     className="calendarAvalSlot"
                                     style={{
                                       backgroundColor:
-                                        totaldaycount === 0 ? "red" : "#5ebe5e",
+                                        totaldaycount === 0
+                                          ? "red"
+                                          : "#5ebe5e",
                                     }}
                                   >
                                     {totaldaycount === 0 ? "" : totaldaycount}
@@ -2492,15 +2531,8 @@ const AppointmentBooking = () => {
                                 )}
                               </div>
                             </TooltipTrigger>
-                            <TooltipContent
-                              style={{
-                                backgroundColor: "rgb(33 55 96)",
-                                color: "white",
-                                zIndex: 1000,
-                              }}
-                            >
-                              {totaldaycount === 0 ||
-                              totaldaycount === undefined
+                            <TooltipContent style={{ backgroundColor: 'rgb(33 55 96)', color: 'white', zIndex: 1000 }}>
+                              {totaldaycount === 0 || totaldaycount === undefined
                                 ? "No slot available"
                                 : `Available Slots: ${totaldaycount}`}
                             </TooltipContent>
@@ -2518,6 +2550,7 @@ const AppointmentBooking = () => {
                 </div>
               </div>
             </div>
+
 
             {/* <div
               className="card border-0 shadow-sm mt-3 px-3 py-2 small"
@@ -2544,6 +2577,9 @@ const AppointmentBooking = () => {
                 </div>
               </div>
             </div> */}
+
+
+
 
             {/* Time Slots Panel */}
           </div>
@@ -2754,9 +2790,7 @@ const AppointmentBooking = () => {
                             border: shake ? "2px solid red" : undefined,
                             outline: shake ? "none" : undefined,
                           }}
-                          className={`form-control ${
-                            shake ? "input-shake" : ""
-                          }`}
+                          className={`form-control ${shake ? "input-shake" : ""}`}
                           min={2}
                           max={5}
                         />
@@ -2770,6 +2804,7 @@ const AppointmentBooking = () => {
                   )}
                 </div>
               </div>
+
 
               {selectedDate && selectedCenter && (
                 <div
@@ -2803,8 +2838,7 @@ const AppointmentBooking = () => {
                     {(() => {
                       const selected = new Date(selectedDate);
 
-                      const sortedSlotDates =
-                        getNextFourNonSundayDates(selected);
+                      const sortedSlotDates = getNextFourNonSundayDates(selected);
 
                       // console.log('slots------?????',sortedSlotDates,'777777',slotsGroupedByDate);
 
@@ -2817,13 +2851,13 @@ const AppointmentBooking = () => {
 
                         const slots = dateKey
                           ? Array.from(
-                              new Map(
-                                slotsGroupedByDate[dateKey].map((slot: any) => [
-                                  slot.time,
-                                  slot,
-                                ])
-                              ).values()
-                            )
+                            new Map(
+                              slotsGroupedByDate[dateKey].map((slot: any) => [
+                                slot.time,
+                                slot,
+                              ])
+                            ).values()
+                          )
                           : [];
                         // console.log('slots----------',slots);
 
@@ -2863,21 +2897,17 @@ const AppointmentBooking = () => {
 
 
                             {slots.length > 0 &&
-                              slots.filter(
-                                (slot: any) => +slot.remaining > 0 && !isSlotExpired(slot?.time, slot?.slotItem?.slot?.date)
-                              ).length > 0 ? (
-                              <div
-                                className="row g-3 px-2 slottimebox"
-                              >
+                            slots.filter(
+                              (slot: any) =>
+                                +slot.remaining > 0 &&
+                                !isSlotExpired(
+                                  slot?.time,
+                                  slot?.slotItem?.slot?.date
+                                )
+                            ).length > 0 ? (
+                              <div className="row g-3 px-2 slottimebox">
                                 {slots
-                                  .filter(
-                                    (slot: any) =>
-                                      +slot.remaining > 0 &&
-                                      !isSlotExpired(
-                                        slot?.time,
-                                        slot?.slotItem?.slot?.date
-                                      )
-                                  )
+                                  .filter((slot: any) => +slot.remaining > 0 && !isSlotExpired(slot?.time, slot?.slotItem?.slot?.date))
                                   .map((slot: any, idx: number) => (
                                     <div
                                       key={idx}
@@ -2885,27 +2915,20 @@ const AppointmentBooking = () => {
                                     >
                                       <>
                                         <span
-                                          className={`position-absolute badge Slotcountview ${
-                                            slot.remaining < membercount
-                                              ? "badge-disabled"
-                                              : "slotNum-success"
-                                          }`}
+                                          className={`position-absolute badge Slotcountview ${slot.remaining < membercount
+                                            ? "badge-disabled"
+                                            : "slotNum-success"
+                                            }`}
                                         >
                                           {slot.remaining}
                                         </span>
 
                                         <button
-                                          className={`btn w-70 text-start btnclr ${
-                                            slot.remaining < membercount
-                                              ? "btn-outline-secondary"
-                                              : "btn-outline-primary"
-                                          }`}
-                                          onClick={
-                                            rescheduledata &&
-                                            rescheduledata.length > 0
-                                              ? () => rescheduleSlotbook(slot)
-                                              : () => bookTimeSlot(slot)
-                                          }
+                                          className={`btn w-70 text-start btnclr ${slot.remaining < membercount
+                                            ? "btn-outline-secondary"
+                                            : "btn-outline-primary"
+                                            }`}
+                                          onClick={rescheduledata && rescheduledata.length > 0 ? () => rescheduleSlotbook(slot) : () => bookTimeSlot(slot)}
                                           disabled={
                                             slot.remaining < membercount ||
                                             selectedServices.length === 0
@@ -2990,9 +3013,7 @@ const AppointmentBooking = () => {
                           Selected Date <span>:</span>
                         </label>
                         <span className="info-value">
-                          {selectedDate
-                            ? `${formatDateToDDMMYYYY(selectedDate)}`
-                            : "No date selected"}
+                          {selectedDate ? `${formatDateToDDMMYYYY(selectedDate)}` : "No date selected"}
                         </span>
                       </div>
                       <div className="info-item">
@@ -3004,6 +3025,7 @@ const AppointmentBooking = () => {
                           {formData?.patientName}
                         </span>
                       </div>
+
                     </div>
 
                     {/* Row 2 */}
@@ -3012,7 +3034,9 @@ const AppointmentBooking = () => {
                         <label className="info-label">
                           Selected Slot <span>:</span>
                         </label>
-                        <span className="info-value">{selectedslottime}</span>
+                        <span className="info-value">
+                          {selectedslottime}
+                        </span>
                       </div>
 
                       <div className="info-item">
@@ -3042,11 +3066,10 @@ const AppointmentBooking = () => {
                                 <AccordionItem key={i} value={`item-${i}`}>
                                   <AccordionTrigger>
                                     <div
-                                      className={`flex items-center gap-2 ${
-                                        memberHasError[i]
-                                          ? "bg-red-100 border-l-4 border-red-500 px-2 py-1 input-shake"
-                                          : ""
-                                      }`}
+                                      className={`flex items-center gap-2 ${memberHasError[i]
+                                        ? "bg-red-100 border-l-4 border-red-500 px-2 py-1 input-shake"
+                                        : ""
+                                        }`}
                                     >
                                       {i === 0 ? (
                                         <>
@@ -3068,22 +3091,20 @@ const AppointmentBooking = () => {
                                             <label
                                               htmlFor={`patientName_${i}`}
                                               className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+
                                             >
                                               Name
                                             </label>
                                             <input
                                               type="text"
-                                              className={`form-control ${
-                                                formErrors[`patientName_${i}`]
-                                                  ? "is-invalid input-shake"
-                                                  : ""
-                                              }`}
+                                              className={`form-control ${formErrors[`patientName_${i}`]
+                                                ? "is-invalid input-shake"
+                                                : ""
+                                                }`}
                                               id={`patientName_${i}`}
                                               name="patientName"
                                               value={member.patientName}
-                                              onChange={(e) =>
-                                                handleChange(e, i)
-                                              }
+                                              onChange={(e) => handleChange(e, i)}
                                               autoComplete="off"
                                               placeholder={getDynamicPlaceholder(
                                                 "patientName"
@@ -3097,16 +3118,16 @@ const AppointmentBooking = () => {
                                             <label
                                               htmlFor={`contactNumber_${i}`}
                                               className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+
                                             >
                                               Contact Number
                                             </label>
                                             <input
                                               type="text"
-                                              className={`form-control ${
-                                                formErrors[`contactNumber_${i}`]
-                                                  ? "is-invalid input-shake"
-                                                  : ""
-                                              }`}
+                                              className={`form-control ${formErrors[`contactNumber_${i}`]
+                                                ? "is-invalid input-shake"
+                                                : ""
+                                                }`}
                                               id={`contactNumber_${i}`}
                                               name="contactNumber"
                                               value={member.contactNumber}
@@ -3132,30 +3153,24 @@ const AppointmentBooking = () => {
                                             <label
                                               htmlFor={`gender_${i}`}
                                               className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+
                                             >
                                               Gender
                                             </label>
                                             <select
-                                              className={`form-control ${
-                                                formErrors[`gender_${i}`]
-                                                  ? "is-invalid input-shake"
-                                                  : ""
-                                              }`}
+                                              className={`form-control ${formErrors[`gender_${i}`]
+                                                ? "is-invalid input-shake"
+                                                : ""
+                                                }`}
                                               name="gender"
                                               id={`gender_${i}`}
                                               value={member.gender}
-                                              onChange={(e) =>
-                                                handleChange(e, i)
-                                              }
+                                              onChange={(e) => handleChange(e, i)}
                                             >
                                               <option value="">Select</option>
                                               <option value="male">Male</option>
-                                              <option value="female">
-                                                Female
-                                              </option>
-                                              <option value="other">
-                                                Other
-                                              </option>
+                                              <option value="female">Female</option>
+                                              <option value="other">Other</option>
                                             </select>
                                           </div>
                                         </div>
@@ -3165,31 +3180,27 @@ const AppointmentBooking = () => {
                                             <label
                                               htmlFor={`dob_${i}`}
                                               className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+
                                             >
                                               DOB
                                             </label>
                                             <input
                                               type="date"
-                                              className={`form-control ${
-                                                formErrors[`dob_${i}`]
-                                                  ? "is-invalid input-shake"
-                                                  : ""
-                                              }`}
+                                              className={`form-control ${formErrors[`dob_${i}`]
+                                                ? "is-invalid input-shake"
+                                                : ""
+                                                }`}
                                               id="dob"
                                               name="dob"
                                               value={member.dob}
                                               min={getMinDOB()}
                                               max={getMaxDOB()}
-                                              onChange={(e) =>
-                                                handleChange(e, i)
-                                              }
+                                              onChange={(e) => handleChange(e, i)}
                                               style={{
                                                 cursor: "pointer",
                                                 backgroundColor: "#fff",
                                               }}
-                                              onKeyDown={(e) =>
-                                                e.preventDefault()
-                                              }
+                                              onKeyDown={(e) => e.preventDefault()}
                                             />
                                           </div>
                                         </div>
@@ -3201,16 +3212,16 @@ const AppointmentBooking = () => {
                                             <label
                                               htmlFor={`age_${i}`}
                                               className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+
                                             >
                                               Age
                                             </label>
                                             <input
                                               type="text"
-                                              className={`form-control ${
-                                                formErrors[`age_${i}`]
-                                                  ? "is-invalid input-shake"
-                                                  : ""
-                                              }`}
+                                              className={`form-control ${formErrors[`age_${i}`]
+                                                ? "is-invalid input-shake"
+                                                : ""
+                                                }`}
                                               id={`age_${i}`}
                                               name="age"
                                               value={member.age}
@@ -3234,23 +3245,21 @@ const AppointmentBooking = () => {
                                             <label
                                               htmlFor={`passportNo_${i}`}
                                               className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+
                                             >
                                               Passport No
                                             </label>
 
                                             <input
                                               type="text"
-                                              className={`form-control ${
-                                                formErrors[`passportNo_${i}`]
-                                                  ? "is-invalid input-shake"
-                                                  : ""
-                                              }`}
+                                              className={`form-control ${formErrors[`passportNo_${i}`]
+                                                ? "is-invalid input-shake"
+                                                : ""
+                                                }`}
                                               id={`passportNo_${i}`}
                                               name="passportNo"
                                               value={member.passportNo}
-                                              onChange={(e) =>
-                                                handleChange(e, i)
-                                              }
+                                              onChange={(e) => handleChange(e, i)}
                                               maxLength={12}
                                               placeholder={getDynamicPlaceholder(
                                                 "passportNo"
@@ -3258,6 +3267,7 @@ const AppointmentBooking = () => {
                                               autoComplete="off"
                                             />
                                           </div>
+
                                         </div>
                                       </div>
 
@@ -3269,17 +3279,17 @@ const AppointmentBooking = () => {
                                                 <label
                                                   htmlFor={`email_${i}`}
                                                   className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+
                                                 >
                                                   Email
                                                 </label>
                                                 <input
                                                   type="email"
                                                   id={`email_${i}`}
-                                                  className={`form-control ${
-                                                    formErrors[`email_${i}`]
-                                                      ? "is-invalid input-shake"
-                                                      : ""
-                                                  }`}
+                                                  className={`form-control ${formErrors[`email_${i}`]
+                                                    ? "is-invalid input-shake"
+                                                    : ""
+                                                    }`}
                                                   name="email"
                                                   value={members[i].email}
                                                   onChange={(e) =>
@@ -3295,24 +3305,25 @@ const AppointmentBooking = () => {
 
                                             <div className="col-md-6 mb-3">
                                               <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                                <label className="form-label label-fixed me-md-2 mb-1 mb-md-0">
+                                                <label
+                                                  className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+
+                                                >
                                                   HAP ID
                                                 </label>
                                                 <input
                                                   type="text"
-                                                  className={`form-control ${
-                                                    formErrors[`hapId_${i}`]
-                                                      ? "is-invalid input-shake"
-                                                      : ""
-                                                  }`}
+                                                  className={`form-control ${formErrors[`hapId_${i}`]
+                                                    ? "is-invalid input-shake"
+                                                    : ""
+                                                    }`}
                                                   id={`hapId_${i}`}
                                                   inputMode="numeric"
                                                   pattern="\d*"
                                                   name="hapId"
                                                   value={members[i].hapId}
                                                   onChange={(e) => {
-                                                    const value =
-                                                      e.target.value;
+                                                    const value = e.target.value;
                                                     if (/^\d*$/.test(value)) {
                                                       handleChange(e, i);
                                                     }
@@ -3333,18 +3344,18 @@ const AppointmentBooking = () => {
                                                 <label
                                                   htmlFor={`alternativeNumber_${i}`}
                                                   className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+
                                                 >
                                                   Alternative Number
                                                 </label>
                                                 <input
                                                   type="text"
-                                                  className={`form-control ${
-                                                    formErrors[
-                                                      `alternativeNumber_${i}`
-                                                    ]
-                                                      ? "is-invalid input-shake"
-                                                      : ""
-                                                  }`}
+                                                  className={`form-control ${formErrors[
+                                                    `alternativeNumber_${i}`
+                                                  ]
+                                                    ? "is-invalid input-shake"
+                                                    : ""
+                                                    }`}
                                                   id={`alternativeNumber_${i}`}
                                                   name="alternativeNumber"
                                                   value={
@@ -3352,8 +3363,7 @@ const AppointmentBooking = () => {
                                                   }
                                                   maxLength={10}
                                                   onChange={(e) => {
-                                                    const value =
-                                                      e.target.value;
+                                                    const value = e.target.value;
                                                     if (/^\d*$/.test(value)) {
                                                       handleChange(e, i);
                                                     }
@@ -3371,29 +3381,23 @@ const AppointmentBooking = () => {
                                                 <label
                                                   htmlFor={`paymentMethod_${i}`}
                                                   className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+
                                                 >
                                                   Payment Method
                                                 </label>
                                                 <select
-                                                  className={`form-control ${
-                                                    formErrors[
-                                                      `paymentMethod_${i}`
-                                                    ]
-                                                      ? "is-invalid input-shake"
-                                                      : ""
-                                                  }`}
+                                                  className={`form-control ${formErrors[`paymentMethod_${i}`]
+                                                    ? "is-invalid input-shake"
+                                                    : ""
+                                                    }`}
                                                   id={`paymentMethod_${i}`}
                                                   name="paymentMethod"
-                                                  value={
-                                                    members[i].paymentMethod
-                                                  }
+                                                  value={members[i].paymentMethod}
                                                   onChange={(e) =>
                                                     handleChange(e, i)
                                                   }
                                                 >
-                                                  <option value="">
-                                                    Select
-                                                  </option>
+                                                  <option value="">Select</option>
                                                   <option value="QR">QR</option>
                                                 </select>
                                               </div>
@@ -3412,26 +3416,15 @@ const AppointmentBooking = () => {
                             <div className="row mb-3">
                               <div className="col-md-6 mb-3">
                                 <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                  <label
-                                    htmlFor="patientName"
-                                    className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                  >
-                                    Name
-                                  </label>
+                                  <label htmlFor="patientName" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Name</label>
                                   <input
                                     type="text"
-                                    className={`form-control ${
-                                      formErrors.patientName
-                                        ? "is-invalid input-shake"
-                                        : ""
-                                    }`}
+                                    className={`form-control ${formErrors.patientName ? "is-invalid input-shake" : ""}`}
                                     id="patientName"
                                     name="patientName"
                                     value={formData.patientName}
                                     onChange={handleChange}
-                                    placeholder={getDynamicPlaceholder(
-                                      "patientName"
-                                    )}
+                                    placeholder={getDynamicPlaceholder("patientName")}
                                     autoComplete="off"
                                   />
                                 </div>
@@ -3439,19 +3432,10 @@ const AppointmentBooking = () => {
 
                               <div className="col-md-6 mb-3">
                                 <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                  <label
-                                    htmlFor="hapId"
-                                    className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                  >
-                                    HAP ID
-                                  </label>
+                                  <label htmlFor="hapId" className="form-label label-fixed me-md-2 mb-1 mb-md-0">HAP ID</label>
                                   <input
                                     type="text"
-                                    className={`form-control ${
-                                      formErrors.hapId
-                                        ? "is-invalid input-shake"
-                                        : ""
-                                    }`}
+                                    className={`form-control ${formErrors.hapId ? "is-invalid input-shake" : ""}`}
                                     id="hapId"
                                     name="hapId"
                                     value={formData.hapId}
@@ -3471,19 +3455,10 @@ const AppointmentBooking = () => {
                             <div className="row mb-3">
                               <div className="col-md-6 mb-3">
                                 <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                  <label
-                                    htmlFor="email"
-                                    className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                  >
-                                    Email
-                                  </label>
+                                  <label htmlFor="email" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Email</label>
                                   <input
                                     type="email"
-                                    className={`form-control ${
-                                      formErrors.email
-                                        ? "is-invalid input-shake"
-                                        : ""
-                                    }`}
+                                    className={`form-control ${formErrors.email ? "is-invalid input-shake" : ""}`}
                                     id="email"
                                     name="email"
                                     value={formData.email}
@@ -3496,19 +3471,10 @@ const AppointmentBooking = () => {
 
                               <div className="col-md-6 mb-3">
                                 <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                  <label
-                                    htmlFor="contactNumber"
-                                    className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                  >
-                                    Contact Number
-                                  </label>
+                                  <label htmlFor="contactNumber" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Contact Number</label>
                                   <input
                                     type="text"
-                                    className={`form-control ${
-                                      formErrors.contactNumber
-                                        ? "is-invalid input-shake"
-                                        : ""
-                                    }`}
+                                    className={`form-control ${formErrors.contactNumber ? "is-invalid input-shake" : ""}`}
                                     id="contactNumber"
                                     name="contactNumber"
                                     value={formData.contactNumber}
@@ -3517,9 +3483,7 @@ const AppointmentBooking = () => {
                                       if (/^\d*$/.test(value)) handleChange(e);
                                     }}
                                     maxLength={10}
-                                    placeholder={getDynamicPlaceholder(
-                                      "contactNumber"
-                                    )}
+                                    placeholder={getDynamicPlaceholder("contactNumber")}
                                     autoComplete="off"
                                   />
                                 </div>
@@ -3529,19 +3493,10 @@ const AppointmentBooking = () => {
                             <div className="row mb-3">
                               <div className="col-md-6 mb-3">
                                 <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                  <label
-                                    htmlFor="alternativeNumber"
-                                    className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                  >
-                                    Alternative Number
-                                  </label>
+                                  <label htmlFor="alternativeNumber" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Alternative Number</label>
                                   <input
                                     type="text"
-                                    className={`form-control ${
-                                      formErrors.alternativeNumber
-                                        ? "is-invalid input-shake"
-                                        : ""
-                                    }`}
+                                    className={`form-control ${formErrors.alternativeNumber ? "is-invalid input-shake" : ""}`}
                                     id="alternativeNumber"
                                     name="alternativeNumber"
                                     value={formData.alternativeNumber}
@@ -3550,9 +3505,7 @@ const AppointmentBooking = () => {
                                       if (/^\d*$/.test(value)) handleChange(e);
                                     }}
                                     maxLength={10}
-                                    placeholder={getDynamicPlaceholder(
-                                      "alternativeNumber"
-                                    )}
+                                    placeholder={getDynamicPlaceholder("alternativeNumber")}
                                     autoComplete="off"
                                   />
                                 </div>
@@ -3560,18 +3513,9 @@ const AppointmentBooking = () => {
 
                               <div className="col-md-6 mb-3">
                                 <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                  <label
-                                    htmlFor="gender"
-                                    className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                  >
-                                    Gender
-                                  </label>
+                                  <label htmlFor="gender" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Gender</label>
                                   <select
-                                    className={`form-control ${
-                                      formErrors.gender
-                                        ? "is-invalid input-shake"
-                                        : ""
-                                    }`}
+                                    className={`form-control ${formErrors.gender ? "is-invalid input-shake" : ""}`}
                                     id="gender"
                                     name="gender"
                                     value={formData.gender}
@@ -3589,17 +3533,10 @@ const AppointmentBooking = () => {
                             <div className="row mb-3">
                               <div className="col-md-6 mb-3">
                                 <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                  <label
-                                    htmlFor="dob"
-                                    className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                  >
-                                    DOB
-                                  </label>
+                                  <label htmlFor="dob" className="form-label label-fixed me-md-2 mb-1 mb-md-0">DOB</label>
                                   <input
                                     type="date"
-                                    className={`form-control ${
-                                      formErrors.dob ? "is-invalid" : ""
-                                    }`}
+                                    className={`form-control ${formErrors.dob ? "is-invalid" : ""}`}
                                     id="dob"
                                     name="dob"
                                     value={formData.dob}
@@ -3607,29 +3544,17 @@ const AppointmentBooking = () => {
                                     min={getMinDOB()}
                                     max={getMaxDOB()}
                                     onKeyDown={(e) => e.preventDefault()}
-                                    style={{
-                                      backgroundColor: "#fff",
-                                      cursor: "pointer",
-                                    }}
+                                    style={{ backgroundColor: "#fff", cursor: "pointer" }}
                                   />
                                 </div>
                               </div>
 
                               <div className="col-md-6 mb-3">
                                 <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                  <label
-                                    htmlFor="age"
-                                    className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                  >
-                                    Age
-                                  </label>
+                                  <label htmlFor="age" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Age</label>
                                   <input
                                     type="text"
-                                    className={`form-control ${
-                                      formErrors.age
-                                        ? "is-invalid input-shake"
-                                        : ""
-                                    }`}
+                                    className={`form-control ${formErrors.age ? "is-invalid input-shake" : ""}`}
                                     id="age"
                                     name="age"
                                     value={formData.age}
@@ -3649,51 +3574,29 @@ const AppointmentBooking = () => {
                             <div className="row mb-3">
                               <div className="col-md-6 mb-3">
                                 <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                  <label
-                                    htmlFor="passportNo"
-                                    className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                  >
-                                    Passport No
-                                  </label>
+                                  <label htmlFor="passportNo" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Passport No</label>
                                   <input
                                     type="text"
-                                    className={`form-control ${
-                                      formErrors.passportNo
-                                        ? "is-invalid input-shake"
-                                        : ""
-                                    }`}
+                                    className={`form-control ${formErrors.passportNo ? "is-invalid input-shake" : ""}`}
                                     id="passportNo"
                                     name="passportNo"
                                     value={formData.passportNo}
                                     onChange={handleChange}
                                     maxLength={12}
-                                    placeholder={getDynamicPlaceholder(
-                                      "passportNo"
-                                    )}
+                                    placeholder={getDynamicPlaceholder("passportNo")}
                                     autoComplete="off"
                                   />
                                 </div>
                                 {formErrors.passportNo && (
-                                  <small className="text-danger mt-1 d-block text-end">
-                                    eg: A123456 or AB1234567
-                                  </small>
+                                  <small className="text-danger mt-1 d-block text-end">eg: A123456 or AB1234567</small>
                                 )}
                               </div>
 
                               <div className="col-md-6 mb-3">
                                 <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                  <label
-                                    htmlFor="paymentMethod"
-                                    className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                  >
-                                    Payment Method
-                                  </label>
+                                  <label htmlFor="paymentMethod" className="form-label label-fixed me-md-2 mb-1 mb-md-0">Payment Method</label>
                                   <select
-                                    className={`form-control ${
-                                      formErrors.paymentMethod
-                                        ? "is-invalid input-shake"
-                                        : ""
-                                    }`}
+                                    className={`form-control ${formErrors.paymentMethod ? "is-invalid input-shake" : ""}`}
                                     id="paymentMethod"
                                     name="paymentMethod"
                                     value={formData.paymentMethod}
@@ -3706,6 +3609,7 @@ const AppointmentBooking = () => {
                               </div>
                             </div>
                           </form>
+
                         )}
                       </>
                     )}
@@ -3714,25 +3618,21 @@ const AppointmentBooking = () => {
                       <div className="payment-section container">
                         {/* Header Section */}
                         <div className="d-flex flex-column flex-md-row justify-content-start align-items-start gap-3 mb-4">
-                          <h1 className="h5 fw-bold mb-2 mb-md-0">
-                            Price Details :
-                          </h1>
-                          <h1 className="h5 fw-bold">
-                            Scan the QR code to pay
-                          </h1>
+                          <h1 className="h5 fw-bold mb-2 mb-md-0">Price Details :</h1>
+                          <h1 className="h5 fw-bold">Scan the QR code to pay</h1>
                         </div>
+
 
                         {/* Main Content Section */}
                         <div className="row">
                           {/* Left Column */}
                           <div className="col-12 col-lg-6 mb-4">
                             <div className="d-flex flex-column gap-3">
+
                               {/* Price */}
                               <div className="d-flex flex-column">
                                 <label className="fw-bold mb-1">Price:</label>
-                                <span className="form-control">
-                                  &#8377; {formData?.totalPrice}
-                                </span>
+                                <span className="form-control">&#8377; {formData?.totalPrice}</span>
                               </div>
 
                               {/* Payment Type */}
@@ -3773,26 +3673,15 @@ const AppointmentBooking = () => {
 
                               {/* Transaction ID */}
                               <div className="d-flex flex-column">
-                                <label
-                                  htmlFor="TransactionId"
-                                  className="fw-bold mb-1"
-                                >
-                                  Transaction ID:
-                                </label>
+                                <label htmlFor="TransactionId" className="fw-bold mb-1">Transaction ID:</label>
                                 <input
                                   id="TransactionId"
                                   name="TransactionId"
-                                  className={`form-control ${
-                                    formErrors.TransactionId
-                                      ? "is-invalid input-shake"
-                                      : ""
-                                  }`}
+                                  className={`form-control ${formErrors.TransactionId ? "is-invalid input-shake" : ""}`}
                                   value={formData.TransactionId}
                                   onChange={handleChange}
                                   autoComplete="off"
-                                  placeholder={getDynamicPlaceholder(
-                                    "TransactionId"
-                                  )}
+                                  placeholder={getDynamicPlaceholder("TransactionId")}
                                 />
                               </div>
                             </div>
@@ -3804,25 +3693,18 @@ const AppointmentBooking = () => {
                               src={Nddiagnostics_QR_Code_1}
                               alt="QR Code"
                               className="img-fluid"
-                              style={{
-                                maxWidth: "250px",
-                                maxHeight: "280px",
-                                width: "100%",
-                                height: "auto",
-                              }}
+                              style={{ maxWidth: "250px", maxHeight: "280px", width: "100%", height: "auto" }}
                             />
                           </div>
                         </div>
                       </div>
                     )}
+
                   </div>
                 </>
                 <div
                   className="card border-0 shadow-sm mt-3 px-3 py-2"
-                  style={{
-                    backgroundColor: "#fff3f3",
-                    borderLeft: "4px solid #e74c3c",
-                  }}
+                  style={{ backgroundColor: '#fff3f3', borderLeft: '4px solid #e74c3c' }}
                 >
                   <div className="row g-2 align-items-center">
                     <div className="col-12 col-md-auto">
@@ -3831,13 +3713,12 @@ const AppointmentBooking = () => {
                     <div className="col-12 col-md">
                       <div className="d-flex flex-wrap align-items-center">
                         <span className="text-danger me-2">
-                          For rescheduling or cancelling appointments, please
-                          contact Customer Care -
+                          For rescheduling or cancelling appointments, please contact Customer Care -
                         </span>
                         <a
                           href="tel:+919582116116"
                           className="text-primary d-flex align-items-center fw-semibold"
-                          style={{ textDecoration: "none" }}
+                          style={{ textDecoration: 'none' }}
                         >
                           <Phone className="me-2 h-4 w-4" />
                           +91 9582-116116
@@ -3873,60 +3754,35 @@ const AppointmentBooking = () => {
             </div>
           </div>
         )}
+
+
       </div>
 
       {successModule && (
-        <div
-          className="modal fade show d-block"
-          tabIndex={-1}
-          role="dialog"
-          style={{
-            background: "rgba(0,0,0,0.6)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <div
-            className="modal-dialog modal-dialog-centered"
-            role="document"
-            style={{ maxWidth: "550px", width: "100%" }}
-          >
-            <div
-              className="modal-content border-0"
-              style={{
-                borderRadius: "16px",
-                overflow: "hidden",
-                boxShadow: "0 10px 30px rgba(0, 0, 0, 0.2)",
-                background: "linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%)",
-              }}
-            >
+        <div className="modal fade show d-block" tabIndex={-1} role="dialog" style={{ background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="modal-dialog modal-dialog-centered" role="document" style={{ maxWidth: '550px', width: '100%' }}>
+            <div className="modal-content border-0" style={{
+              borderRadius: '16px',
+              overflow: 'hidden',
+              boxShadow: '0 10px 30px rgba(0, 0, 0, 0.2)',
+              background: 'linear-gradient(145deg, #ffffff 0%, #f8f9ff 100%)'
+            }}>
               <div className="position-relative">
                 {/* Header - Compact Blue Gradient */}
-                <div
-                  className="p-4 text-white"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #f2994a 0%, #f27121 100%)",
-                    //  background: 'linear-gradient(135deg, #4b6cb7 0%, #182848 100%)',
-                    borderTopLeftRadius: "16px",
-                    borderTopRightRadius: "16px",
-                  }}
-                >
+                <div className="p-4 text-white" style={{
+                  background: 'linear-gradient(135deg, #f2994a 0%, #f27121 100%)',
+                  //  background: 'linear-gradient(135deg, #4b6cb7 0%, #182848 100%)',
+                  borderTopLeftRadius: '16px',
+                  borderTopRightRadius: '16px',
+                }}>
                   <div className="d-flex align-items-center">
                     <div>
-                      <h4
-                        className="mb-1 fw-bold"
-                        style={{ letterSpacing: "0.3px", fontSize: "1.4rem" }}
-                      >
-                        {appicantResdata.gender === "male" ? "Mr." : "Ms."}{" "}
-                        {appicantResdata.fullname}
+                      <h4 className="mb-1 fw-bold" style={{ letterSpacing: '0.3px', fontSize: '1.4rem' }}>
+                        {appicantResdata.gender === 'male' ? 'Mr.' : 'Ms.'} {appicantResdata.fullname}
                       </h4>
                       <div className="d-flex align-items-center mt-1">
                         <i className="bi bi-check-circle-fill me-2 fs-6"></i>
-                        <span style={{ fontSize: "0.95rem", opacity: 0.9 }}>
-                          Appointment Booked
-                        </span>
+                        <span style={{ fontSize: '0.95rem', opacity: 0.9 }}>Appointment Booked</span>
                       </div>
                     </div>
                     <div className="ms-auto bg-white bg-opacity-20 rounded-circle p-2">
@@ -3936,39 +3792,27 @@ const AppointmentBooking = () => {
                 </div>
 
                 {/* Body - Compact Card Design */}
-                <div className="p-3 p-lg-4" style={{ minHeight: "200px" }}>
+                <div className="p-3 p-lg-4" style={{ minHeight: '200px' }}>
                   <div className="row g-3">
                     {[
-                      {
-                        label: "Applicant Number",
-                        value: appicantResdata.applicant_number,
-                      },
+                      { label: "Applicant Number", value: appicantResdata.applicant_number },
                       { label: "Date", value: appicantResdata.date },
                       { label: "Time", value: appicantResdata.time },
-                      { label: "Reference", value: appicantResdata.reference },
+                      { label: "Reference", value: appicantResdata.reference }
                     ].map((item, index) => (
                       <div className="col-md-6" key={index}>
-                        <div
-                          className="p-2 rounded"
-                          style={{
-                            background: "#f8faff",
-                            border: "1px solid #e0e8ff",
-                            boxShadow: "0 2px 8px rgba(75, 108, 183, 0.08)",
-                          }}
-                        >
-                          <label
-                            className="fw-semibold text-muted small mb-1"
-                            style={{ color: "#5a6b8c", fontSize: "0.8rem" }}
-                          >
+                        <div className="p-2 rounded" style={{
+                          background: '#f8faff',
+                          border: '1px solid #e0e8ff',
+                          boxShadow: '0 2px 8px rgba(75, 108, 183, 0.08)'
+                        }}>
+                          <label className="fw-semibold text-muted small mb-1" style={{ color: '#5a6b8c', fontSize: '0.8rem' }}>
                             {item.label}
                           </label>
-                          <div
-                            className="text-dark fw-bold mt-1"
-                            style={{
-                              fontSize: "1rem",
-                              color: "#2d3a5a",
-                            }}
-                          >
+                          <div className="text-dark fw-bold mt-1" style={{
+                            fontSize: '1rem',
+                            color: '#2d3a5a'
+                          }}>
                             {item.value}
                           </div>
                         </div>
@@ -3978,10 +3822,7 @@ const AppointmentBooking = () => {
                 </div>
 
                 {/* Confetti + Image - Medium Size */}
-                <div
-                  className="confetti-burst-container"
-                  style={{ height: "220px", margin: "15px 0" }}
-                >
+                <div className="confetti-burst-container" style={{ height: '220px', margin: '15px 0' }}>
                   {Array.from({ length: 80 }).map((_, i) => {
                     const angle = Math.random() * 2 * Math.PI;
                     const distance = 150 + Math.random() * 80;
@@ -3993,22 +3834,27 @@ const AppointmentBooking = () => {
                         key={i}
                         className={`confetti-piece color-${i % 5}`}
                         style={{
-                          ["--transform" as any]: `translate(${x}px, ${y}px) rotate(${rotate}deg)`,
+                          ['--transform' as any]: `translate(${x}px, ${y}px) rotate(${rotate}deg)`,
                           width: `${8 + Math.random() * 6}px`,
                           height: `${8 + Math.random() * 6}px`,
-                          borderRadius: Math.random() > 0.5 ? "2px" : "50%",
+                          borderRadius: Math.random() > 0.5 ? '2px' : '50%'
                         }}
                       />
                     );
                   })}
 
-                  <div className="d-flex flex-column align-items-center justify-content-center position-relative z-2"
-                    style={{ height: '220px' }}>
-                    <div className="position-absolute" style={{
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)'
-                    }}>
+                  <div
+                    className="d-flex flex-column align-items-center justify-content-center position-relative z-2"
+                    style={{ height: "220px" }}
+                  >
+                    <div
+                      className="position-absolute"
+                      style={{
+                        top: "50%",
+                        left: "50%",
+                        transform: "translate(-50%, -50%)",
+                      }}
+                    >
                       <img
                         src={successImg}
                         alt="Success"
@@ -4016,21 +3862,22 @@ const AppointmentBooking = () => {
                         style={{
                           width: "160px",
                           height: "160px",
-                          objectFit: "contain",
-                          display: "block",
-                          margin: "0 auto",
+                          objectFit: 'contain',
+                          display: 'block',
+                          margin: '0 auto'
                         }}
                       />
                       <h4
                         className="fw-bold mt-3 text-center"
                         style={{
-                          background: 'linear-gradient(135deg, #4b6cb7 0%, #2ecc71 100%)',
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          fontSize: '1.5rem',
-                          whiteSpace: 'nowrap', // prevent line break
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
+                          background:
+                            "linear-gradient(135deg, #4b6cb7 0%, #2ecc71 100%)",
+                          WebkitBackgroundClip: "text",
+                          WebkitTextFillColor: "transparent",
+                          fontSize: "1.5rem",
+                          whiteSpace: "nowrap", // prevent line break
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
                         }}
                       >
                         Appointment saved successfully!
@@ -4040,26 +3887,27 @@ const AppointmentBooking = () => {
                 </div>
 
                 {/* Footer - Compact Button */}
-                <div
-                  className="px-3 pb-3 pt-2"
-                  style={{ background: "rgba(246, 248, 255, 0.8)" }}
-                >
+                <div className="px-3 pb-3 pt-2" style={{ background: 'rgba(246, 248, 255, 0.8)' }}>
                   <div className="d-flex gap-2 flex-wrap">
-
                     <button
                       className="btn fw-bold flex-fill py-2 text-decoration-none"
                       style={{
-                        background: 'linear-gradient(135deg, #f2994a 0%, #f27121 100%)',
-                        color: 'white',
-                        fontSize: '1rem',
-                        letterSpacing: '0.3px',
-                        borderRadius: '10px',
-                        border: 'none',
-                        display: 'inline-block',
-                        transition: 'all 0.3s ease'
+                        background:
+                          "linear-gradient(135deg, #f2994a 0%, #f27121 100%)",
+                        color: "white",
+                        fontSize: "1rem",
+                        letterSpacing: "0.3px",
+                        borderRadius: "10px",
+                        border: "none",
+                        display: "inline-block",
+                        transition: "all 0.3s ease",
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-                      onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.transform = "translateY(-2px)")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.transform = "none")
+                      }
                       onClick={downloadAllInvoices}
                     >
                       <i className="bi bi-download me-2"></i>
@@ -4072,24 +3920,19 @@ const AppointmentBooking = () => {
                       className="btn fw-bold flex-fill py-2"
                       style={{
                         // background: 'linear-gradient(135deg, #4b6cb7 0%, #182848 100%)',
-                        background:
-                          "linear-gradient(135deg, #f2994a 0%, #f27121 100%)",
-                        color: "white",
-                        fontSize: "1rem",
-                        letterSpacing: "0.3px",
-                        borderRadius: "10px",
-                        border: "none",
-                        transition: "all 0.3s ease",
+                        background: 'linear-gradient(135deg, #f2994a 0%, #f27121 100%)',
+                        color: 'white',
+                        fontSize: '1rem',
+                        letterSpacing: '0.3px',
+                        borderRadius: '10px',
+                        border: 'none',
+                        transition: 'all 0.3s ease'
                       }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.transform = "translateY(-2px)")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.transform = "none")
-                      }
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
                       onClick={() => {
                         setsuccessModule(false);
-                        navigate("/");
+                        navigate('/');
                       }}
                     >
                       <i className="bi bi-house-door me-2"></i>
@@ -4097,11 +3940,18 @@ const AppointmentBooking = () => {
                     </button>
                   </div>
                 </div>
+
               </div>
             </div>
           </div>
         </div>
       )}
+
+
+
+
+
+
     </>
   );
 };
