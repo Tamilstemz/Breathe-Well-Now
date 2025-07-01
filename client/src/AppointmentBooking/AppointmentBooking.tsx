@@ -280,7 +280,15 @@ const AppointmentBooking = () => {
 
   // --------------------------- Reschedule -----------------------------
 
-  const [rescheduledata, setRescheduledata] = useState<any[]>([]);
+  const [rescheduledata, setRescheduledata] = useState<any[]>([])
+  const [reappointmentType, setreappointmentType] = useState('')
+
+
+
+
+
+  console.log('formData[222222]', rescheduledata, '=======', reappointmentType);
+
 
   const navigate = useNavigate();
 
@@ -702,9 +710,7 @@ const AppointmentBooking = () => {
       paymentMethod: "QR",
       dob: "",
       TransactionId: "",
-      servicecode: serviceList[0]
-        ? [serviceList[0].code]
-        : [environment.DEFAULT_SERVICE_CODE],
+      servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
       totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
       PaymentType: "",
     });
@@ -723,9 +729,7 @@ const AppointmentBooking = () => {
         paymentMethod: "",
         dob: "",
         TransactionId: "",
-        servicecode: serviceList[0]
-          ? [serviceList[0].code]
-          : [environment.DEFAULT_SERVICE_CODE],
+        servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
         totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
         slot_booking: [],
       },
@@ -815,9 +819,7 @@ const AppointmentBooking = () => {
     } else {
       setFormData((prev) => ({
         ...prev,
-        servicecode: serviceList[0]
-          ? [serviceList[0].code]
-          : [environment.DEFAULT_SERVICE_CODE],
+        servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
         totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
       }));
     }
@@ -1422,9 +1424,8 @@ const AppointmentBooking = () => {
 
       const servicedetail = members[0]?.servicecode;
 
-      const servicetotalPrice = serviceList[0]
-        ? parseInt(serviceList[0]?.price)
-        : 100;
+      const servicetotalPrice = serviceList[0] ? parseInt(serviceList[0]?.price) : 100
+
 
       const updatedMembers = Array.from({ length: value }, () => ({
         patientName: "",
@@ -1448,7 +1449,7 @@ const AppointmentBooking = () => {
       setFormData((prev) => ({
         ...prev,
         totalPrice: value * servicetotalPrice,
-      }));
+      }))
 
       setMembers(updatedMembers);
     } else {
@@ -1535,6 +1536,7 @@ const AppointmentBooking = () => {
       }
 
       let finalData;
+
 
       if (appointmentType === "Group") {
         finalData = members.map((member, index) => ({
@@ -1682,9 +1684,7 @@ const AppointmentBooking = () => {
             paymentMethod: "QR",
             dob: "",
             TransactionId: "",
-            servicecode: serviceList[0]
-              ? [serviceList[0].code]
-              : [environment.DEFAULT_SERVICE_CODE],
+            servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
             totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
             PaymentType: "",
           });
@@ -1703,12 +1703,8 @@ const AppointmentBooking = () => {
               paymentMethod: "",
               dob: "",
               TransactionId: "",
-              servicecode: serviceList[0]
-                ? [serviceList[0].code]
-                : [environment.DEFAULT_SERVICE_CODE],
-              totalPrice: serviceList[0]
-                ? parseInt(serviceList[0]?.price)
-                : 100,
+              servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
+              totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
               slot_booking: [],
             },
           ]);
@@ -1756,9 +1752,7 @@ const AppointmentBooking = () => {
       paymentMethod: "QR",
       dob: "",
       TransactionId: "",
-      servicecode: serviceList[0]
-        ? [serviceList[0].code]
-        : [environment.DEFAULT_SERVICE_CODE],
+      servicecode: serviceList[0] ? [serviceList[0].code] : [environment.DEFAULT_SERVICE_CODE],
       totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
       PaymentType: "",
     });
@@ -2017,9 +2011,9 @@ const AppointmentBooking = () => {
   const downloadAllInvoices = () => {
     invoiceUrls.forEach((url, index) => {
       setTimeout(() => {
-        const link = document.createElement("a");
+        const link = document.createElement('a');
         link.href = url;
-        link.download = "";
+        link.download = '';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -2029,9 +2023,13 @@ const AppointmentBooking = () => {
     // After all downloads triggered, navigate to home
     setTimeout(() => {
       setsuccessModule(false);
-      navigate("/");
+      navigate('/');
     }, invoiceUrls.length * 1000 + 500);
   };
+
+
+
+
 
   //------------------------------------update
 
@@ -2052,9 +2050,21 @@ const AppointmentBooking = () => {
   useEffect(() => {
     let update_data = getDecryptedAppointments();
     if (update_data && update_data.length > 0) {
+
       const appointmentType = localStorage.getItem("appointmentType");
-      setRescheduledata(update_data);
-      console.log("update_data", update_data);
+      setreappointmentType(appointmentType ?? "")
+      setRescheduledata(update_data)
+      console.log('update_data', update_data);
+
+      if (appointmentType === 'Group') {
+        setAppointmentType('Group')
+        setmembercount(update_data?.length || 0)
+      }
+
+
+
+
+
 
       if (appointmentType === "Group") {
         setAppointmentType("Group");
@@ -2077,9 +2087,10 @@ const AppointmentBooking = () => {
       );
 
       if (rescheduleConfirm) {
-        console.log("rescheduledata------------???", rescheduledata);
 
-        if (appointmentType === "Group") {
+        console.log('rescheduledata------------???', rescheduledata);
+
+        if (appointmentType === 'Group') {
           let finalData: any[] = [];
 
           rescheduledata.forEach((item: any, index: number) => {
@@ -2132,8 +2143,7 @@ const AppointmentBooking = () => {
           // 2. Merge new group data into stored data (replace if applicant_number matches)
           finalData.forEach((incomingApplicant) => {
             const existingIndex = newSlotData.findIndex(
-              (item) =>
-                item.applicant_number === incomingApplicant.applicant_number
+              (item) => item.applicant_number === incomingApplicant.applicant_number
             );
 
             if (existingIndex !== -1) {
@@ -2156,10 +2166,13 @@ const AppointmentBooking = () => {
           setTimeout(() => {
             window.scrollTo({ top: 0, behavior: "smooth" });
           }, 50);
-        } else {
-          let singledata = rescheduledata[0];
 
-          console.log("singledata----+++", singledata);
+        }
+        else {
+
+          let singledata = rescheduledata[0]
+
+          console.log('singledata----+++', singledata)
           let finalData = [
             {
               type: "I",
@@ -2191,7 +2204,9 @@ const AppointmentBooking = () => {
             },
           ];
 
-          console.log("finalData--------", finalData);
+          console.log('finalData--------', finalData);
+
+
 
           // 1. Get encrypted data from localStorage
           const encryptedData = localStorage.getItem("Newslot");
@@ -2233,6 +2248,7 @@ const AppointmentBooking = () => {
           setTimeout(() => {
             window.scrollTo({ top: 0, behavior: "smooth" });
           }, 50);
+
         }
       }
     }
@@ -2242,15 +2258,9 @@ const AppointmentBooking = () => {
     <>
       {rescheduledata && rescheduledata.length > 0 && (
         <div className="bg-white p-4 shadow rounded-lg border border-gray-200 mb-6">
-          <h2 className="text-lg font-semibold mb-4 text-blue-700">
-            Appointment Details
-          </h2>
+          <h2 className="text-lg font-semibold mb-4 text-blue-700">Appointment Details</h2>
           {rescheduledata.map((data: any, index: number) => (
-            <div
-              key={index}
-              className="grid grid-cols-1 md:grid-cols-8 gap-4 text-sm text-gray-700"
-              style={{ marginTop: "15px" }}
-            >
+            <div key={index} className="grid grid-cols-1 md:grid-cols-8 gap-4 text-sm text-gray-700" style={{ marginTop: '15px' }}>
               <div className="flex flex-col">
                 <span className="font-medium text-gray-500">
                   Applicant Number
@@ -2296,10 +2306,14 @@ const AppointmentBooking = () => {
                 <span className="font-medium text-gray-500">Time</span>
                 <span>{data.booked_time}</span>
               </div>
-            </div>
-          ))}
+            </div>))}
         </div>
+
       )}
+
+
+
+
 
       <div className="container-fluid p-3" style={{ marginTop: "10px" }}>
         <div className="row custom-main-layout">
@@ -2845,16 +2859,16 @@ const AppointmentBooking = () => {
                               </h5>
                             </div>
 
+
+
+
                             {slots.length > 0 &&
-                            slots.filter(
-                              (slot: any) =>
-                                +slot.remaining > 0 &&
-                                !isSlotExpired(
-                                  slot?.time,
-                                  slot?.slotItem?.slot?.date
-                                )
-                            ).length > 0 ? (
-                              <div className="row g-3 px-2 slottimebox">
+                              slots.filter(
+                                (slot: any) => +slot.remaining > 0 && !isSlotExpired(slot?.time, slot?.slotItem?.slot?.date)
+                              ).length > 0 ? (
+                              <div
+                                className="row g-3 px-2 slottimebox"
+                              >
                                 {slots
                                   .filter(
                                     (slot: any) =>
@@ -3988,18 +4002,13 @@ const AppointmentBooking = () => {
                     );
                   })}
 
-                  <div
-                    className="d-flex flex-column align-items-center justify-content-center position-relative z-2"
-                    style={{ height: "220px" }}
-                  >
-                    <div
-                      className="position-absolute"
-                      style={{
-                        top: "50%",
-                        left: "50%",
-                        transform: "translate(-50%, -50%)",
-                      }}
-                    >
+                  <div className="d-flex flex-column align-items-center justify-content-center position-relative z-2"
+                    style={{ height: '220px' }}>
+                    <div className="position-absolute" style={{
+                      top: '50%',
+                      left: '50%',
+                      transform: 'translate(-50%, -50%)'
+                    }}>
                       <img
                         src={successImg}
                         alt="Success"
@@ -4015,14 +4024,13 @@ const AppointmentBooking = () => {
                       <h4
                         className="fw-bold mt-3 text-center"
                         style={{
-                          background:
-                            "linear-gradient(135deg, #4b6cb7 0%, #2ecc71 100%)",
-                          WebkitBackgroundClip: "text",
-                          WebkitTextFillColor: "transparent",
-                          fontSize: "1.5rem",
-                          whiteSpace: "nowrap", // prevent line break
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
+                          background: 'linear-gradient(135deg, #4b6cb7 0%, #2ecc71 100%)',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                          fontSize: '1.5rem',
+                          whiteSpace: 'nowrap', // prevent line break
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
                         }}
                       >
                         Appointment saved successfully!
@@ -4037,30 +4045,28 @@ const AppointmentBooking = () => {
                   style={{ background: "rgba(246, 248, 255, 0.8)" }}
                 >
                   <div className="d-flex gap-2 flex-wrap">
+
                     <button
                       className="btn fw-bold flex-fill py-2 text-decoration-none"
                       style={{
-                        background:
-                          "linear-gradient(135deg, #f2994a 0%, #f27121 100%)",
-                        color: "white",
-                        fontSize: "1rem",
-                        letterSpacing: "0.3px",
-                        borderRadius: "10px",
-                        border: "none",
-                        display: "inline-block",
-                        transition: "all 0.3s ease",
+                        background: 'linear-gradient(135deg, #f2994a 0%, #f27121 100%)',
+                        color: 'white',
+                        fontSize: '1rem',
+                        letterSpacing: '0.3px',
+                        borderRadius: '10px',
+                        border: 'none',
+                        display: 'inline-block',
+                        transition: 'all 0.3s ease'
                       }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.transform = "translateY(-2px)")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.transform = "none")
-                      }
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
                       onClick={downloadAllInvoices}
                     >
                       <i className="bi bi-download me-2"></i>
                       Download Invoice
                     </button>
+
+
 
                     <button
                       className="btn fw-bold flex-fill py-2"
