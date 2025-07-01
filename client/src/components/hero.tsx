@@ -21,7 +21,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import httpClient from "../../../api/httpClient";
 import { environment } from "../../../environment/environment";
-import { encrypt } from "../../../utils/crypto-util";
+import { decrypt, encrypt } from "../../../utils/crypto-util";
 import successImg from "../../assests/successImg.png";
 
 interface AppointmentData {
@@ -135,59 +135,70 @@ export default function Hero() {
     const encrypted = localStorage.getItem("appointments");
     if (!encrypted) return [];
 
+    const decrypted = decrypt(encrypted);
     try {
-      const bytes = CryptoJS.AES.decrypt(encrypted, environment.SECRET_KEY);
-      const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-      return JSON.parse(decrypted);
+      return decrypted ? JSON.parse(decrypted) : [];
     } catch (error) {
-      console.error("Decryption error:", error);
+      console.error("Decryption JSON parse error:", error);
       return [];
     }
   };
 
   useEffect(() => {
-    const encrypted = localStorage.getItem("Newslot");
+    const processNewSlotData = async () => {
+      const encrypted = localStorage.getItem("Newslot");
 
-    if (encrypted) {
-      try {
-        const decrypted = CryptoJS.AES.decrypt(
-          encrypted,
-          environment.SECRET_KEY
-        ).toString(CryptoJS.enc.Utf8);
-        console.log();
+      if (encrypted) {
+        try {
+          const decrypted = decrypt(encrypted);
+          const parsedData = JSON.parse(decrypted ?? "[]");
+          console.log("parsedData111--------", parsedData);
 
-        const parsedData = JSON.parse(decrypted);
-        console.log("parsedData111--------", parsedData);
+          const Appoinment = getDecryptedAppointmentsdata();
+          console.log("parsedData222-------", Appoinment);
 
-        let Appoinment = getDecryptedAppointmentsdata();
+          const appointmentType = localStorage.getItem("appointmentType");
+          setappointmentType(appointmentType ?? "");
+          setAppointmentData(Appoinment);
+          setNewAppointmentSlot(parsedData);
 
-        console.log("parsedData222-------", Appoinment);
+          const filteredSelectedApplicants = Appoinment.filter((item: any) =>
+            parsedData.some(
+              (a: any) => a.applicant_number === item.applicant_number
+            )
+          );
 
-        const appointmentType = localStorage.getItem("appointmentType");
+          const otpdata = {
+            applicant_number: Appoinment[0]?.applicant_number,
+            contact_number: Appoinment[0]?.contact_number,
+            otp_type: "RescheduleOTP",
+            center_id: Appoinment[0]?.center_id,
+            newtype: "new",
+          };
 
-        setappointmentType(appointmentType ?? "");
-        setAppointmentData(Appoinment);
-        setNewAppointmentSlot(parsedData);
+          const res = await httpClient.post(environment.OTP_API, otpdata);
+          console.log("OTP Response:", res);
 
-        const filteredSelectedApplicants = Appoinment.filter((item: any) =>
-          parsedData.some(
-            (a: any) => a.applicant_number === item.applicant_number
-          )
-        );
+          toast({
+            title: "success",
+            description: res.data.message,
+            variant: "success",
+            duration: 4000,
+          });
 
-        // Set selected applicants
-        setSelectedApplicants(filteredSelectedApplicants);
-
-        setShowAppointmentModal(true);
-        setotpButtontype("Reschedule");
-        setOtpVisible(true);
-        setOtpError("");
-
-        // setRescheduledAppointments(parsedData);
-      } catch (error) {
-        console.error("Error decrypting or parsing Newslot data:", error);
+          startTimer(); // ✅ Start 5-min timer
+          setOtpVisible(true);
+          setOtpError("");
+          setotpButtontype("Reschedule");
+          setSelectedApplicants(filteredSelectedApplicants);
+          setShowAppointmentModal(true);
+        } catch (error) {
+          console.error("Error decrypting or processing Newslot data:", error);
+        }
       }
-    }
+    };
+
+    processNewSlotData();
   }, []);
 
   const handleClear = () => {
@@ -211,15 +222,15 @@ export default function Hero() {
     setOpenModal(true);
   };
 
-  const getDecryptedAppointments = () => {
+  const getDecryptedAppointments = (): any[] => {
     const encrypted = localStorage.getItem("appointments");
     if (!encrypted) return [];
 
+    const decrypted = decrypt(encrypted);
     try {
-      const bytes = CryptoJS.AES.decrypt(encrypted, environment.SECRET_KEY);
-      return JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
-    } catch (e) {
-      console.error("Decryption failed", e);
+      return decrypted ? JSON.parse(decrypted) : [];
+    } catch (error) {
+      console.error("Decryption JSON parse error:", error);
       return [];
     }
   };
@@ -249,10 +260,7 @@ export default function Hero() {
       existing = [...existing, ...item];
 
       // Encrypt and save
-      const encrypted = CryptoJS.AES.encrypt(
-        JSON.stringify(existing),
-        environment.SECRET_KEY
-      ).toString();
+      const encrypted = encrypt(JSON.stringify(existing));
 
       localStorage.setItem("appointments", encrypted);
 
@@ -262,26 +270,26 @@ export default function Hero() {
       navigate(`${environment.BASE_PATH}AppointmentBooking`);
       setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
     } else {
-      const otpdata = {
-        applicant_number: appointmentData[0]?.applicant_number,
-        contact_number: appointmentData[0]?.contact_number,
-        otp_type: "RescheduleOTP",
-        center_id: appointmentData[0]?.center_id,
-        newtype: "new",
-      };
+      // const otpdata = {
+      //   applicant_number: appointmentData[0]?.applicant_number,
+      //   contact_number: appointmentData[0]?.contact_number,
+      //   otp_type: "RescheduleOTP",
+      //   center_id: appointmentData[0]?.center_id,
+      //   newtype: "new",
+      // };
 
-      const res = await httpClient.post(environment.OTP_API, otpdata);
-      console.log("OTP Response:", res);
-      toast({
-        title: "success",
-        description: res.data.message,
-        variant: "success",
-        duration: 4000,
-      });
-      startTimer();
-      // setotpButtontype("Reschedule");
-      setOtpVisible(true);
-      setOtpError("");
+      // const res = await httpClient.post(environment.OTP_API, otpdata);
+      // console.log("OTP Response:", res);
+      // toast({
+      //   title: "success",
+      //   description: res.data.message,
+      //   variant: "success",
+      //   duration: 4000,
+      // });
+      // startTimer();
+      // // setotpButtontype("Reschedule");
+      // setOtpVisible(true);
+      // setOtpError("");
 
       let existing = getDecryptedAppointments().filter(
         (appt: any) => appt.id !== item.id
@@ -289,7 +297,9 @@ export default function Hero() {
       existing.push(item);
       const encrypted = encrypt(JSON.stringify(existing));
       localStorage.setItem("appointments", encrypted);
-      setOtpVisible(true);
+      // setOtpVisible(true);
+      navigate(`${environment.BASE_PATH}AppointmentBooking`);
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 50);
     }
   };
 
@@ -359,9 +369,9 @@ export default function Hero() {
           variant: "success",
           duration: 4000,
         });
-        if (otpButtontype !== "Reschedule") {
+      
           setAppointmentCancelBtn(true);
-        }
+       
 
         setsuccessmsg(res.data.message);
         setTimerVisible(false);
@@ -544,10 +554,17 @@ export default function Hero() {
     setAppointmentData([]);
     localStorage.removeItem("appointments");
     localStorage.removeItem("Newslot");
+    localStorage.removeItem("appointmentType");
     setOtpVisible(false);
     setOtpError("");
     setOtp(["", "", "", "", "", ""]);
     setAppointmentCancelBtn(false);
+    setSelectedApplicants([]);
+    setappointmentType("");
+    setResendDisabled(true);
+    setsuccessModule(false);
+    setTimerVisible(false);
+    setNewAppointmentSlot([]);
   };
 
   const handleCancelAppointment = async (item: any) => {
@@ -665,6 +682,7 @@ export default function Hero() {
         handleClear();
         setOpenModal(false);
         setShowAppointmentModal(true);
+        setappointmentType(data?.RegistrationType);
       } else {
         toast({
           title: "Warning",
@@ -837,7 +855,9 @@ export default function Hero() {
             if (!open) resetAppointmentState();
           }}
         >
-          <DialogContent className="max-w-md">
+          <DialogContent
+            className={appointmentType === "Group" ? "max-w-4xl" : "max-w-md"}
+          >
             <DialogHeader>
               <DialogTitle>Booking Details</DialogTitle>
               <DialogDescription>
@@ -962,7 +982,7 @@ export default function Hero() {
                           <Button
                             variant="destructive"
                             className="w-full"
-                            onClick={() => handlecancelAppointmentDetails()}
+                            onClick={handlecancelAppointmentDetails}
                           >
                             <X className="w-4 h-4 mr-1" />
                             Cancel
@@ -972,7 +992,7 @@ export default function Hero() {
                     ) : (
                       <>
                         <div>
-                          <p className="text-sm text-muted-foreground">
+                          {/* <p className="text-sm text-muted-foreground">
                             Enter the OTP sent to your mobile number to{" "}
                             {otpButtontype === "Reschedule"
                               ? "reschedule your booking:"
@@ -999,7 +1019,92 @@ export default function Hero() {
                             <div className="text-red-600 text-xs mt-1">
                               {otpError}
                             </div>
-                          )}
+                          )} */}
+                                                  <p className="otpSubheading">
+                          We’ve sent a 6-digit code to{" "}
+                          {appointmentData[0]?.contact_number}
+                        </p>
+
+                        <div className="inputContainer">
+                          {otp.map((digit, i) => (
+                            <input
+                              key={i}
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={1}
+                              pattern="\d*"
+                              value={digit}
+                              onChange={(e) => handleChange(e, i)}
+                              onKeyDown={(e) => handleKeyDown(e, i)}
+                              className={`otp-input ${
+                                otpErrorActive ? "error" : ""
+                              }`}
+                              disabled={appointmentCancelBtn}
+                            />
+                          ))}
+                        </div>
+                        {timerVisible && (
+                          <p className="countdown-timer">
+                            ⏳ OTP expires in: <strong>{formatTimer()}</strong>
+                          </p>
+                        )}
+                        {otpError && (
+                          <div className="otp-error">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="error-icon"
+                              viewBox="0 0 20 20"
+                              fill="red"
+                              width="20"
+                              height="20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-5h2v2h-2v-2zm0-6h2v5h-2V7z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            <span>{otpError}</span>
+                          </div>
+                        )}
+                        {successmsg && (
+                          <div className="otp-success">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              className="success-icon"
+                              viewBox="0 0 20 20"
+                              fill="green"
+                              width="20"
+                              height="20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            <span>{successmsg}</span>
+                          </div>
+                        )}
+
+                        <button
+                          className="verifyButton"
+                          onClick={handleValidateOtp}
+                        >
+                          Verify
+                        </button>
+
+                        <p className="resendNote">
+                          Didn’t receive code?
+                          <button
+                            type="button"
+                            className="resendBtn"
+                            disabled={resendDisabled}
+                            onClick={handleResendOtp}
+                          >
+                            Resend Code
+                          </button>
+                        </p>
                         </div>
 
                         <div className="flex justify-between gap-2 pt-3">
@@ -1031,7 +1136,7 @@ export default function Hero() {
                           ) : (
                             <Button
                               className="w-full bg-orange-500 text-white font-semibold"
-                              // disabled={!/^\d{6}$/.test(otp)}
+                             disabled={!appointmentCancelBtn}
                               onClick={() =>
                                 handleCancelAppointment(selectedApplicants)
                               }
