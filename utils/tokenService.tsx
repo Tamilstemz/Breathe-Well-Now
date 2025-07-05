@@ -1,7 +1,7 @@
 // src/services/token-service.ts
 import axios from "axios";
 import { encrypt, decrypt } from "../utils/crypto-util";
-import { environment } from "../environment/environment.prod";
+import { environment } from "../environment/environment";
 
 const TOKEN_KEY = "nd_token";
 

@@ -6,7 +6,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import doctorImage from "@assets/newpic1_1749587017199.png";
 import {
@@ -1146,9 +1145,9 @@ export default function Hero() {
                           )}
                         </div>
 
-                        <div className="text-center text-sm underline text-muted-foreground hover:text-black cursor-pointer pt-2">
+                        {/* <div className="text-center text-sm underline text-muted-foreground hover:text-black cursor-pointer pt-2">
                           Resend OTP
-                        </div>
+                        </div> */}
                       </>
                     )}
                   </div>
@@ -1401,9 +1400,9 @@ export default function Hero() {
                           )}
                         </div>
 
-                        <div className="text-center text-sm underline text-muted-foreground hover:text-black cursor-pointer pt-2">
+                        {/* <div className="text-center text-sm underline text-muted-foreground hover:text-black cursor-pointer pt-2">
                           Resend OTP
-                        </div>
+                        </div> */}
                       </>
                     )}
 

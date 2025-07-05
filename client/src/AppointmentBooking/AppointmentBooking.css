@@ -600,6 +600,9 @@ input[type="number"] {
 .modal-content {
   padding: 15px;
 }
+.is-invalid{
+  background-color: red;
+}
 
 .modal-header {
   position: relative; /* Needed for absolute positioning of close button */
@@ -874,6 +877,9 @@ input[type="number"] {
 
   .modal-content {
     padding: 10px;
+    max-height: 1200px;
+    height: 600px;
+    overflow: auto;
   }
 
   .modal-header {
