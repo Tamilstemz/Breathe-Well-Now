@@ -619,6 +619,8 @@ const AppointmentBooking = () => {
       service_code: formData.servicecode,
     };
 
+    console.log('ppppppppp--------ii',slot.time,'+++++',slot.slotItem);
+    
     setselectedslottime(slot.time);
     setSelectedSlot(slot.slotItem);
 
@@ -1332,9 +1334,9 @@ const AppointmentBooking = () => {
         if (!passportNo.trim()) {
           errors[`passportNo_${index}`] = "Passport Number is required.";
           hasError = true;
-        } else if (!/^[A-Z0-9]{6,12}$/.test(passportNo)) {
+        } else if (!/^[A-Z0-9]{8,12}$/.test(passportNo)) {
           errors[`passportNo_${index}`] =
-            "6-9 characters, uppercase letters/numbers only.";
+            "8-12 characters, uppercase letters/numbers only.";
           hasError = true;
         }
 
@@ -1420,8 +1422,8 @@ const AppointmentBooking = () => {
 
       if (!passportNo.trim())
         errors.passportNo = "Passport Number is required.";
-      else if (!/^[A-Z0-9]{6,12}$/.test(passportNo))
-        errors.passportNo = "6-9 characters, uppercase letters/numbers only.";
+      else if (!/^[A-Z0-9]{8,12}$/.test(passportNo))
+        errors.passportNo = "8-12 characters, uppercase letters/numbers only.";
 
       if (alternativeNumber && !/^\d{10}$/.test(alternativeNumber))
         errors.alternativeNumber = "Must be exactly 10 digits.";
@@ -2041,7 +2043,7 @@ const AppointmentBooking = () => {
       let updatedData = { ...formData, [name]: value };
 
       // If DOB is updated, auto-calculate age
-      if (name === "dob" && value) {
+      if (name === "dob" && value) {        
         updatedData.age = calculateAge(value);
       }
 
@@ -3272,7 +3274,6 @@ const AppointmentBooking = () => {
                           Selected Slot <span>:</span>
                         </label>
                         <span className="info-value">
-                          {selectedslottime}
                           {appointmentType === "Group"
                             ? members[0]?.Primarymemselectedslottime
                             : selectedslottime}
@@ -3495,10 +3496,11 @@ const AppointmentBooking = () => {
                                                   handleChange(e, i);
                                                 }
                                               }}
-                                              placeholder={getDynamicPlaceholder(
-                                                "age"
-                                              )}
+                                              // placeholder={getDynamicPlaceholder(
+                                              //   "age"
+                                              // )}
                                               autoComplete="off"
+                                              readOnly
                                             />
                                           </div>
                                         </div>
@@ -3534,7 +3536,7 @@ const AppointmentBooking = () => {
                                           </div>
                                           {formErrors[`passportNo_${i}`] && (
                                             <small className="text-danger mt-1 d-block text-end">
-                                              eg: A123456 or AB1234567
+                                              eg: A12345623 and 8-12 characters
                                             </small>
                                           )}
                                         </div>
@@ -4043,13 +4045,13 @@ const AppointmentBooking = () => {
                                       const today = new Date();
 
                                       const maxAge = 99;
-                                      const minYear =
-                                        today.getFullYear() - maxAge;
+                                      // const minYear =
+                                      //   today.getFullYear() - maxAge;
 
                                       const inputYear = inputDate.getFullYear();
 
                                       if (
-                                        inputYear < minYear ||
+                                        // inputYear < minYear ||
                                         inputDate > today
                                       ) {
                                         return; // Don't update if year is invalid
@@ -4093,9 +4095,8 @@ const AppointmentBooking = () => {
                                       if (/^\d*$/.test(value)) handleChange(e);
                                     }}
                                     maxLength={2}
-                                    placeholder={getDynamicPlaceholder("age")}
                                     autoComplete="off"
-                                    disabled
+                                    readOnly
                                   />
                                 </div>
                               </div>
@@ -4129,9 +4130,9 @@ const AppointmentBooking = () => {
                                   />
                                 </div>
                                 {formErrors.passportNo && (
-                                  <small className="text-danger mt-1 d-block text-end">
-                                    eg: A123456 or AB1234567
-                                  </small>
+                                   <small className="text-danger mt-1 d-block text-end">
+                                      eg: A12345623 and 8-12 characters
+                                    </small>
                                 )}
                               </div>
 
@@ -4317,6 +4318,7 @@ const AppointmentBooking = () => {
                     </div>
                   </div>
                 </div>
+                
                 <div className="modal-footer d-flex justify-content-end gap-2">
                   <button className="btn-custom-orange" onClick={clear}>
                     Clear
