@@ -413,7 +413,6 @@ export default function Hero() {
       variant: "success",
       duration: 4000,
     });
-    alert("OTP resent!");
     setOtp(new Array(6).fill(""));
     startTimer();
   };
@@ -1129,6 +1128,7 @@ export default function Hero() {
                               onClick={() =>
                                 handleConfirmReschedule(selectedApplicants)
                               }
+                              disabled={!appointmentCancelBtn}
                             >
                               Confirm Reschedule
                             </Button>
@@ -1382,6 +1382,7 @@ export default function Hero() {
                               className="w-full bg-orange-500 text-white font-semibold"
                               // disabled={!/^\d{6}$/.test(otp)}
                               onClick={() => handleConfirmReschedule(item)}
+                              disabled={!appointmentCancelBtn}
                             >
                               Confirm Reschedule
                             </Button>

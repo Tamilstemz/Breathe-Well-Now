@@ -161,6 +161,7 @@ type FormDataType = {
   servicecode: string[]; // ← Explicitly typed as string[]
   totalPrice: number;
   PaymentType: string;
+  specialAssistance:boolean;
 };
 
 type ApplicantResData = {
@@ -255,6 +256,7 @@ const AppointmentBooking = () => {
     servicecode: [],
     totalPrice: 0,
     PaymentType: "",
+    specialAssistance:false,
   });
   const [members, setMembers] = useState<any[]>([
     {
@@ -275,6 +277,7 @@ const AppointmentBooking = () => {
       totalPrice: 0,
       slot_booking: [],
       PaymentType: "",
+      specialAssistance:false,
     },
   ]);
 
@@ -598,6 +601,7 @@ const AppointmentBooking = () => {
           passportNo: "",
           gender: "",
           slot_booking: [],
+          specialAssistance:false,
         }));
         setMembers(emptyMembers);
       }
@@ -782,6 +786,7 @@ const AppointmentBooking = () => {
         : [environment.DEFAULT_SERVICE_CODE],
       totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
       PaymentType: "",
+    specialAssistance:false,
     });
     setMembers([
       {
@@ -803,6 +808,7 @@ const AppointmentBooking = () => {
           : [environment.DEFAULT_SERVICE_CODE],
         totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
         slot_booking: [],
+        specialAssistance:false,
       },
     ]);
     setSelectedServices([]);
@@ -1603,6 +1609,7 @@ const AppointmentBooking = () => {
           paymentPreference: "",
           paymentMethod: "",
           dob: "",
+          specialAssistance:false,
         }))
       );
     } else if (stepIndex === 1) {
@@ -1672,6 +1679,7 @@ const AppointmentBooking = () => {
           created_by: 1,
           center: selectedCenter,
           appointmentType: appointmentType,
+          specialAssistance:member.specialAssistance,
           slot_booking: member.slot_booking,
         }));
       } else {
@@ -1697,6 +1705,7 @@ const AppointmentBooking = () => {
             created_by: 1,
             center: selectedCenter,
             appointmentType: appointmentType,
+            specialAssistance:formData.specialAssistance,
             slot_booking: [
               {
                 action_date: formatDateToYYYYMMDDNew(new Date()),
@@ -1714,7 +1723,7 @@ const AppointmentBooking = () => {
         ];
       }
 
-      console.log(finalData);
+      console.log('finalData-----------vvvv',finalData);
 
       const res = await httpClient.post(
         environment.APPLICANT_WITH_APPT_API,
@@ -1795,6 +1804,7 @@ const AppointmentBooking = () => {
               : [environment.DEFAULT_SERVICE_CODE],
             totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
             PaymentType: "",
+            specialAssistance:false,
           });
           setMembers([
             {
@@ -1818,6 +1828,7 @@ const AppointmentBooking = () => {
                 ? parseInt(serviceList[0]?.price)
                 : 100,
               slot_booking: [],
+              specialAssistance:false,
             },
           ]);
           setSelectedService("");
@@ -1869,7 +1880,8 @@ const AppointmentBooking = () => {
         ? [serviceList[0].code]
         : [environment.DEFAULT_SERVICE_CODE],
       totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
-      PaymentType: "",
+      PaymentType: "",      
+     specialAssistance:false,
     });
 
     // Dynamically generate membercount empty members
@@ -2035,7 +2047,7 @@ const AppointmentBooking = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     index?: number // optional index for group members
   ) => {
-    const { name, value } = e.target;
+    const { name,type,value} = e.target;
 
     // console.log('vvvvvv----11111', value, '000----000', index);
 
@@ -2079,12 +2091,22 @@ const AppointmentBooking = () => {
       });
 
       // console.log('formData-----',formData);
-    } else if (appointmentType === "Group") {
+    }
+    
+    else if (appointmentType === "Group") {
       // console.log('vvvvvv----222', value, '000----000', index);
+      const isCheckbox = type === "checkbox";
+      const newValue = isCheckbox
+        ? (e.target as HTMLInputElement).checked
+        : value;
 
       const updatedMembers = [...members];
       if (typeof index === "number" && index >= 0) {
         updatedMembers[index][name] = value;
+      }
+
+      if(typeof index === "number" && type === "checkbox"){
+        updatedMembers[index][name] = newValue
       }
 
       // Name validation: letters + space only
@@ -2120,7 +2142,10 @@ const AppointmentBooking = () => {
       let updatedData = { ...formData, [name]: value };
       setFormData(updatedData);
       console.log(members);
-    }
+    
+}
+
+
   };
 
   const downloadAllInvoices = () => {
@@ -3542,6 +3567,8 @@ const AppointmentBooking = () => {
                                         </div>
                                       </div>
 
+
+                                      
                                       {i === 0 && (
                                         <>
                                           <div className="row mb-3">
@@ -3689,6 +3716,10 @@ const AppointmentBooking = () => {
                                                 </select>
                                               </div>
                                             </div>
+
+
+                                              
+
                                           </div>
                                         </>
                                       )}
@@ -3821,6 +3852,45 @@ const AppointmentBooking = () => {
                                           )}
                                         </div>
                                       </div>
+
+                                      <div className="row g-2 align-items-center">
+                                        <div className="col-12 col-md-auto">
+                                          <span className="text-danger fw-bold">
+                                            <input
+                                              className="form-check-input"
+                                              type="checkbox"
+                                              id={`specialAssistance_${i}`}
+                                              style={{
+                                                width: "1.2rem",
+                                                height: "1.2rem",
+                                                marginBottom: "22px",
+                                                border: "1px solid black",
+                                              }}
+                                              checked={members[i].specialAssistance}
+                                              onChange={(e) => handleChange(e, i)}
+                                              name="specialAssistance"
+                                            />
+                                          </span>
+                                        </div>
+                                        <div className="col-12 col-md">
+                                          <div className="d-flex flex-wrap align-items-center">
+                                            <span className="text-danger me-2">
+                                              <label
+                                                className="form-check-label"
+                                                htmlFor={`specialAssistance_${i}`}
+                                              >
+                                                <div style={{ color: "darkred" }}>
+                                                  Kindly check this box if you require special assistance, including
+                                                  support for children with special needs or wheelchair accessibility.
+                                                  Please inform us in advance so we can make the necessary
+                                                  arrangements.
+                                                </div>
+                                              </label>
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </div>
+
                                     </form>
                                   </AccordionContent>
                                 </AccordionItem>
@@ -4161,6 +4231,60 @@ const AppointmentBooking = () => {
                                 </div>
                               </div>
                             </div>
+
+
+                            <div
+                              className="card border-0 shadow-sm mt-3 px-3 py-2"
+                              style={{
+                                backgroundColor: "#fff3f3",
+                                borderLeft: "4px solid #e74c3c",
+                              }}
+                            >
+                              <div className="row g-2 align-items-center">
+                                <div className="col-12 col-md-auto">
+                                  <span className="text-danger fw-bold">
+                                    <input
+                                      className="form-check-input"
+                                      type="checkbox"
+                                      id="specialAssistance"
+                                      style={{
+                                        width: "1.2rem",
+                                        height: "1.2rem",
+                                        marginBottom: "22px",
+                                        border: "1px solid black",
+                                      }}
+                                      checked={formData.specialAssistance}
+                                      onChange={(e) =>
+                                        setFormData({
+                                          ...formData,
+                                          specialAssistance: e.target.checked,
+                                        })
+                                      }
+                                    />
+                                  </span>
+                                </div>
+                                <div className="col-12 col-md">
+                                  <div className="d-flex flex-wrap align-items-center">
+                                    <span className="text-danger me-2">
+                                      <label
+                                        className="form-check-label"
+                                        htmlFor="specialAssistance"
+                                      >
+                                        <div style={{ color: "darkred" }}>
+                                          Kindly check this box if you require special
+                                          assistance, including support for children with
+                                          special needs or wheelchair accessibility. Please
+                                          inform us in advance so we can make the necessary
+                                          arrangements.
+                                        </div>
+                                      </label>
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            
                           </form>
                         )}
                       </>
@@ -4273,51 +4397,7 @@ const AppointmentBooking = () => {
                     )}
                   </div>
                 </>
-                <div
-                  className="card border-0 shadow-sm mt-3 px-3 py-2"
-                  style={{
-                    backgroundColor: "#fff3f3",
-                    borderLeft: "4px solid #e74c3c",
-                  }}
-                >
-                  <div className="row g-2 align-items-center">
-                    <div className="col-12 col-md-auto">
-                      <span className="text-danger fw-bold">
-                        <input
-                          className="form-check-input"
-                          type="checkbox"
-                          id="specialAssistance"
-                          style={{
-                            width: "1.2rem",
-                            height: "1.2rem",
-                            marginBottom: "22px",
-                            border: "1px solid black",
-                          }}
-                          // checked={needsAssistance}
-                          // onChange={(e) => setNeedsAssistance(e.target.checked)}
-                        />
-                      </span>
-                    </div>
-                    <div className="col-12 col-md">
-                      <div className="d-flex flex-wrap align-items-center">
-                        <span className="text-danger me-2">
-                          <label
-                            className="form-check-label"
-                            htmlFor="specialAssistance"
-                          >
-                            <div style={{ color: "darkred" }}>
-                              Kindly check this box if you require special
-                              assistance, including support for children with
-                              special needs or wheelchair accessibility. Please
-                              inform us in advance so we can make the necessary
-                              arrangements.
-                            </div>
-                          </label>
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                
                 
                 <div className="modal-footer d-flex justify-content-end gap-2">
                   <button className="btn-custom-orange" onClick={clear}>
