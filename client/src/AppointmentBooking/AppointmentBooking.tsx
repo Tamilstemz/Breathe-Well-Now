@@ -382,49 +382,54 @@ const AppointmentBooking = () => {
   //   };
 
   const handleSlotChange = (e: any, memberIndex: number) => {
-    const bookedTime = e.target.value;
-    if (!bookedTime) return;
+    const newBookedTime = e.target.value;
+    if (!newBookedTime) return;
 
-    const bookingPayload = {
-      action_date: formatDateToYYYYMMDDNew(new Date()),
-      booked_time: bookedTime,
-      booking_from: 3,
-      booking_status: 1,
-      date_booked: formatDateToYYYYMMDDNew(selectedDate),
-      department: "AU",
-      description: "Test Service",
-      service_code: formData.servicecode,
-    };
+    const prevMembers = [...members];
+    const previousBookedTime =
+      prevMembers[memberIndex]?.slot_booking?.[0]?.booked_time;
 
-    setMembers((prevMembers) => {
-      const updated = [...prevMembers];
-      updated[memberIndex].slot_booking = [bookingPayload];
-      return updated;
-    });
+    const updatedMembers = [...prevMembers];
+    updatedMembers[memberIndex].slot_booking = [
+      {
+        action_date: formatDateToYYYYMMDDNew(new Date()),
+        booked_time: newBookedTime,
+        booking_from: 3,
+        booking_status: 1,
+        date_booked: formatDateToYYYYMMDDNew(selectedDate),
+        department: "AU",
+        description: "Test Service",
+        service_code: formData.servicecode,
+      },
+    ];
+    setMembers(updatedMembers);
 
-    // ✅ Decrease slot count manually
+    // Adjust slot counts
     setgrpavailslots((prev) =>
       prev.map((slot) => {
         const start = new Date(
-          `1970-01-01T${slot?.start_time}`
+          `1970-01-01T${slot.start_time}`
         ).toLocaleTimeString("en-US", {
           hour: "2-digit",
           minute: "2-digit",
           hour12: true,
         });
-        const end = new Date(`1970-01-01T${slot?.end_time}`).toLocaleTimeString(
+        const end = new Date(`1970-01-01T${slot.end_time}`).toLocaleTimeString(
           "en-US",
-          {
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: true,
-          }
+          { hour: "2-digit", minute: "2-digit", hour12: true }
         );
         const label = `${start} to ${end}`;
 
-        if (label === bookedTime && slot.remaining > 0) {
+        // If previously selected slot: increment back
+        if (label === previousBookedTime) {
+          return { ...slot, remaining: slot.remaining + 1 };
+        }
+
+        // If newly selected slot: decrement
+        if (label === newBookedTime) {
           return { ...slot, remaining: slot.remaining - 1 };
         }
+
         return slot;
       })
     );
@@ -1047,6 +1052,14 @@ const AppointmentBooking = () => {
     const matchedSlot = rawSlots.find(
       (item) => item.slot?.date === formattedDay
     );
+
+    console.log("Matched Slot (Before Filter):", matchedSlot);
+
+    if (matchedSlot && matchedSlot.slot && matchedSlot.slot.slottime) {
+      matchedSlot.slot.slottime = matchedSlot.slot.slottime.filter(
+        (slot: any) => slot.remaining > 0
+      );
+    }
     console.log("Matched Slot:", matchedSlot);
 
     const totalRemaining =
@@ -2286,7 +2299,7 @@ const AppointmentBooking = () => {
               payment_method: item.payment_method,
               transaction_amt: item.transaction_amt,
               appointmentType: appointmentType,
-              specialAssistance:item.specialAssistance,
+              specialAssistance: item.specialAssistance,
               slot_booking: [
                 {
                   action_date: formatDateToYYYYMMDDNew(new Date()),
@@ -2366,7 +2379,7 @@ const AppointmentBooking = () => {
               payment_method: singledata.payment_method,
               transaction_amt: singledata.transaction_amt,
               appointmentType: appointmentType,
-              specialAssistance:singledata.specialAssistance,
+              specialAssistance: singledata.specialAssistance,
               slot_booking: [
                 {
                   action_date: formatDateToYYYYMMDDNew(new Date()),
@@ -3620,48 +3633,46 @@ const AppointmentBooking = () => {
                                             </small>
                                           )}
                                         </div>
-                                        
                                       </div>
 
-                                        <div className="row mb-3">
+                                      <div className="row mb-3">
                                         <div className="col-md-6 mb-3">
-                                              <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                                <label className="form-label label-fixed me-md-2 mb-1 mb-md-0">
-                                                  HAP ID
-                                                </label>
-                                                <input
-                                                  type="text"
-                                                  className={`form-control ${
-                                                    formErrors[`hapId_${i}`]
-                                                      ? "is-invalid input-shake"
-                                                      : ""
-                                                  }`}
-                                                  id={`hapId_${i}`}
-                                                  inputMode="numeric"
-                                                  pattern="\d*"
-                                                  name="hapId"
-                                                  value={members[i].hapId}
-                                                  onChange={(e) => {
-                                                    const value =
-                                                      e.target.value;
-                                                    if (/^\d*$/.test(value)) {
-                                                      handleChange(e, i);
-                                                    }
-                                                  }}
-                                                  maxLength={8}
-                                                  placeholder={getDynamicPlaceholder(
-                                                    "hapId"
-                                                  )}
-                                                  autoComplete="off"
-                                                />
-                                              </div>
-                                              {formErrors[`hapId_${i}`] && (
-                                                <small className="text-danger mt-1 d-block text-end">
-                                                  eg: 12345678
-                                                </small>
+                                          <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                            <label className="form-label label-fixed me-md-2 mb-1 mb-md-0">
+                                              HAP ID
+                                            </label>
+                                            <input
+                                              type="text"
+                                              className={`form-control ${
+                                                formErrors[`hapId_${i}`]
+                                                  ? "is-invalid input-shake"
+                                                  : ""
+                                              }`}
+                                              id={`hapId_${i}`}
+                                              inputMode="numeric"
+                                              pattern="\d*"
+                                              name="hapId"
+                                              value={members[i].hapId}
+                                              onChange={(e) => {
+                                                const value = e.target.value;
+                                                if (/^\d*$/.test(value)) {
+                                                  handleChange(e, i);
+                                                }
+                                              }}
+                                              maxLength={8}
+                                              placeholder={getDynamicPlaceholder(
+                                                "hapId"
                                               )}
-                                            </div>
-                                            
+                                              autoComplete="off"
+                                            />
+                                          </div>
+                                          {formErrors[`hapId_${i}`] && (
+                                            <small className="text-danger mt-1 d-block text-end">
+                                              eg: 12345678
+                                            </small>
+                                          )}
+                                        </div>
+
                                         <div className="col-md-6 mb-3">
                                           <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
                                             <label
@@ -3765,15 +3776,18 @@ const AppointmentBooking = () => {
                                                     }
                                                   );
 
-                                                  const timeOnly = `${start} to ${end}`;
-                                                  const optionText = `${timeOnly} - (Available ${slot.remaining} slots)`;
+                                                  const label = `${start} to ${end}`;
+                                                  const displayLabel = `${label} - (${slot.remaining} slots)`;
 
                                                   return (
                                                     <option
                                                       key={index}
-                                                      value={timeOnly}
+                                                      value={label}
+                                                      disabled={
+                                                        slot.remaining <= 0
+                                                      }
                                                     >
-                                                      {optionText}
+                                                      {displayLabel}
                                                     </option>
                                                   );
                                                 }
@@ -3900,12 +3914,9 @@ const AppointmentBooking = () => {
                                                 </small>
                                               )}
                                             </div> */}
-
                                           </div>
 
                                           <div className="row mb-3">
-                                            
-
                                             <div className="col-md-6 mb-3">
                                               <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
                                                 <label
@@ -3941,7 +3952,6 @@ const AppointmentBooking = () => {
                                           </div>
                                         </>
                                       )}
-                                      
 
                                       <div className="row g-2 align-items-center">
                                         <div className="col-12 col-md-auto">
