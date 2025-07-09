@@ -33,7 +33,6 @@ import CryptoJS from "crypto-js";
 import { Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { isSlotExpired } from "../components/commonfunctions";
-import { set } from "date-fns";
 
 type Service = {
   id: number;
@@ -314,33 +313,77 @@ const AppointmentBooking = () => {
     }
   }, []);
 
+  //   const handleSlotChange = (e: any, memberIndex: number) => {
+  //     if (!e.target.value) {
+  //       return;
+  //     }
+  //     const selectedLabel = e.target.value;
+  //    const selectedSlot = grpavailslots.find((slot) => {
+  //   const start = new Date(`1970-01-01T${slot?.start_time}`).toLocaleTimeString(
+  //     "en-US", { hour: "2-digit", minute: "2-digit", hour12: true }
+  //   );
+  //   const end = new Date(`1970-01-01T${slot?.end_time}`).toLocaleTimeString(
+  //     "en-US", { hour: "2-digit", minute: "2-digit", hour12: true }
+  //   );
+  //   return `${start} to ${end}` === selectedLabel;
+  // });
+
+  //     const start = new Date(
+  //       `1970-01-01T${selectedSlot.start_time}`
+  //     ).toLocaleTimeString("en-US", {
+  //       hour: "2-digit",
+  //       minute: "2-digit",
+  //       hour12: true,
+  //     });
+  //     const end = new Date(
+  //       `1970-01-01T${selectedSlot.end_time}`
+  //     ).toLocaleTimeString("en-US", {
+  //       hour: "2-digit",
+  //       minute: "2-digit",
+  //       hour12: true,
+  //     });
+  //     const bookedTime = `${start} to ${end}`;
+
+  //     const today = new Date().toISOString().split("T")[0]; // e.g., "2025-07-05"
+
+  //     // const bookingPayload = {
+  //     //   booked_time: bookedTime,
+  //     // };
+
+  //     const bookingPayload = {
+  //       action_date: formatDateToYYYYMMDDNew(new Date()),
+  //       booked_time: bookedTime,
+  //       booking_from: 3,
+  //       booking_status: 1,
+  //       date_booked: formatDateToYYYYMMDDNew(selectedDate),
+  //       department: "AU",
+  //       description: "Test Service",
+  //       service_code: formData.servicecode,
+  //     };
+
+  //     // ✅ Push to slot_booking array
+  //     setMembers((prevMembers) => {
+  //       const updated = [...prevMembers];
+
+  //       // Replace slot_booking with a new array (if needed)
+  //       updated[memberIndex].slot_booking = [bookingPayload];
+
+  //       return updated;
+  //     });
+
+  //     // ✅ Remove this slot from available list
+  //     // setgrpavailslots((prev) =>
+  //     //   prev.filter(
+  //     //     (slot) =>
+  //     //       slot.start_time !== selectedSlot.start_time ||
+  //     //       slot.end_time !== selectedSlot.end_time
+  //     //   )
+  //     // );
+  //   };
+
   const handleSlotChange = (e: any, memberIndex: number) => {
-    if (!e.target.value) {
-      return;
-    }
-    const selectedSlot = JSON.parse(e.target.value); // from <option value={JSON.stringify(slot)}>
-
-    const start = new Date(
-      `1970-01-01T${selectedSlot.start_time}`
-    ).toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-    const end = new Date(
-      `1970-01-01T${selectedSlot.end_time}`
-    ).toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-    const bookedTime = `${start} to ${end}`;
-
-    const today = new Date().toISOString().split("T")[0]; // e.g., "2025-07-05"
-
-    // const bookingPayload = {
-    //   booked_time: bookedTime,
-    // };
+    const bookedTime = e.target.value;
+    if (!bookedTime) return;
 
     const bookingPayload = {
       action_date: formatDateToYYYYMMDDNew(new Date()),
@@ -353,23 +396,37 @@ const AppointmentBooking = () => {
       service_code: formData.servicecode,
     };
 
-    // ✅ Push to slot_booking array
     setMembers((prevMembers) => {
       const updated = [...prevMembers];
-
-      // Replace slot_booking with a new array (if needed)
       updated[memberIndex].slot_booking = [bookingPayload];
-
       return updated;
     });
 
-    // ✅ Remove this slot from available list
+    // ✅ Decrease slot count manually
     setgrpavailslots((prev) =>
-      prev.filter(
-        (slot) =>
-          slot.start_time !== selectedSlot.start_time ||
-          slot.end_time !== selectedSlot.end_time
-      )
+      prev.map((slot) => {
+        const start = new Date(
+          `1970-01-01T${slot?.start_time}`
+        ).toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        });
+        const end = new Date(`1970-01-01T${slot?.end_time}`).toLocaleTimeString(
+          "en-US",
+          {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+          }
+        );
+        const label = `${start} to ${end}`;
+
+        if (label === bookedTime && slot.remaining > 0) {
+          return { ...slot, remaining: slot.remaining - 1 };
+        }
+        return slot;
+      })
     );
   };
 
@@ -1000,8 +1057,11 @@ const AppointmentBooking = () => {
     const availmembercount = matchedSlot?.slot?.slottime?.length || 0;
     console.log("Available Member Count:", totalRemaining);
     console.log("Available Member Count:", availmembercount);
+    console.log("matchedSlot :", matchedSlot);
+
     setavailablemembercount(totalRemaining);
     setgrpavailslots(matchedSlot?.slot?.slottime);
+
     const selectedDates: string[] = [];
     const selectedDateStringsSet = new Set<string>();
 
@@ -1101,6 +1161,12 @@ const AppointmentBooking = () => {
   };
 
   const today = new Date().toISOString().split("T")[0];
+
+  const selectedSlotCounts = members.reduce((acc, member) => {
+    const time = member.slot_booking?.[0]?.booked_time;
+    if (time) acc[time] = (acc[time] || 0) + 1;
+    return acc;
+  }, {});
 
   const downloadPDFsSilently = async (urls: string[]) => {
     for (const url of urls) {
@@ -3552,6 +3618,7 @@ const AppointmentBooking = () => {
                                             </small>
                                           )}
                                         </div>
+                                        
                                       </div>
 
                                       {i === 0 && (
@@ -3591,43 +3658,7 @@ const AppointmentBooking = () => {
                                               )}
                                             </div>
 
-                                            <div className="col-md-6 mb-3">
-                                              <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                                <label className="form-label label-fixed me-md-2 mb-1 mb-md-0">
-                                                  HAP ID
-                                                </label>
-                                                <input
-                                                  type="text"
-                                                  className={`form-control ${
-                                                    formErrors[`hapId_${i}`]
-                                                      ? "is-invalid input-shake"
-                                                      : ""
-                                                  }`}
-                                                  id={`hapId_${i}`}
-                                                  inputMode="numeric"
-                                                  pattern="\d*"
-                                                  name="hapId"
-                                                  value={members[i].hapId}
-                                                  onChange={(e) => {
-                                                    const value =
-                                                      e.target.value;
-                                                    if (/^\d*$/.test(value)) {
-                                                      handleChange(e, i);
-                                                    }
-                                                  }}
-                                                  maxLength={8}
-                                                  placeholder={getDynamicPlaceholder(
-                                                    "hapId"
-                                                  )}
-                                                  autoComplete="off"
-                                                />
-                                              </div>
-                                              {formErrors[`hapId_${i}`] && (
-                                                <small className="text-danger mt-1 d-block text-end">
-                                                  eg: 12345678
-                                                </small>
-                                              )}
-                                            </div>
+                                           
                                           </div>
 
                                           <div className="row mb-3">
@@ -3722,9 +3753,7 @@ const AppointmentBooking = () => {
                                                 }
                                               )}
                                             </label>
-
                                             <select
-                                              // className="form-select"
                                               className={`form-control ${
                                                 formErrors[`slot_booking_${i}`]
                                                   ? "is-invalid input-shake"
@@ -3740,12 +3769,12 @@ const AppointmentBooking = () => {
                                             >
                                               <option value="">Select</option>
 
-                                              {/* ✅ Show selected slot if it's no longer in grpavailslots */}
+                                              {/* Show previously selected time if it no longer exists in available slots */}
                                               {members[i]?.slot_booking[0]
                                                 ?.booked_time &&
                                                 !grpavailslots.some((slot) => {
                                                   const start = new Date(
-                                                    `1970-01-01T${slot?.start_time}`
+                                                    `1970-01-01T${slot.start_time}`
                                                   ).toLocaleTimeString(
                                                     "en-US",
                                                     {
@@ -3755,7 +3784,7 @@ const AppointmentBooking = () => {
                                                     }
                                                   );
                                                   const end = new Date(
-                                                    `1970-01-01T${slot?.end_time}`
+                                                    `1970-01-01T${slot.end_time}`
                                                   ).toLocaleTimeString(
                                                     "en-US",
                                                     {
@@ -3786,11 +3815,11 @@ const AppointmentBooking = () => {
                                                   </option>
                                                 )}
 
-                                              {/* ✅ Remaining available slots */}
-                                              {grpavailslots?.map(
+                                              {/* Render available slot options */}
+                                              {grpavailslots.map(
                                                 (slot, index) => {
                                                   const start = new Date(
-                                                    `1970-01-01T${slot?.start_time}`
+                                                    `1970-01-01T${slot.start_time}`
                                                   ).toLocaleTimeString(
                                                     "en-US",
                                                     {
@@ -3800,7 +3829,7 @@ const AppointmentBooking = () => {
                                                     }
                                                   );
                                                   const end = new Date(
-                                                    `1970-01-01T${slot?.end_time}`
+                                                    `1970-01-01T${slot.end_time}`
                                                   ).toLocaleTimeString(
                                                     "en-US",
                                                     {
@@ -3810,16 +3839,15 @@ const AppointmentBooking = () => {
                                                     }
                                                   );
 
-                                                  const timeLabel = `${start} to ${end}`;
+                                                  const timeOnly = `${start} to ${end}`;
+                                                  const optionText = `${timeOnly} - (Available ${slot.remaining} slots)`;
 
                                                   return (
                                                     <option
                                                       key={index}
-                                                      value={JSON.stringify(
-                                                        slot
-                                                      )}
+                                                      value={timeOnly}
                                                     >
-                                                      {timeLabel}
+                                                      {optionText}
                                                     </option>
                                                   );
                                                 }
