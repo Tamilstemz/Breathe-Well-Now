@@ -3623,70 +3623,24 @@ const AppointmentBooking = () => {
                                         
                                       </div>
 
-                                      {i === 0 && (
-                                        <>
-                                          <div className="row mb-3">
-                                            <div className="col-md-6 mb-3">
+                                        <div className="row mb-3">
+                                        <div className="col-md-6 mb-3">
                                               <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                                <label
-                                                  htmlFor={`email_${i}`}
-                                                  className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                                >
-                                                  Email
-                                                </label>
-                                                <input
-                                                  type="email"
-                                                  id={`email_${i}`}
-                                                  className={`form-control ${
-                                                    formErrors[`email_${i}`]
-                                                      ? "is-invalid input-shake"
-                                                      : ""
-                                                  }`}
-                                                  name="email"
-                                                  value={members[i].email}
-                                                  onChange={(e) =>
-                                                    handleChange(e, i)
-                                                  }
-                                                  placeholder={getDynamicPlaceholder(
-                                                    "email"
-                                                  )}
-                                                  autoComplete="off"
-                                                />
-                                              </div>
-                                              {formErrors[`email_${i}`] && (
-                                                <small className="text-danger mt-1 d-block text-end">
-                                                  eg: example123@gmail.com
-                                                </small>
-                                              )}
-                                            </div>
-
-                                           
-                                          </div>
-
-                                          <div className="row mb-3">
-                                            <div className="col-md-6 mb-3">
-                                              <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                                <label
-                                                  htmlFor={`alternativeNumber_${i}`}
-                                                  className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                                >
-                                                  Alternative Number
+                                                <label className="form-label label-fixed me-md-2 mb-1 mb-md-0">
+                                                  HAP ID
                                                 </label>
                                                 <input
                                                   type="text"
                                                   className={`form-control ${
-                                                    formErrors[
-                                                      `alternativeNumber_${i}`
-                                                    ]
+                                                    formErrors[`hapId_${i}`]
                                                       ? "is-invalid input-shake"
                                                       : ""
                                                   }`}
-                                                  id={`alternativeNumber_${i}`}
-                                                  name="alternativeNumber"
-                                                  value={
-                                                    members[i].alternativeNumber
-                                                  }
-                                                  maxLength={10}
+                                                  id={`hapId_${i}`}
+                                                  inputMode="numeric"
+                                                  pattern="\d*"
+                                                  name="hapId"
+                                                  value={members[i].hapId}
                                                   onChange={(e) => {
                                                     const value =
                                                       e.target.value;
@@ -3694,50 +3648,20 @@ const AppointmentBooking = () => {
                                                       handleChange(e, i);
                                                     }
                                                   }}
+                                                  maxLength={8}
                                                   placeholder={getDynamicPlaceholder(
-                                                    "alternativeNumber"
+                                                    "hapId"
                                                   )}
                                                   autoComplete="off"
                                                 />
                                               </div>
+                                              {formErrors[`hapId_${i}`] && (
+                                                <small className="text-danger mt-1 d-block text-end">
+                                                  eg: 12345678
+                                                </small>
+                                              )}
                                             </div>
-
-                                            <div className="col-md-6 mb-3">
-                                              <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                                <label
-                                                  htmlFor={`paymentMethod_${i}`}
-                                                  className="form-label label-fixed me-md-2 mb-1 mb-md-0"
-                                                >
-                                                  Payment Method
-                                                </label>
-                                                <select
-                                                  className={`form-control ${
-                                                    formErrors[
-                                                      `paymentMethod_${i}`
-                                                    ]
-                                                      ? "is-invalid input-shake"
-                                                      : ""
-                                                  }`}
-                                                  id={`paymentMethod_${i}`}
-                                                  name="paymentMethod"
-                                                  value={
-                                                    members[i].paymentMethod
-                                                  }
-                                                  onChange={(e) =>
-                                                    handleChange(e, i)
-                                                  }
-                                                >
-                                                  <option value="">
-                                                    Select
-                                                  </option>
-                                                  <option value="QR">QR</option>
-                                                </select>
-                                              </div>
-                                            </div>
-                                          </div>
-                                        </>
-                                      )}
-                                      <div className="row mb-3">
+                                            
                                         <div className="col-md-6 mb-3">
                                           <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
                                             <label
@@ -3863,6 +3787,161 @@ const AppointmentBooking = () => {
                                           )}
                                         </div>
                                       </div>
+
+                                      {i === 0 && (
+                                        <>
+                                          <div className="row mb-3">
+                                            <div className="col-md-6 mb-3">
+                                              <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                                <label
+                                                  htmlFor={`email_${i}`}
+                                                  className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+                                                >
+                                                  Email
+                                                </label>
+                                                <input
+                                                  type="email"
+                                                  id={`email_${i}`}
+                                                  className={`form-control ${
+                                                    formErrors[`email_${i}`]
+                                                      ? "is-invalid input-shake"
+                                                      : ""
+                                                  }`}
+                                                  name="email"
+                                                  value={members[i].email}
+                                                  onChange={(e) =>
+                                                    handleChange(e, i)
+                                                  }
+                                                  placeholder={getDynamicPlaceholder(
+                                                    "email"
+                                                  )}
+                                                  autoComplete="off"
+                                                />
+                                              </div>
+                                              {formErrors[`email_${i}`] && (
+                                                <small className="text-danger mt-1 d-block text-end">
+                                                  eg: example123@gmail.com
+                                                </small>
+                                              )}
+                                            </div>
+
+                                            <div className="col-md-6 mb-3">
+                                              <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                                <label
+                                                  htmlFor={`alternativeNumber_${i}`}
+                                                  className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+                                                >
+                                                  Alternative Number
+                                                </label>
+                                                <input
+                                                  type="text"
+                                                  className={`form-control ${
+                                                    formErrors[
+                                                      `alternativeNumber_${i}`
+                                                    ]
+                                                      ? "is-invalid input-shake"
+                                                      : ""
+                                                  }`}
+                                                  id={`alternativeNumber_${i}`}
+                                                  name="alternativeNumber"
+                                                  value={
+                                                    members[i].alternativeNumber
+                                                  }
+                                                  maxLength={10}
+                                                  onChange={(e) => {
+                                                    const value =
+                                                      e.target.value;
+                                                    if (/^\d*$/.test(value)) {
+                                                      handleChange(e, i);
+                                                    }
+                                                  }}
+                                                  placeholder={getDynamicPlaceholder(
+                                                    "alternativeNumber"
+                                                  )}
+                                                  autoComplete="off"
+                                                />
+                                              </div>
+                                            </div>
+
+                                            {/* <div className="col-md-6 mb-3">
+                                              <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                                <label className="form-label label-fixed me-md-2 mb-1 mb-md-0">
+                                                  HAP ID
+                                                </label>
+                                                <input
+                                                  type="text"
+                                                  className={`form-control ${
+                                                    formErrors[`hapId_${i}`]
+                                                      ? "is-invalid input-shake"
+                                                      : ""
+                                                  }`}
+                                                  id={`hapId_${i}`}
+                                                  inputMode="numeric"
+                                                  pattern="\d*"
+                                                  name="hapId"
+                                                  value={members[i].hapId}
+                                                  onChange={(e) => {
+                                                    const value =
+                                                      e.target.value;
+                                                    if (/^\d*$/.test(value)) {
+                                                      handleChange(e, i);
+                                                    }
+                                                  }}
+                                                  maxLength={8}
+                                                  placeholder={getDynamicPlaceholder(
+                                                    "hapId"
+                                                  )}
+                                                  autoComplete="off"
+                                                />
+                                              </div>
+                                              {formErrors[`hapId_${i}`] && (
+                                                <small className="text-danger mt-1 d-block text-end">
+                                                  eg: 12345678
+                                                </small>
+                                              )}
+                                            </div> */}
+
+                                          </div>
+
+                                          <div className="row mb-3">
+                                            
+
+                                            <div className="col-md-6 mb-3">
+                                              <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
+                                                <label
+                                                  htmlFor={`paymentMethod_${i}`}
+                                                  className="form-label label-fixed me-md-2 mb-1 mb-md-0"
+                                                >
+                                                  Payment Method
+                                                </label>
+                                                <select
+                                                  className={`form-control ${
+                                                    formErrors[
+                                                      `paymentMethod_${i}`
+                                                    ]
+                                                      ? "is-invalid input-shake"
+                                                      : ""
+                                                  }`}
+                                                  id={`paymentMethod_${i}`}
+                                                  name="paymentMethod"
+                                                  value={
+                                                    members[i].paymentMethod
+                                                  }
+                                                  onChange={(e) =>
+                                                    handleChange(e, i)
+                                                  }
+                                                >
+                                                  <option value="">
+                                                    Select
+                                                  </option>
+                                                  <option value="QR">QR</option>
+                                                </select>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </>
+                                      )}
+                                      
 
                                       <div className="row g-2 align-items-center">
                                         <div className="col-12 col-md-auto">
