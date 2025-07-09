@@ -368,9 +368,8 @@ export default function Hero() {
           variant: "success",
           duration: 4000,
         });
-      
-          setAppointmentCancelBtn(true);
-       
+
+        setAppointmentCancelBtn(true);
 
         setsuccessmsg(res.data.message);
         setTimerVisible(false);
@@ -780,13 +779,13 @@ export default function Hero() {
               >
                 <option value="">Choose your ID type</option>
                 <option value="passport">Passport Number</option>
-                <option value="referenceId">Reference Number</option>
+                <option value="referenceId">Applicant No</option>
               </select>
             </div>
 
             <div>
               <label className="block mb-1 text-sm font-medium">
-                {searchType === "passport" ? "Passport Number" : "Reference ID"}
+                {searchType === "passport" ? "Passport Number" : "Applicant No"}
               </label>
               <input
                 type="text"
@@ -1018,91 +1017,92 @@ export default function Hero() {
                               {otpError}
                             </div>
                           )} */}
-                                                  <p className="otpSubheading">
-                          We’ve sent a 6-digit code to{" "}
-                          {appointmentData[0]?.contact_number}
-                        </p>
-
-                        <div className="inputContainer">
-                          {otp.map((digit, i) => (
-                            <input
-                              key={i}
-                              type="text"
-                              inputMode="numeric"
-                              maxLength={1}
-                              pattern="\d*"
-                              value={digit}
-                              onChange={(e) => handleChange(e, i)}
-                              onKeyDown={(e) => handleKeyDown(e, i)}
-                              className={`otp-input ${
-                                otpErrorActive ? "error" : ""
-                              }`}
-                              disabled={appointmentCancelBtn}
-                            />
-                          ))}
-                        </div>
-                        {timerVisible && (
-                          <p className="countdown-timer">
-                            ⏳ OTP expires in: <strong>{formatTimer()}</strong>
+                          <p className="otpSubheading">
+                            We’ve sent a 6-digit code to{" "}
+                            {appointmentData[0]?.contact_number}
                           </p>
-                        )}
-                        {otpError && (
-                          <div className="otp-error">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="error-icon"
-                              viewBox="0 0 20 20"
-                              fill="red"
-                              width="20"
-                              height="20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-5h2v2h-2v-2zm0-6h2v5h-2V7z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <span>{otpError}</span>
-                          </div>
-                        )}
-                        {successmsg && (
-                          <div className="otp-success">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="success-icon"
-                              viewBox="0 0 20 20"
-                              fill="green"
-                              width="20"
-                              height="20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <span>{successmsg}</span>
-                          </div>
-                        )}
 
-                        <button
-                          className="verifyButton"
-                          onClick={handleValidateOtp}
-                        >
-                          Verify
-                        </button>
+                          <div className="inputContainer">
+                            {otp.map((digit, i) => (
+                              <input
+                                key={i}
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={1}
+                                pattern="\d*"
+                                value={digit}
+                                onChange={(e) => handleChange(e, i)}
+                                onKeyDown={(e) => handleKeyDown(e, i)}
+                                className={`otp-input ${
+                                  otpErrorActive ? "error" : ""
+                                }`}
+                                disabled={appointmentCancelBtn}
+                              />
+                            ))}
+                          </div>
+                          {timerVisible && (
+                            <p className="countdown-timer">
+                              ⏳ OTP expires in:{" "}
+                              <strong>{formatTimer()}</strong>
+                            </p>
+                          )}
+                          {otpError && (
+                            <div className="otp-error">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="error-icon"
+                                viewBox="0 0 20 20"
+                                fill="red"
+                                width="20"
+                                height="20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-5h2v2h-2v-2zm0-6h2v5h-2V7z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                              <span>{otpError}</span>
+                            </div>
+                          )}
+                          {successmsg && (
+                            <div className="otp-success">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="success-icon"
+                                viewBox="0 0 20 20"
+                                fill="green"
+                                width="20"
+                                height="20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                              <span>{successmsg}</span>
+                            </div>
+                          )}
 
-                        <p className="resendNote">
-                          Didn’t receive code?
                           <button
-                            type="button"
-                            className="resendBtn"
-                            disabled={resendDisabled}
-                            onClick={handleResendOtp}
+                            className="verifyButton"
+                            onClick={handleValidateOtp}
                           >
-                            Resend Code
+                            Verify
                           </button>
-                        </p>
+
+                          <p className="resendNote">
+                            Didn’t receive code?
+                            <button
+                              type="button"
+                              className="resendBtn"
+                              disabled={resendDisabled}
+                              onClick={handleResendOtp}
+                            >
+                              Resend Code
+                            </button>
+                          </p>
                         </div>
 
                         <div className="flex justify-between gap-2 pt-3">
@@ -1135,7 +1135,7 @@ export default function Hero() {
                           ) : (
                             <Button
                               className="w-full bg-orange-500 text-white font-semibold"
-                             disabled={!appointmentCancelBtn}
+                              disabled={!appointmentCancelBtn}
                               onClick={() =>
                                 handleCancelAppointment(selectedApplicants)
                               }
@@ -1185,7 +1185,7 @@ export default function Hero() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <div className="text-gray-500">Reference Number</div>
+                        <div className="text-gray-500">Applicant No</div>
                         <div className="font-medium">
                           {item.applicant_number}
                         </div>
@@ -1495,7 +1495,15 @@ export default function Hero() {
                         label: "Applicant Number",
                         value: appicantResdata.applicant_number,
                       },
-                      { label: "Date", value: appicantResdata.date },
+                      {
+                        label: "Date",
+                       value: appicantResdata.date
+  ? new Date(appicantResdata.date)
+      .toLocaleDateString("en-GB") // → "17/07/2025"
+      .replaceAll("/", "-")        // → "17-07-2025"
+  : "",
+
+                      },
                       { label: "Time", value: appicantResdata.time },
                       { label: "Reference", value: appicantResdata.reference },
                     ].map((item, index) => (
