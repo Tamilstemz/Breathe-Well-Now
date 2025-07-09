@@ -161,7 +161,7 @@ type FormDataType = {
   servicecode: string[]; // ← Explicitly typed as string[]
   totalPrice: number;
   PaymentType: string;
-  specialAssistance:boolean;
+  specialAssistance: boolean;
 };
 
 type ApplicantResData = {
@@ -256,7 +256,7 @@ const AppointmentBooking = () => {
     servicecode: [],
     totalPrice: 0,
     PaymentType: "",
-    specialAssistance:false,
+    specialAssistance: false,
   });
   const [members, setMembers] = useState<any[]>([
     {
@@ -277,7 +277,7 @@ const AppointmentBooking = () => {
       totalPrice: 0,
       slot_booking: [],
       PaymentType: "",
-      specialAssistance:false,
+      specialAssistance: false,
     },
   ]);
 
@@ -601,7 +601,7 @@ const AppointmentBooking = () => {
           passportNo: "",
           gender: "",
           slot_booking: [],
-          specialAssistance:false,
+          specialAssistance: false,
         }));
         setMembers(emptyMembers);
       }
@@ -623,8 +623,8 @@ const AppointmentBooking = () => {
       service_code: formData.servicecode,
     };
 
-    console.log('ppppppppp--------ii',slot.time,'+++++',slot.slotItem);
-    
+    console.log("ppppppppp--------ii", slot.time, "+++++", slot.slotItem);
+
     setselectedslottime(slot.time);
     setSelectedSlot(slot.slotItem);
 
@@ -786,7 +786,7 @@ const AppointmentBooking = () => {
         : [environment.DEFAULT_SERVICE_CODE],
       totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
       PaymentType: "",
-    specialAssistance:false,
+      specialAssistance: false,
     });
     setMembers([
       {
@@ -808,7 +808,7 @@ const AppointmentBooking = () => {
           : [environment.DEFAULT_SERVICE_CODE],
         totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
         slot_booking: [],
-        specialAssistance:false,
+        specialAssistance: false,
       },
     ]);
     setSelectedServices([]);
@@ -1070,26 +1070,25 @@ const AppointmentBooking = () => {
   const formatDate = (date: Date) => date.toISOString().split("T")[0];
 
   // Calculate age from dob
-const calculateAge = (dob: string): string => {
-  const birthDate = new Date(dob);
-  const today = new Date();
+  const calculateAge = (dob: string): string => {
+    const birthDate = new Date(dob);
+    const today = new Date();
 
-  let years = today.getFullYear() - birthDate.getFullYear();
-  let months = today.getMonth() - birthDate.getMonth();
+    let years = today.getFullYear() - birthDate.getFullYear();
+    let months = today.getMonth() - birthDate.getMonth();
 
-  // Adjust years and months based on the day of the month
-  if (today.getDate() < birthDate.getDate()) {
-    months--; // Not completed the full month yet
-  }
+    // Adjust years and months based on the day of the month
+    if (today.getDate() < birthDate.getDate()) {
+      months--; // Not completed the full month yet
+    }
 
-  if (months < 0) {
-    years--;
-    months += 12;
-  }
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
 
-  return `${years} Y ${months} M`;
-};
-
+    return `${years} Y ${months} M`;
+  };
 
   // Calculate dob from age (returns yyyy-01-01)
   const calculateDOB = (age: string): string => {
@@ -1256,7 +1255,7 @@ const calculateAge = (dob: string): string => {
 
     if (!age.trim()) {
       errors.age = "Age is required.";
-    } 
+    }
 
     if (!passportNo.trim()) {
       errors.passportNo = "Passport Number is required.";
@@ -1419,7 +1418,7 @@ const calculateAge = (dob: string): string => {
 
       if (!age.trim()) {
         errors.age = "Age is required.";
-      } 
+      }
 
       if (!passportNo.trim())
         errors.passportNo = "Passport Number is required.";
@@ -1604,7 +1603,7 @@ const calculateAge = (dob: string): string => {
           paymentPreference: "",
           paymentMethod: "",
           dob: "",
-          specialAssistance:false,
+          specialAssistance: false,
         }))
       );
     } else if (stepIndex === 1) {
@@ -1674,7 +1673,7 @@ const calculateAge = (dob: string): string => {
           created_by: 1,
           center: selectedCenter,
           appointmentType: appointmentType,
-          specialAssistance:member.specialAssistance,
+          specialAssistance: member.specialAssistance,
           slot_booking: member.slot_booking,
         }));
       } else {
@@ -1700,7 +1699,7 @@ const calculateAge = (dob: string): string => {
             created_by: 1,
             center: selectedCenter,
             appointmentType: appointmentType,
-            specialAssistance:formData.specialAssistance,
+            specialAssistance: formData.specialAssistance,
             slot_booking: [
               {
                 action_date: formatDateToYYYYMMDDNew(new Date()),
@@ -1718,7 +1717,7 @@ const calculateAge = (dob: string): string => {
         ];
       }
 
-      console.log('finalData-----------vvvv',finalData);
+      console.log("finalData-----------vvvv", finalData);
 
       const res = await httpClient.post(
         environment.APPLICANT_WITH_APPT_API,
@@ -1799,7 +1798,7 @@ const calculateAge = (dob: string): string => {
               : [environment.DEFAULT_SERVICE_CODE],
             totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
             PaymentType: "",
-            specialAssistance:false,
+            specialAssistance: false,
           });
           setMembers([
             {
@@ -1823,7 +1822,7 @@ const calculateAge = (dob: string): string => {
                 ? parseInt(serviceList[0]?.price)
                 : 100,
               slot_booking: [],
-              specialAssistance:false,
+              specialAssistance: false,
             },
           ]);
           setSelectedService("");
@@ -1875,8 +1874,8 @@ const calculateAge = (dob: string): string => {
         ? [serviceList[0].code]
         : [environment.DEFAULT_SERVICE_CODE],
       totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
-      PaymentType: "",      
-     specialAssistance:false,
+      PaymentType: "",
+      specialAssistance: false,
     });
 
     // Dynamically generate membercount empty members
@@ -2042,7 +2041,7 @@ const calculateAge = (dob: string): string => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     index?: number // optional index for group members
   ) => {
-    const { name,type,value} = e.target;
+    const { name, type, value } = e.target;
 
     // console.log('vvvvvv----11111', value, '000----000', index);
 
@@ -2050,7 +2049,7 @@ const calculateAge = (dob: string): string => {
       let updatedData = { ...formData, [name]: value };
 
       // If DOB is updated, auto-calculate age
-      if (name === "dob" && value) {        
+      if (name === "dob" && value) {
         updatedData.age = calculateAge(value);
       }
 
@@ -2086,9 +2085,7 @@ const calculateAge = (dob: string): string => {
       });
 
       // console.log('formData-----',formData);
-    }
-    
-    else if (appointmentType === "Group") {
+    } else if (appointmentType === "Group") {
       // console.log('vvvvvv----222', value, '000----000', index);
       const isCheckbox = type === "checkbox";
       const newValue = isCheckbox
@@ -2100,8 +2097,8 @@ const calculateAge = (dob: string): string => {
         updatedMembers[index][name] = value;
       }
 
-      if(typeof index === "number" && type === "checkbox"){
-        updatedMembers[index][name] = newValue
+      if (typeof index === "number" && type === "checkbox") {
+        updatedMembers[index][name] = newValue;
       }
 
       // Name validation: letters + space only
@@ -2137,10 +2134,7 @@ const calculateAge = (dob: string): string => {
       let updatedData = { ...formData, [name]: value };
       setFormData(updatedData);
       console.log(members);
-    
-}
-
-
+    }
   };
 
   const downloadAllInvoices = () => {
@@ -2550,18 +2544,17 @@ const calculateAge = (dob: string): string => {
                   ></div>
                   <span className="text-muted small">Slot Available</span>
                 </div>
-               <div className="d-flex align-items-center gap-2 ms-4">
-  <div
-    className="rounded-circle"
-    style={{
-      width: "15px",
-      height: "15px",
-      backgroundColor: "#ffc107", // Bootstrap warning yellow
-    }}
-  ></div>
-  <span className="text-muted small">Holiday</span>
-</div>
-
+                <div className="d-flex align-items-center gap-2 ms-4">
+                  <div
+                    className="rounded-circle"
+                    style={{
+                      width: "15px",
+                      height: "15px",
+                      backgroundColor: "#ffc107", // Bootstrap warning yellow
+                    }}
+                  ></div>
+                  <span className="text-muted small">Holiday</span>
+                </div>
               </div>
 
               <div className="calendarmainbody card-body p-4">
@@ -2645,24 +2638,23 @@ const calculateAge = (dob: string): string => {
                                 {day.getDate()}
 
                                 {(isHoliday(day) || hasSlot) && (
-  <div
-    className="calendarAvalSlot"
-    style={{
-      backgroundColor: isHoliday(day)
-        ? "#ffc107" // Yellow for holiday
-        : totaldaycount === 0
-        ? "red" // Red for no slots
-        : "#5ebe5e", // Green for available slots
-    }}
-  >
-    {isHoliday(day)
-      ? "" // Empty badge or show "H" if you prefer
-      : totaldaycount === 0
-      ? ""
-      : totaldaycount}
-  </div>
-)}
-  
+                                  <div
+                                    className="calendarAvalSlot"
+                                    style={{
+                                      backgroundColor: isHoliday(day)
+                                        ? "#ffc107" // Yellow for holiday
+                                        : totaldaycount === 0
+                                        ? "red" // Red for no slots
+                                        : "#5ebe5e", // Green for available slots
+                                    }}
+                                  >
+                                    {isHoliday(day)
+                                      ? "" // Empty badge or show "H" if you prefer
+                                      : totaldaycount === 0
+                                      ? ""
+                                      : totaldaycount}
+                                  </div>
+                                )}
                               </div>
                             </TooltipTrigger>
                             <TooltipContent
@@ -3562,8 +3554,6 @@ const calculateAge = (dob: string): string => {
                                         </div>
                                       </div>
 
-
-                                      
                                       {i === 0 && (
                                         <>
                                           <div className="row mb-3">
@@ -3711,10 +3701,6 @@ const calculateAge = (dob: string): string => {
                                                 </select>
                                               </div>
                                             </div>
-
-
-                                              
-
                                           </div>
                                         </>
                                       )}
@@ -3861,8 +3847,12 @@ const calculateAge = (dob: string): string => {
                                                 marginBottom: "22px",
                                                 border: "1px solid black",
                                               }}
-                                              checked={members[i].specialAssistance}
-                                              onChange={(e) => handleChange(e, i)}
+                                              checked={
+                                                members[i].specialAssistance
+                                              }
+                                              onChange={(e) =>
+                                                handleChange(e, i)
+                                              }
                                               name="specialAssistance"
                                             />
                                           </span>
@@ -3874,10 +3864,16 @@ const calculateAge = (dob: string): string => {
                                                 className="form-check-label"
                                                 htmlFor={`specialAssistance_${i}`}
                                               >
-                                                <div style={{ color: "darkred" }}>
-                                                  Kindly check this box if you require special assistance, including
-                                                  support for children with special needs or wheelchair accessibility.
-                                                  Please inform us in advance so we can make the necessary
+                                                <div
+                                                  style={{ color: "darkred" }}
+                                                >
+                                                  Kindly check this box if you
+                                                  require special assistance,
+                                                  including support for children
+                                                  with special needs or
+                                                  wheelchair accessibility.
+                                                  Please inform us in advance so
+                                                  we can make the necessary
                                                   arrangements.
                                                 </div>
                                               </label>
@@ -3885,7 +3881,6 @@ const calculateAge = (dob: string): string => {
                                           </div>
                                         </div>
                                       </div>
-
                                     </form>
                                   </AccordionContent>
                                 </AccordionItem>
@@ -4195,9 +4190,9 @@ const calculateAge = (dob: string): string => {
                                   />
                                 </div>
                                 {formErrors.passportNo && (
-                                   <small className="text-danger mt-1 d-block text-end">
-                                      eg: A12345623 and 8-12 characters
-                                    </small>
+                                  <small className="text-danger mt-1 d-block text-end">
+                                    eg: A12345623 and 8-12 characters
+                                  </small>
                                 )}
                               </div>
 
@@ -4226,7 +4221,6 @@ const calculateAge = (dob: string): string => {
                                 </div>
                               </div>
                             </div>
-
 
                             <div
                               className="card border-0 shadow-sm mt-3 px-3 py-2"
@@ -4266,11 +4260,12 @@ const calculateAge = (dob: string): string => {
                                         htmlFor="specialAssistance"
                                       >
                                         <div style={{ color: "darkred" }}>
-                                          Kindly check this box if you require special
-                                          assistance, including support for children with
-                                          special needs or wheelchair accessibility. Please
-                                          inform us in advance so we can make the necessary
-                                          arrangements.
+                                          Kindly check this box if you require
+                                          special assistance, including support
+                                          for children with special needs or
+                                          wheelchair accessibility. Please
+                                          inform us in advance so we can make
+                                          the necessary arrangements.
                                         </div>
                                       </label>
                                     </span>
@@ -4278,8 +4273,6 @@ const calculateAge = (dob: string): string => {
                                 </div>
                               </div>
                             </div>
-
-                            
                           </form>
                         )}
                       </>
@@ -4392,8 +4385,7 @@ const calculateAge = (dob: string): string => {
                     )}
                   </div>
                 </>
-                
-                
+
                 <div className="modal-footer d-flex justify-content-end gap-2">
                   <button className="btn-custom-orange" onClick={clear}>
                     Clear
@@ -4520,7 +4512,14 @@ const calculateAge = (dob: string): string => {
                         label: "Applicant Number",
                         value: appicantResdata.applicant_number,
                       },
-                      { label: "Date", value: appicantResdata.date },
+                      {
+                        label: "Date",
+                        value: appicantResdata.date
+                          ? new Date(appicantResdata.date).toLocaleDateString(
+                              "en-GB"
+                            ) // converts to dd-mm-yyyy
+                          : "",
+                      },
                       { label: "Time", value: appicantResdata.time },
                       { label: "Reference", value: appicantResdata.reference },
                     ].map((item, index) => (
