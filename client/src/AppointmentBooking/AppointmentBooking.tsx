@@ -1070,17 +1070,26 @@ const AppointmentBooking = () => {
   const formatDate = (date: Date) => date.toISOString().split("T")[0];
 
   // Calculate age from dob
-  const calculateAge = (dob: string): string => {
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
+const calculateAge = (dob: string): string => {
+  const birthDate = new Date(dob);
+  const today = new Date();
 
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    return age.toString();
-  };
+  let years = today.getFullYear() - birthDate.getFullYear();
+  let months = today.getMonth() - birthDate.getMonth();
+
+  // Adjust years and months based on the day of the month
+  if (today.getDate() < birthDate.getDate()) {
+    months--; // Not completed the full month yet
+  }
+
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+
+  return `${years} Y ${months} M`;
+};
+
 
   // Calculate dob from age (returns yyyy-01-01)
   const calculateDOB = (age: string): string => {
@@ -1247,8 +1256,6 @@ const AppointmentBooking = () => {
 
     if (!age.trim()) {
       errors.age = "Age is required.";
-    } else if (!/^\d+$/.test(age)) {
-      errors.age = "Age must be a number.";
     } 
 
     if (!passportNo.trim()) {
@@ -1412,8 +1419,6 @@ const AppointmentBooking = () => {
 
       if (!age.trim()) {
         errors.age = "Age is required.";
-      } else if (!/^\d+$/.test(age)) {
-        errors.age = "Age must be a number.";
       } 
 
       if (!passportNo.trim())
