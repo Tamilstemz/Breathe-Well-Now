@@ -1249,12 +1249,7 @@ const AppointmentBooking = () => {
       errors.age = "Age is required.";
     } else if (!/^\d+$/.test(age)) {
       errors.age = "Age must be a number.";
-    } else {
-      const numericAge = parseInt(age, 10);
-      if (numericAge < 10 || numericAge > 99) {
-        errors.age = "Age must be between 10 and 99.";
-      }
-    }
+    } 
 
     if (!passportNo.trim()) {
       errors.passportNo = "Passport Number is required.";
@@ -1419,12 +1414,7 @@ const AppointmentBooking = () => {
         errors.age = "Age is required.";
       } else if (!/^\d+$/.test(age)) {
         errors.age = "Age must be a number.";
-      } else {
-        const numericAge = parseInt(age, 10);
-        if (numericAge < 10 || numericAge > 99) {
-          errors.age = "Age must be between 10 and above and 99.";
-        }
-      }
+      } 
 
       if (!passportNo.trim())
         errors.passportNo = "Passport Number is required.";
