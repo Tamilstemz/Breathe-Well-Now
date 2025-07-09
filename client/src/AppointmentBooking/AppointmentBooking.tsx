@@ -2221,6 +2221,7 @@ const AppointmentBooking = () => {
               payment_method: item.payment_method,
               transaction_amt: item.transaction_amt,
               appointmentType: appointmentType,
+              specialAssistance:item.specialAssistance,
               slot_booking: [
                 {
                   action_date: formatDateToYYYYMMDDNew(new Date()),
@@ -2300,6 +2301,7 @@ const AppointmentBooking = () => {
               payment_method: singledata.payment_method,
               transaction_amt: singledata.transaction_amt,
               appointmentType: appointmentType,
+              specialAssistance:singledata.specialAssistance,
               slot_booking: [
                 {
                   action_date: formatDateToYYYYMMDDNew(new Date()),
