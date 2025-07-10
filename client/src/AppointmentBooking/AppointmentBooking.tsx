@@ -3037,7 +3037,7 @@ const AppointmentBooking = () => {
                               shake ? "input-shake" : ""
                             }`}
                             disabled={
-                              !selectedDate || availablemembercount <= 2
+                              !selectedDate || availablemembercount <= 1
                             }
                           >
                             <option value="">Select</option>
@@ -3076,8 +3076,8 @@ const AppointmentBooking = () => {
                         </div>
                       )}
 
-                      {availablemembercount >= 1 &&
-                        availablemembercount <= 2 && (
+                      {
+                        availablemembercount <= 1 && (
                           <div className="row g-2 align-items-center">
                             <div className="col-12 col-md">
                               <div className="d-flex flex-wrap align-items-center">
