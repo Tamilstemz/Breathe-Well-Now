@@ -19,7 +19,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import httpClient from "../../../api/httpClient";
-import { environment } from "../../../environment/environment";
+import { environment,API } from "../../../environment/environment";
 import { decrypt, encrypt } from "../../../utils/crypto-util";
 import successImg from "../../assests/successImg.png";
 
@@ -175,7 +175,7 @@ export default function Hero() {
             newtype: "new",
           };
 
-          const res = await httpClient.post(environment.OTP_API, otpdata);
+          const res = await httpClient.post(API.OTP_API, otpdata);
           console.log("OTP Response:", res);
 
           toast({
@@ -359,7 +359,7 @@ export default function Hero() {
     console.log(payload);
 
     try {
-      const res = await httpClient.post(environment.OTP_VALIDATE_API, payload);
+      const res = await httpClient.post(API.OTP_VALIDATE_API, payload);
 
       if (res.data.status) {
         toast({
@@ -403,7 +403,7 @@ export default function Hero() {
       center_id: appointmentData[0]?.center_id,
       newtype: "resend",
     };
-    const res = await httpClient.post(environment.OTP_API, otpdata1);
+    const res = await httpClient.post(API.OTP_API, otpdata1);
 
     console.log("OTP Response:", res);
     toast({
@@ -431,7 +431,7 @@ export default function Hero() {
       newtype: "new",
     };
 
-    const res = await httpClient.post(environment.OTP_API, otpdata);
+    const res = await httpClient.post(API.OTP_API, otpdata);
 
     console.log("OTP Response:", res);
     toast({
@@ -488,7 +488,7 @@ export default function Hero() {
           };
         }
 
-        const response = await fetch(environment.APPOINMENT_REPORT_Cancel, {
+        const response = await fetch(API.APPOINMENT_REPORT_Cancel, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -503,7 +503,7 @@ export default function Hero() {
 
         if (result.status === 1) {
           const res = await httpClient.post(
-            environment.APPLICANT_WITH_APPT_API,
+            API.APPLICANT_WITH_APPT_API,
             newappointmentSlot
           );
 
@@ -593,7 +593,7 @@ export default function Hero() {
         };
       }
 
-      const response = await fetch(environment.APPOINMENT_REPORT_Cancel, {
+      const response = await fetch(API.APPOINMENT_REPORT_Cancel, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -667,7 +667,7 @@ export default function Hero() {
       formData.append("contactType", contactType);
       formData.append("contactValue", contactValue);
 
-      const response = await fetch(environment.APPOINMENT_REPORT_API, {
+      const response = await fetch(API.APPOINMENT_REPORT_API, {
         method: "POST",
         body: formData,
       });

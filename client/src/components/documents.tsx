@@ -61,7 +61,7 @@ export default function Documents() {
     "Documents in languages other than English must be translated",
     "Bring your eMedical referral letter for examination",
     "Arrive 15 minutes early for your appointment",
-    "Fasting required for blood tests (8-12 hours)",
+    // "Fasting required for blood tests (8-12 hours)",
     "Bring comfortable clothing for chest X-ray"
   ];
 
@@ -115,6 +115,9 @@ export default function Documents() {
                 <div className="w-5 h-5 card-gradient-orange rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                   <CheckCircle className="text-white h-3 w-3" />
                 </div>
+                 {/* <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+                  <span>{index+1}.</span>
+                </div> */}
                 <span className="text-brand-black leading-relaxed">{note}</span>
               </div>
             ))}

@@ -1,6 +1,6 @@
 import axios from "axios";
 import { jwtDecode } from "jwt-decode";
-import { environment } from "../environment/environment";
+import { environment, API } from "../environment/environment";
 import { decrypt, encrypt, x_api_keyencryption } from "../utils/crypto-util";
 
 const TOKEN_KEY = "nd_token";
@@ -37,7 +37,7 @@ function getTokenExpiry(token: string): number | null {
 async function fetchToken(): Promise<string | null> {
   try {
     const res = await axios.post(
-      environment.TOKEN_API,
+      API.TOKEN_API,
       {},
       {
         headers: {

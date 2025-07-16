@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import httpClient from "../../../api/httpClient";
-import { environment } from "../../../environment/environment";
+import { environment, API } from "../../../environment/environment";
 // import Calendar from "react-calendar"; // for basic calendar
 import "./AppointmentBooking.css";
 // import { toast } from "react-toastify";
@@ -812,7 +812,7 @@ const AppointmentBooking = () => {
   useEffect(() => {
     (async () => {
       try {
-        const res = await httpClient.get(environment.AVAILABLE_CENTER_API);
+        const res = await httpClient.get(API.AVAILABLE_CENTER_API);
         console.log(res.data.data);
         const filterdedata = res.data.data.filter(
           (item: any) => item.status != "2"
@@ -884,7 +884,7 @@ const AppointmentBooking = () => {
     );
 
     try {
-      const serviceApiUrl = `${environment.AVAILABLE_SERVIVCE_API}&center=${selectedCode}`;
+      const serviceApiUrl = `${API.AVAILABLE_SERVIVCE_API}&center=${selectedCode}`;
       const res = await httpClient.get(serviceApiUrl);
       setServiceList(res.data?.data || []);
     } catch (err) {
@@ -897,7 +897,7 @@ const AppointmentBooking = () => {
       formData.append("center", selectedCode);
 
       const res = await httpClient.post(
-        environment.AVAILABLE_SLOTS_API,
+        API.AVAILABLE_SLOTS_API,
         formData
       );
       const Timeslot = res.data.data || [];
@@ -1799,7 +1799,7 @@ const AppointmentBooking = () => {
       console.log("finalData-----------vvvv", finalData);
 
       const res = await httpClient.post(
-        environment.APPLICANT_WITH_APPT_API,
+        API.APPLICANT_WITH_APPT_API,
         finalData
       );
 
@@ -1832,7 +1832,7 @@ const AppointmentBooking = () => {
             booking?.appointment_id
           ) {
             const appointmentId = booking.appointment_id;
-            invoiceUrls1.push(environment.APPLICANT_RECEIPT_API(appointmentId));
+            invoiceUrls1.push(API.APPLICANT_RECEIPT_API(appointmentId));
             return true;
           }
 
@@ -2446,7 +2446,7 @@ const AppointmentBooking = () => {
 
   useEffect(() => {
     const fetchholiday = async () => {
-      const res = await httpClient.get(environment.HOLIDAY_API);
+      const res = await httpClient.get(API.HOLIDAY_API);
       console.log("Holiday Data:", res.data);
 
       const filteredAndFormatted = Array.from(
@@ -2468,7 +2468,7 @@ const AppointmentBooking = () => {
     };
 
     fetchholiday();
-  }, [environment.HOLIDAY_API]);
+  }, [API.HOLIDAY_API]);
 
   const isHoliday = (day: Date) => {
     return holidaydata.some((holiday) => {
@@ -3076,29 +3076,28 @@ const AppointmentBooking = () => {
                         </div>
                       )}
 
-                      {
-                        availablemembercount <= 1 && (
-                          <div className="row g-2 align-items-center">
-                            <div className="col-12 col-md">
-                              <div className="d-flex flex-wrap align-items-center">
-                                <span className="text-danger me-2">
-                                  {selectedDate?.toLocaleDateString("en-US", {
-                                    weekday: "long",
-                                    year: "numeric",
-                                    month: "short",
-                                    day: "numeric",
-                                  })}{" "}
-                                  - This date is only available for{" "}
-                                  {availablemembercount}{" "}
-                                  {availablemembercount === 1
-                                    ? "member"
-                                    : "members"}{" "}
-                                  Choose another date .
-                                </span>
-                              </div>
+                      {availablemembercount <= 1 && (
+                        <div className="row g-2 align-items-center">
+                          <div className="col-12 col-md">
+                            <div className="d-flex flex-wrap align-items-center">
+                              <span className="text-danger me-2">
+                                {selectedDate?.toLocaleDateString("en-US", {
+                                  weekday: "long",
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                })}{" "}
+                                - This date is only available for{" "}
+                                {availablemembercount}{" "}
+                                {availablemembercount === 1
+                                  ? "member"
+                                  : "members"}{" "}
+                                Choose another date .
+                              </span>
                             </div>
                           </div>
-                        )}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

@@ -1,97 +1,53 @@
+export type EnvType = "LOCAL" | "UAT" | "PROD";
+
+export const ACTIVE_ENV: EnvType = "LOCAL";
+
+const CONFIG = {
+  LOCAL: {
+    BASE_URL: "http://localhost:8001",
+    SECRET_KEY: "Ndhelthcheck_@local",
+    ENCRYPTION_KEY: "ND-HealthCheck-Web!local",
+  },
+  UAT: {
+    BASE_URL: "https://uat.ndhealthcheck.com/appointment-service",
+    SECRET_KEY: "Ndhelthcheck_@uat",
+    ENCRYPTION_KEY: "ND-HealthCheck-Web!uat",
+  },
+  PROD: {
+    BASE_URL: "https://ndhealthcheck.com/appointment-service",
+    SECRET_KEY: "Ndhelthcheck_@prod",
+    ENCRYPTION_KEY: "ND-HealthCheck-Web!prod",
+  },
+}[ACTIVE_ENV as EnvType];
+
 export const environment = {
-  production: false,
+  production: (ACTIVE_ENV as EnvType) === "PROD" ? true : false,
   apiUrl: "http://localhost:3000/api",
   BASE_PATH: "/",
   DEFAULT_SERVICE_CODE: "APPT",
   SECRET_KEY: "Ndhelthcheck_@key",
-  // uat api
-  // TOKEN_API: "https://uat.ndhealthcheck.com/appointment-service/api/auth/token",
-  // APPLICANT_CRUD_API:
-  //   "https://uat.ndhealthcheck.com/appointment-service/transaction/applicant/details",
-  // APPOINMENT_SAVE_API:
-  //   "https://uat.ndhealthcheck.com/appointment-service/transaction/book_appointment/save",
-  // AVAILABLE_SLOTS_API:
-  //   "https://uat.ndhealthcheck.com/appointment-service/configuration/slot-listing",
-  // AVAILABLE_CENTER_API:
-  //   "https://uat.ndhealthcheck.com/appointment-service/master/center?application=1",
-  // AVAILABLE_SERVIVCE_API:
-  //   "https://uat.ndhealthcheck.com/appointment-service/master/service?status=1&application=1",
-  // APPLICANT_WITH_APPT_API:
-  //   "https://uat.ndhealthcheck.com/appointment-service/transaction/applicant-appointment/details",
-
-  // APPLICANT_RECEIPT_API: (appointmentId: string) =>
-  //   `https://uat.ndhealthcheck.com/appointment-service/transaction/invoice/pdf/${appointmentId}/download`,
-
-  // APPOINMENT_REPORT_API:
-  //   "https://uat.ndhealthcheck.com/appointment-service/transaction/appointment-report",
-
-  // APPOINMENT_REPORT_Cancel:
-  //   "https://uat.ndhealthcheck.com/appointment-service/transaction/appointment/cancel",
-
-  // OTP_API:
-  //   "https://uat.ndhealthcheck.com/appointment-service/notification/GenerateOTP",
-  // OTP_VALIDATE_API:
-  //   "https://uat.ndhealthcheck.com/appointment-service/notification/validate-otp",
-  // HOLIDAY_API:
-  //   "https://uat.ndhealthcheck.com/appointment-service/master/holiday?status=1&application=1",
-
-  // -----------local API
-
-  TOKEN_API: "http://localhost:8001/api/auth/webtoken",
-  APPLICANT_CRUD_API: "http://localhost:8001/transaction/applicant/details",
-  APPOINMENT_SAVE_API:
-    "http://localhost:8001/transaction/book_appointment/save",
-  AVAILABLE_SLOTS_API: "http://localhost:8001/configuration/slot-listing",
-  AVAILABLE_CENTER_API: "http://localhost:8001/master/center?application=1",
-  AVAILABLE_SERVIVCE_API:
-    "http://localhost:8001/master/service?status=1&application=1",
-  APPLICANT_WITH_APPT_API:
-    "http://localhost:8001/transaction/applicant-appointment/details",
-  APPLICANT_RECEIPT_API: (appointmentId: string) =>
-    `http://localhost:8001/transaction/invoice/pdf/${appointmentId}/download`,
-  APPOINMENT_REPORT_API: "http://localhost:8001/transaction/appointment-report",
-
-  APPOINMENT_REPORT_Cancel:
-    "http://localhost:8001/transaction/appointment/cancel",
-
-  HOLIDAY_API: "http://localhost:8001/master/holiday?status=1&application=1",
-
-  OTP_API: "http://localhost:8001/notification/GenerateOTP",
-  OTP_VALIDATE_API: "http://localhost:8001/notification/validate-otp",
-
-  WEBSITE_CUSTOM_SECRET_KEY: "Ndhelthcheck_@local",
-  WEBSITE_CUSTOM_ENCRYPTION_SECRET_KEY: "ND-HealthCheck-Web!local",
-  // -- prod api
-
-  // TOKEN_API: "https://ndhealthcheck.com/appointment-service/api/auth/token",
-  // APPLICANT_CRUD_API:
-  //   "https://ndhealthcheck.com/appointment-service/transaction/applicant/details",
-  // APPOINMENT_SAVE_API:
-  //   "https://ndhealthcheck.com/appointment-service/transaction/book_appointment/save",
-  // AVAILABLE_SLOTS_API:
-  //   "https://ndhealthcheck.com/appointment-service/configuration/slot-listing",
-  // AVAILABLE_CENTER_API:
-  //   "https://ndhealthcheck.com/appointment-service/master/center?application=1",
-  // AVAILABLE_SERVIVCE_API:
-  //   "https://ndhealthcheck.com/appointment-service/master/service?status=1&application=1",
-  // APPLICANT_WITH_APPT_API:
-  //   "https://ndhealthcheck.com/appointment-service/transaction/applicant-appointment/details",
-
-  // APPLICANT_RECEIPT_API: (appointmentId: string) =>
-  //   `https://ndhealthcheck.com/appointment-service/transaction/invoice/pdf/${appointmentId}/download`,
-
-  // APPOINMENT_REPORT_API:
-  //   "https://ndhealthcheck.com/appointment-service/transaction/appointment-report",
-
-  // APPOINMENT_REPORT_Cancel:
-  //   "https://ndhealthcheck.com/appointment-service/transaction/appointment/cancel",
-
-  // OTP_API:
-  //   "https://ndhealthcheck.com/appointment-service/notification/GenerateOTP",
-  // OTP_VALIDATE_API:
-  //   "https://ndhealthcheck.com/appointment-service/notification/validate-otp",
-  // HOLIDAY_API:
-  //   "https://ndhealthcheck.com/appointment-service/master/holiday?status=1&application=1",
-
+  WEBSITE_CUSTOM_SECRET_KEY: CONFIG.SECRET_KEY,
+  WEBSITE_CUSTOM_ENCRYPTION_SECRET_KEY: CONFIG.ENCRYPTION_KEY,
   OTP_TIMER_DURATION: 300,
+};
+
+const apiPath = (path: string) => `${CONFIG.BASE_URL}${path}`;
+
+export const API = {
+  TOKEN_API: apiPath("/api/auth/webtoken"),
+  APPLICANT_CRUD_API: apiPath("/transaction/applicant/details"),
+  APPOINMENT_SAVE_API: apiPath("/transaction/book_appointment/save"),
+  AVAILABLE_SLOTS_API: apiPath("/configuration/slot-listing"),
+  AVAILABLE_CENTER_API: apiPath("/master/center?application=1"),
+  AVAILABLE_SERVICE_API: apiPath("/master/service?status=1&application=1"),
+  APPLICANT_WITH_APPT_API: apiPath(
+    "/transaction/applicant-appointment/details"
+  ),
+  APPLICANT_RECEIPT_API: (appointmentId: string) =>
+    apiPath(`/transaction/invoice/pdf/${appointmentId}/download`),
+  APPOINMENT_REPORT_API: apiPath("/transaction/appointment-report"),
+  APPOINMENT_REPORT_CANCEL: apiPath("/transaction/appointment/cancel"),
+  OTP_API: apiPath("/notification/GenerateOTP"),
+  OTP_VALIDATE_API: apiPath("/notification/validate-otp"),
+  HOLIDAY_API: apiPath("/master/holiday?status=1&application=1"),
 };
