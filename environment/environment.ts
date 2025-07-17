@@ -1,32 +1,28 @@
-// Define Environment Constants
-export const ENV_LOCAL = "LOCAL" as const;
-export const ENV_UAT = "UAT" as const;
-export const ENV_PROD = "PROD" as const;
+// Single variable to switch environment manually
+export const ACTIVE_ENV = "UAT";  // Change to "LOCAL", "UAT", or "PROD"
 
-// Define ACTIVE_ENV with proper type to avoid TS warning
-export const ACTIVE_ENV: typeof ENV_LOCAL | typeof ENV_UAT | typeof ENV_PROD = ENV_LOCAL; // Change as needed
-
-// Configuration based on ACTIVE_ENV
+// Configuration Object
 const CONFIG = {
-  [ENV_LOCAL]: {
+  LOCAL: {
     BASE_URL: "http://localhost:8001",
     SECRET_KEY: "Ndhelthcheck_@local",
     ENCRYPTION_KEY: "ND-HealthCheck-Web!local",
   },
-  [ENV_UAT]: {
+  UAT: {
     BASE_URL: "https://uat.ndhealthcheck.com/appointment-service",
     SECRET_KEY: "Ndhelthcheck_@uat",
     ENCRYPTION_KEY: "ND-HealthCheck-Web!uat",
   },
-  [ENV_PROD]: {
+  PROD: {
     BASE_URL: "https://ndhealthcheck.com/appointment-service",
     SECRET_KEY: "Ndhelthcheck_@prod",
     ENCRYPTION_KEY: "ND-HealthCheck-Web!prod",
   },
 }[ACTIVE_ENV];
 
+// Environment Object
 export const environment = {
-  production: false,
+  production: true,
   apiUrl: "http://localhost:3000/api",
   BASE_PATH: "/",
   DEFAULT_SERVICE_CODE: "APPT",
@@ -36,8 +32,10 @@ export const environment = {
   OTP_TIMER_DURATION: 300,
 };
 
+// API Paths Function
 const apiPath = (path: string) => `${CONFIG.BASE_URL}${path}`;
 
+// API Endpoints
 export const API = {
   TOKEN_API: apiPath("/api/auth/webtoken"),
   APPLICANT_CRUD_API: apiPath("/transaction/applicant/details"),
