@@ -884,7 +884,7 @@ const AppointmentBooking = () => {
     );
 
     try {
-      const serviceApiUrl = `${API.AVAILABLE_SERVIVCE_API}&center=${selectedCode}`;
+      const serviceApiUrl = `${API.AVAILABLE_SERVICE_API}&center=${selectedCode}`;
       const res = await httpClient.get(serviceApiUrl);
       setServiceList(res.data?.data || []);
     } catch (err) {
