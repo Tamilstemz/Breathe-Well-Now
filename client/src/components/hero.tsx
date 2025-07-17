@@ -19,7 +19,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import httpClient from "../../../api/httpClient";
-import { environment,API } from "../../../environment/environment";
+import { API, environment } from "../../../environment/environment";
 import { decrypt, encrypt } from "../../../utils/crypto-util";
 import successImg from "../../assests/successImg.png";
 
@@ -461,6 +461,8 @@ export default function Hero() {
 
       try {
         let payload = {};
+        console.log("payload :", payload);
+        console.log("API :", API.APPOINMENT_REPORT_CANCEL);
 
         if (appointmentType === "Group") {
           const groupdata = selectedApplicants.map((item) => ({
@@ -488,7 +490,7 @@ export default function Hero() {
           };
         }
 
-        const response = await fetch(API.APPOINMENT_REPORT_Cancel, {
+        const response = await fetch(API.APPOINMENT_REPORT_CANCEL, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -593,7 +595,7 @@ export default function Hero() {
         };
       }
 
-      const response = await fetch(API.APPOINMENT_REPORT_Cancel, {
+      const response = await fetch(API.APPOINMENT_REPORT_CANCEL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1497,12 +1499,11 @@ export default function Hero() {
                       },
                       {
                         label: "Date",
-                       value: appicantResdata.date
-  ? new Date(appicantResdata.date)
-      .toLocaleDateString("en-GB") // → "17/07/2025"
-      .replaceAll("/", "-")        // → "17-07-2025"
-  : "",
-
+                        value: appicantResdata.date
+                          ? new Date(appicantResdata.date)
+                              .toLocaleDateString("en-GB") // → "17/07/2025"
+                              .replaceAll("/", "-") // → "17-07-2025"
+                          : "",
                       },
                       { label: "Time", value: appicantResdata.time },
                       { label: "Reference", value: appicantResdata.reference },

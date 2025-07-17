@@ -1,27 +1,32 @@
-export type EnvType = "LOCAL" | "UAT" | "PROD";
+// Define Environment Constants
+export const ENV_LOCAL = "LOCAL" as const;
+export const ENV_UAT = "UAT" as const;
+export const ENV_PROD = "PROD" as const;
 
-export const ACTIVE_ENV: EnvType = "LOCAL";
+// Define ACTIVE_ENV with proper type to avoid TS warning
+export const ACTIVE_ENV: typeof ENV_LOCAL | typeof ENV_UAT | typeof ENV_PROD = ENV_LOCAL; // Change as needed
 
+// Configuration based on ACTIVE_ENV
 const CONFIG = {
-  LOCAL: {
+  [ENV_LOCAL]: {
     BASE_URL: "http://localhost:8001",
     SECRET_KEY: "Ndhelthcheck_@local",
     ENCRYPTION_KEY: "ND-HealthCheck-Web!local",
   },
-  UAT: {
+  [ENV_UAT]: {
     BASE_URL: "https://uat.ndhealthcheck.com/appointment-service",
     SECRET_KEY: "Ndhelthcheck_@uat",
     ENCRYPTION_KEY: "ND-HealthCheck-Web!uat",
   },
-  PROD: {
+  [ENV_PROD]: {
     BASE_URL: "https://ndhealthcheck.com/appointment-service",
     SECRET_KEY: "Ndhelthcheck_@prod",
     ENCRYPTION_KEY: "ND-HealthCheck-Web!prod",
   },
-}[ACTIVE_ENV as EnvType];
+}[ACTIVE_ENV];
 
 export const environment = {
-  production: (ACTIVE_ENV as EnvType) === "PROD" ? true : false,
+  production: false,
   apiUrl: "http://localhost:3000/api",
   BASE_PATH: "/",
   DEFAULT_SERVICE_CODE: "APPT",
@@ -40,9 +45,7 @@ export const API = {
   AVAILABLE_SLOTS_API: apiPath("/configuration/slot-listing"),
   AVAILABLE_CENTER_API: apiPath("/master/center?application=1"),
   AVAILABLE_SERVICE_API: apiPath("/master/service?status=1&application=1"),
-  APPLICANT_WITH_APPT_API: apiPath(
-    "/transaction/applicant-appointment/details"
-  ),
+  APPLICANT_WITH_APPT_API: apiPath("/transaction/applicant-appointment/details"),
   APPLICANT_RECEIPT_API: (appointmentId: string) =>
     apiPath(`/transaction/invoice/pdf/${appointmentId}/download`),
   APPOINMENT_REPORT_API: apiPath("/transaction/appointment-report"),
