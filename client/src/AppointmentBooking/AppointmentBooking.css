@@ -30,6 +30,15 @@
   width: 100%;
 }
 
+.calendardaybox {
+  min-width: 40px;
+  height: 40px;
+}
+
+.empty-day {
+  visibility: hidden;
+}
+
 input,
 textarea,
 select {
@@ -600,7 +609,7 @@ input[type="number"] {
 .modal-content {
   padding: 15px;
 }
-.is-invalid{
+.is-invalid {
   background-color: red;
 }
 

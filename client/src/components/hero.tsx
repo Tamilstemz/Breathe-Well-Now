@@ -306,18 +306,18 @@ export default function Hero() {
     e: React.ChangeEvent<HTMLInputElement>,
     index: number
   ) => {
-    const value = e.target.value.replace(/\D/g, ""); // Only digits
-    if (value.length > 1) return;
+      const value = e.target.value.replace(/\D/g, ""); // Only digits
+      if (value.length > 1) return;
 
-    const newOtp = [...otp];
-    newOtp[index] = value;
-    setOtp(newOtp);
+      const newOtp = [...otp];
+      newOtp[index] = value;
+      setOtp(newOtp);
 
-    // Move to next input
-    const nextInput = e.target.nextElementSibling as HTMLInputElement | null;
-    if (nextInput) {
-      nextInput.focus();
-    }
+      // Move to next input
+      const nextInput = e.target.nextElementSibling as HTMLInputElement | null;
+      if (nextInput) {
+        nextInput.focus();
+      }
   };
   const handleKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>,
@@ -991,34 +991,7 @@ export default function Hero() {
                     ) : (
                       <>
                         <div>
-                          {/* <p className="text-sm text-muted-foreground">
-                            Enter the OTP sent to your mobile number to{" "}
-                            {otpButtontype === "Reschedule"
-                              ? "reschedule your booking:"
-                              : "cancel your booking:"}
-                          </p>
-                          <Input
-                            type="text"
-                            inputMode="numeric"
-                            pattern="\d*"
-                            placeholder="Enter 6-digit OTP"
-                            value={otp}
-                            onChange={(
-                              e: React.ChangeEvent<HTMLInputElement>
-                            ) => {
-                              const onlyDigits = e.target.value.replace(
-                                /\D/g,
-                                ""
-                              );
-                              // if (onlyDigits.length <= 6) setOtp(onlyDigits);
-                            }}
-                            className="mt-2 text-center tracking-widest font-semibold text-lg"
-                          />
-                          {otpError && (
-                            <div className="text-red-600 text-xs mt-1">
-                              {otpError}
-                            </div>
-                          )} */}
+                          
                           <p className="otpSubheading">
                             We’ve sent a 6-digit code to{" "}
                             {appointmentData[0]?.contact_number}

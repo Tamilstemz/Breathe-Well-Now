@@ -474,15 +474,18 @@ const AppointmentBooking = () => {
     const month = currentDate.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-    const startDate = new Date(firstDay);
-    startDate.setDate(firstDay.getDate() - firstDay.getDay());
 
-    const days = [];
-    const currentDay = new Date(startDate);
+    const days: (Date | null)[] = [];
 
-    for (let i = 0; i < 42; i++) {
-      days.push(new Date(currentDay));
-      currentDay.setDate(currentDay.getDate() + 1);
+    // Add placeholders for days before the 1st of the month
+    const startWeekday = firstDay.getDay(); // 0 (Sun) to 6 (Sat)
+    for (let i = 0; i < startWeekday; i++) {
+      days.push(null); // Empty slot
+    }
+
+    // Add actual days of the current month
+    for (let d = 1; d <= lastDay.getDate(); d++) {
+      days.push(new Date(year, month, d));
     }
 
     return days;
@@ -896,10 +899,7 @@ const AppointmentBooking = () => {
       formData.append("application", "1");
       formData.append("center", selectedCode);
 
-      const res = await httpClient.post(
-        API.AVAILABLE_SLOTS_API,
-        formData
-      );
+      const res = await httpClient.post(API.AVAILABLE_SLOTS_API, formData);
       const Timeslot = res.data.data || [];
 
       // ✅ Update state
@@ -1798,10 +1798,7 @@ const AppointmentBooking = () => {
 
       console.log("finalData-----------vvvv", finalData);
 
-      const res = await httpClient.post(
-        API.APPLICANT_WITH_APPT_API,
-        finalData
-      );
+      const res = await httpClient.post(API.APPLICANT_WITH_APPT_API, finalData);
 
       const responseData = res.data.data;
 
@@ -2653,7 +2650,7 @@ const AppointmentBooking = () => {
                 </div>
 
                 <div className="calendar-wrapper">
-                  <div
+                  {/* <div
                     className={`calendar-grid ${
                       selectedCenter ? "active" : ""
                     }`}
@@ -2731,6 +2728,112 @@ const AppointmentBooking = () => {
                                   >
                                     {isHoliday(day)
                                       ? "" // Empty badge or show "H" if you prefer
+                                      : totaldaycount === 0
+                                      ? ""
+                                      : totaldaycount}
+                                  </div>
+                                )}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent
+                              style={{
+                                backgroundColor: "rgb(33 55 96)",
+                                color: "white",
+                                zIndex: 1000,
+                              }}
+                            >
+                              {isHoliday(day)
+                                ? "Holiday"
+                                : totaldaycount === 0 ||
+                                  totaldaycount === undefined
+                                ? "No slot available"
+                                : `Available Slots: ${totaldaycount}`}
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                      );
+                    })}
+                  </div> */}
+                  <div
+                    className={`calendar-grid ${
+                      selectedCenter ? "active" : ""
+                    }`}
+                    style={{
+                      opacity: !selectedCenter ? 0.5 : 1,
+                      pointerEvents: !selectedCenter ? "none" : "auto",
+                      cursor: !selectedCenter ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {getCalendarDays().map((day, index) => {
+                      if (!day) {
+                        // Placeholder cell
+                        return (
+                          <div
+                            key={index}
+                            className="calendardaybox"
+                            style={{ visibility: "hidden", height: "35px" }}
+                          ></div>
+                        );
+                      }
+
+                      const isDisabled =
+                        isPastDate(day) ||
+                        day.getDay() === 0 || // Sunday
+                        !isWithin90DaysFromToday(day) ||
+                        isHoliday(day) ||
+                        (totalcount(day) === 0 && hasEvent(day));
+
+                      const today = isToday(day);
+                      const dayStyle: React.CSSProperties = {
+                        opacity: isDisabled ? 0.5 : 1,
+                        border: isHoliday(day)
+                          ? "1px solid red"
+                          : isDisabled
+                          ? "1px solid #ccc"
+                          : "none",
+                        cursor: isDisabled ? "not-allowed" : "pointer",
+                        borderRadius: "5px",
+                        background: today ? "orange" : "",
+                        height: "35px",
+                      };
+
+                      const totaldaycount = totalcount(day);
+                      const hasSlot = hasEvent(day);
+
+                      return (
+                        <div
+                          key={index}
+                          className="d-flex align-items-center justify-content-center position-relative calendardaybox"
+                          style={{
+                            pointerEvents: isDisabled ? "none" : "auto",
+                          }}
+                          onClick={() => {
+                            if (!isDisabled) handleDateClick(day, timeSlots);
+                          }}
+                        >
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div
+                                className={`calendardaystyle d-flex align-items-center justify-content-center rounded-square position-relative z-9999 ${
+                                  !isDisabled ? "calendar-day" : ""
+                                } ${isSelecteddate(day) ? "selected" : ""}`}
+                                style={dayStyle}
+                              >
+                                {day.getDate()}
+
+                                {(isHoliday(day) || hasSlot) && (
+                                  <div
+                                    className="calendarAvalSlot"
+                                    style={{
+                                      backgroundColor: isHoliday(day)
+                                        ? "#ffc107"
+                                        : totaldaycount === 0
+                                        ? "red"
+                                        : "#5ebe5e",
+                                    }}
+                                  >
+                                    {isHoliday(day)
+                                      ? ""
                                       : totaldaycount === 0
                                       ? ""
                                       : totaldaycount}
