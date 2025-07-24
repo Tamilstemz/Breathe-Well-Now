@@ -1,5 +1,5 @@
 // Single variable to switch environment manually
-export const ACTIVE_ENV = "LOCAL";  // Change to "LOCAL", "UAT", or "PROD"
+export const ACTIVE_ENV = "UAT";  // Change to "LOCAL", "UAT", or "PROD"
 
 // Configuration Object
 const CONFIG = {
@@ -16,7 +16,7 @@ const CONFIG = {
   PROD: {
     BASE_URL: "https://ndhealthcheck.com/appointment-service",
     SECRET_KEY: "Ndhelthcheck_@prod",
-    ENCRYPTION_KEY: "ND-HealthCheck-Web!prod",
+    ENCRYPTION_KEY: "ND-HealthCheck-Web!prodd",
   },
 }[ACTIVE_ENV];
 

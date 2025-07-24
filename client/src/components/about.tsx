@@ -1,4 +1,4 @@
-import { IdCard, Laptop, Building } from "lucide-react";
+import { Building, IdCard, Laptop } from "lucide-react";
 
 export default function About() {
   return (
