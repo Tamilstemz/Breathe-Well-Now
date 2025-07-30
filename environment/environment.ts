@@ -11,7 +11,7 @@ const CONFIG = {
   UAT: {
     BASE_URL: "https://uat.ndhealthcheck.com/appointment-service",
     SECRET_KEY: "Ndhelthcheck_@uat",
-    ENCRYPTION_KEY: "ND-HealthCheck-Web!uat",
+    ENCRYPTION_KEY: "ND-HealthCheck-Web!uattt",
   },
   PROD: {
     BASE_URL: "https://ndhealthcheck.com/appointment-service",
