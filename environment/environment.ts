@@ -1,5 +1,5 @@
 // Single variable to switch environment manually
-export const ACTIVE_ENV = "PROD";  // Change to "LOCAL", "UAT", or "PROD"
+export const ACTIVE_ENV = "UAT";  // Change to "LOCAL", "UAT", or "PROD"
 
 // Configuration Object
 const CONFIG = {
