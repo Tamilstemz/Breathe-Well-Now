@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import httpClient from "../../../api/httpClient";
-import { environment, API } from "../../../environment/environment";
+import { API, environment } from "../../../environment/environment";
 // import Calendar from "react-calendar"; // for basic calendar
 import "./AppointmentBooking.css";
 // import { toast } from "react-toastify";
@@ -233,6 +233,10 @@ const AppointmentBooking = () => {
   const [animateModal, setAnimateModal] = useState(false);
   const [holidaydata, setholidaydata] = useState<any[]>([]);
   console.log("holidaydata", holidaydata);
+  const [transactionId, setTransactionId] = useState("");
+  const [isCheckingTxn, setIsCheckingTxn] = useState(false);
+  const [txnMessage, setTxnMessage] = useState<string | null>(null);
+  const [txnStatus, setTxnStatus] = useState<number | null>(null);
 
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -1013,6 +1017,34 @@ const AppointmentBooking = () => {
     }));
   };
 
+  const checkDuplicateHapId = async (hapId: any) => {
+    try {
+      // 🔹 Set loading state by reusing formErrors
+      setFormErrors((prev) => ({ ...prev, hapId: "loading" }));
+      const payload = new FormData();
+      payload.append("data_value", hapId);
+      payload.append("data_type", "hap_id");
+      const res = await httpClient.post(API.APPLICANTCHECK_API, payload);
+      const data = res.data;
+
+      if (data?.status === 1) {
+        // Duplicate
+        setFormErrors((prev) => ({
+          ...prev,
+          hapId: "HAP ID already exists. Please try another.",
+        }));
+      } else {
+        // Valid
+        setFormErrors((prev) => ({ ...prev, hapId: "" }));
+      }
+    } catch (err) {
+      setFormErrors((prev) => ({
+        ...prev,
+        hapId: "Error checking HAP ID. Try again.",
+      }));
+    }
+  };
+
   const getSelectedServiceNames = () => {
     return serviceList
       .filter((s: any) => selectedServices.includes(s.code))
@@ -1692,7 +1724,10 @@ const AppointmentBooking = () => {
         PaymentType: "",
         // Keep servicecode and totalPrice
       }));
-
+      setTransactionId("");
+      setIsCheckingTxn(false);
+      setTxnMessage(null);
+      setTxnStatus(null);
       setMembers((prevMembers) =>
         prevMembers.map((member) => ({
           ...member,
@@ -1723,7 +1758,7 @@ const AppointmentBooking = () => {
         const { TransactionId } = formData;
 
         if (!TransactionId.trim())
-          errors.TransactionId = "Applicant Name is required.";
+          errors.TransactionId = "Transactio ID is required.";
         setFormErrors(errors);
         return;
       }
@@ -1771,7 +1806,7 @@ const AppointmentBooking = () => {
             dob: formatDateToDDMMYYYY(formData.dob),
             gender: formData.gender,
             address: "123 Street, City",
-            transaction_id: formData.TransactionId,
+            transaction_id: transactionId,
             payment_method: formData.paymentMethod,
             transaction_amt: formData.totalPrice,
             status: 1,
@@ -2113,56 +2148,40 @@ const AppointmentBooking = () => {
     return nextMonth > maxDate;
   };
 
-  const handleChange = (
+  const handleChange = async (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-    index?: number // optional index for group members
+    index?: number
   ) => {
     const { name, type, value } = e.target;
-
-    // console.log('vvvvvv----11111', value, '000----000', index);
 
     if (appointmentType === "Self") {
       let updatedData = { ...formData, [name]: value };
 
-      // If DOB is updated, auto-calculate age
       if (name === "dob" && value) {
         updatedData.age = calculateAge(value);
       }
 
       if (name === "patientName") {
-        // Allow only letters and spaces
         const alphabetOnlyRegex = /^[A-Za-z\s]*$/;
-        if (!alphabetOnlyRegex.test(value)) return; // Ignore invalid characters
+        if (!alphabetOnlyRegex.test(value)) return;
       }
 
-      // if (name === "age") {
-      //   if (/^\d+$/.test(value)) {
-      //     // Valid number entered → calculate DOB
-      //     updatedData.dob = calculateDOB(value);
-      //   } else if (value.trim() === "") {
-      //     // If age is cleared → reset DOB too
-      //     updatedData.dob = "";
-      //   }
-      // }
+      if (name === "TransactionId") {
+        setTransactionId(value); // ✅ only track TransactionId typing
+        setFormData((prev) => ({ ...prev, [name]: value }));
 
-      if (name === "hapId" && !/^\d{8}$/.test(value)) {
-        updatedData.hapId = value;
+        // clear errors while typing
+        setFormErrors((prevErrors) => {
+          const updatedErrors = { ...prevErrors };
+          delete updatedErrors[name];
+          return updatedErrors;
+        });
+      } else {
+        setFormData((prev) => ({ ...prev, [name]: value }));
       }
-
-      // console.log('updatedData-------',updatedData);
 
       setFormData(updatedData);
-
-      // Clear error if present
-      setFormErrors((prevErrors) => {
-        const updatedErrors = { ...prevErrors };
-        delete updatedErrors[name];
-        return updatedErrors;
-      });
-
-      // console.log('formData-----',formData);
     } else if (appointmentType === "Group") {
-      // console.log('vvvvvv----222', value, '000----000', index);
       const isCheckbox = type === "checkbox";
       const newValue = isCheckbox
         ? (e.target as HTMLInputElement).checked
@@ -2170,37 +2189,20 @@ const AppointmentBooking = () => {
 
       const updatedMembers = [...members];
       if (typeof index === "number" && index >= 0) {
-        updatedMembers[index][name] = value;
-      }
-
-      if (typeof index === "number" && type === "checkbox") {
         updatedMembers[index][name] = newValue;
       }
 
-      // Name validation: letters + space only
       if (name === "patientName") {
         const alphabetOnlyRegex = /^[A-Za-z\s]*$/;
-        if (!alphabetOnlyRegex.test(value)) return; // stop if invalid
+        if (!alphabetOnlyRegex.test(value)) return;
       }
 
-      // Auto-calculate age from DOB
       if (name === "dob" && value && typeof index === "number") {
         updatedMembers[index].age = calculateAge(value);
       }
 
-      // if (name === "age") {
-      //   if (/^\d+$/.test(value)) {
-      //     // Valid number entered → calculate DOB
-      //     updatedMembers[index].dob = calculateDOB(value);
-      //   } else if (value.trim() === "") {
-      //     // If age is cleared → reset DOB too
-      //     updatedMembers[index].dob = "";
-      //   }
-      // }
-
       setMembers(updatedMembers);
 
-      // ✅ Clear error for this specific group field
       setFormErrors((prevErrors) => {
         const updatedErrors = { ...prevErrors };
         delete updatedErrors[`${name}_${index}`];
@@ -2209,10 +2211,53 @@ const AppointmentBooking = () => {
 
       let updatedData = { ...formData, [name]: value };
       setFormData(updatedData);
-      console.log(members);
     }
   };
 
+  useEffect(() => {
+    if (!transactionId) return;
+
+    // reset previous messages when user types new value
+    setTxnMessage(null);
+    setTxnStatus(null);
+    setIsCheckingTxn(true);
+
+    const timeout = setTimeout(async () => {
+      try {
+        const payload = {
+          data_type: "transaction_id",
+          data_value: transactionId,
+        };
+
+        const res = await httpClient.post(API.APPLICANTCHECK_API, payload);
+
+        setTxnStatus(res?.data?.status);
+        setTxnMessage(res?.data?.message || "Unexpected response");
+
+        if (res?.data?.status === 1) {
+          // ✅ valid TransactionId
+          setFormData((prev) => ({ ...prev, TransactionId: transactionId }));
+        } else {
+          // ❌ invalid / duplicate → also set into formErrors if needed
+          setFormErrors((prevErrors) => ({
+            ...prevErrors,
+            TransactionId: res?.data?.message || "Invalid Transaction ID",
+          }));
+        }
+      } catch (error) {
+        setTxnStatus(0);
+        setTxnMessage("Validation error, please try again");
+        setFormErrors((prevErrors) => ({
+          ...prevErrors,
+          TransactionId: "Validation error, please try again",
+        }));
+      } finally {
+        setIsCheckingTxn(false);
+      }
+    }, 5000);
+
+    return () => clearTimeout(timeout);
+  }, [transactionId]);
   const downloadAllInvoices = () => {
     invoiceUrls.forEach((url, index) => {
       setTimeout(() => {
@@ -4146,31 +4191,57 @@ const AppointmentBooking = () => {
                                   >
                                     HAP ID
                                   </label>
-                                  <input
-                                    type="text"
-                                    className={`form-control ${
-                                      formErrors.hapId
-                                        ? "is-invalid input-shake"
-                                        : ""
-                                    }`}
-                                    id="hapId"
-                                    name="hapId"
-                                    value={formData.hapId}
-                                    onChange={(e) => {
-                                      const value = e.target.value;
-                                      if (/^\d*$/.test(value)) handleChange(e);
-                                    }}
-                                    placeholder={getDynamicPlaceholder("hapId")}
-                                    maxLength={8}
-                                    inputMode="numeric"
-                                    autoComplete="off"
-                                  />
+                                  <div className="position-relative w-100">
+                                    <input
+                                      type="text"
+                                      className={`form-control ${
+                                        formErrors.hapId
+                                          ? "is-invalid input-shake"
+                                          : ""
+                                      }`}
+                                      id="hapId"
+                                      name="hapId"
+                                      value={formData.hapId}
+                                      onChange={(e) => {
+                                        const value = e.target.value;
+                                        if (/^\d*$/.test(value)) {
+                                          handleChange(e); // already updating formData
+                                          if (value.length === 8) {
+                                            checkDuplicateHapId(value); // 🔹 check API on full input
+                                          }
+                                        }
+                                      }}
+                                      placeholder={getDynamicPlaceholder(
+                                        "hapId"
+                                      )}
+                                      maxLength={8}
+                                      inputMode="numeric"
+                                      autoComplete="off"
+                                    />
+                                    {/* Loader inside input field */}
+                                    {formErrors.hapId === "loading" && (
+                                      <div
+                                        className="spinner-border spinner-border-sm text-secondary position-absolute"
+                                        style={{
+                                          right: "10px",
+                                          top: "50%",
+                                          transform: "translateY(-50%)",
+                                        }}
+                                        role="status"
+                                      >
+                                        <span className="visually-hidden">
+                                          Loading...
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                                {formErrors.hapId && (
-                                  <small className="text-danger mt-1 d-block text-end">
-                                    eg: 12345678
-                                  </small>
-                                )}
+                                {formErrors.hapId &&
+                                  formErrors.hapId !== "loading" && (
+                                    <small className="text-danger mt-1 d-block text-end">
+                                      {formErrors.hapId}
+                                    </small>
+                                  )}
                               </div>
                             </div>
 
@@ -4572,17 +4643,47 @@ const AppointmentBooking = () => {
                                   id="TransactionId"
                                   name="TransactionId"
                                   className={`form-control ${
-                                    formErrors.TransactionId
+                                    txnStatus === 2 || txnStatus === 0
                                       ? "is-invalid input-shake"
                                       : ""
                                   }`}
-                                  value={formData.TransactionId}
+                                  value={transactionId}
                                   onChange={handleChange}
                                   autoComplete="off"
                                   placeholder={getDynamicPlaceholder(
                                     "TransactionId"
                                   )}
+                                  maxLength={25}
                                 />
+
+                                {/* Loader */}
+                                {isCheckingTxn && (
+                                  <div className="text-primary mt-1">
+                                    <span className="spinner-border spinner-border-sm me-2"></span>
+                                    Checking Transaction ID...
+                                  </div>
+                                )}
+
+                                {/* Success */}
+                                {txnStatus === 1 && txnMessage && (
+                                  <div className="valid-feedback d-block">
+                                    {txnMessage}
+                                  </div>
+                                )}
+
+                                {/* Error */}
+                                {txnStatus === 2 && txnMessage && (
+                                  <div className="invalid-feedback d-block">
+                                    {txnMessage}
+                                  </div>
+                                )}
+
+                                {/* Fallback error */}
+                                {txnStatus === 0 && txnMessage && (
+                                  <div className="invalid-feedback d-block">
+                                    {txnMessage}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -4625,7 +4726,16 @@ const AppointmentBooking = () => {
                     </button>
                   )}
                   {stepIndex === 1 && (
-                    <button className="btn-custom-orange" onClick={onSubmit}>
+                    <button
+                      disabled={txnStatus !== 1}
+                      className={`btn-custom-orange ${
+                        txnStatus !== 1 ? "disabled-btn" : ""
+                      }`}
+                      onClick={onSubmit}
+                      style={{
+                        cursor: txnStatus !== 1 ? "not-allowed" : "pointer",
+                      }}
+                    >
                       Save
                     </button>
                   )}

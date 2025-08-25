@@ -1,5 +1,5 @@
 // Single variable to switch environment manually
-export const ACTIVE_ENV = "PROD";  // Change to "LOCAL", "UAT", or "PROD"
+export const ACTIVE_ENV = "LOCAL";  // Change to "LOCAL", "UAT", or "PROD"
 
 // Configuration Object
 const CONFIG = {
@@ -51,4 +51,5 @@ export const API = {
   OTP_API: apiPath("/notification/GenerateOTP"),
   OTP_VALIDATE_API: apiPath("/notification/validate-otp"),
   HOLIDAY_API: apiPath("/master/holiday?status=1&application=1"),
+  APPLICANTCHECK_API: apiPath("/transaction/applicant-details/check"),
 };

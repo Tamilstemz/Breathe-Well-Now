@@ -611,6 +611,13 @@ input[type="number"] {
 }
 .is-invalid {
   background-color: red;
+  background: transparent;
+}
+
+.disabled-btn {
+  opacity: 0.6;
+  cursor: not-allowed !important;
+  pointer-events: auto !important;
 }
 
 .modal-header {
