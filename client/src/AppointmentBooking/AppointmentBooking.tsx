@@ -2169,7 +2169,12 @@ const AppointmentBooking = () => {
       if (name === "TransactionId") {
         setTransactionId(value); // ✅ only track TransactionId typing
         setFormData((prev) => ({ ...prev, [name]: value }));
-
+        if (value == "") {
+          setTxnStatus(2);
+          setTxnMessage("Please re-validate Transaction ID");
+          setIsCheckingTxn(false);
+          return;
+        }
         // clear errors while typing
         setFormErrors((prevErrors) => {
           const updatedErrors = { ...prevErrors };
