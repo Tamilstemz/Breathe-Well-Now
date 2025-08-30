@@ -1780,7 +1780,7 @@ const AppointmentBooking = () => {
           dob: formatDateToDDMMYYYY(member.dob),
           gender: member.gender,
           address: "123 Street, City",
-          transaction_id: "3928564386583",
+          transaction_id: transactionId,
           payment_method: member.paymentMethod,
           transaction_amt: member.totalPrice,
           status: 1,
@@ -2199,6 +2199,19 @@ const AppointmentBooking = () => {
 
       if (name === "dob" && value && typeof index === "number") {
         updatedMembers[index].age = calculateAge(value);
+      }
+      if (name === "TransactionId") {
+        setTransactionId(value); // ✅ only track TransactionId typing
+        setFormData((prev) => ({ ...prev, [name]: value }));
+
+        // clear errors while typing
+        setFormErrors((prevErrors) => {
+          const updatedErrors = { ...prevErrors };
+          delete updatedErrors[name];
+          return updatedErrors;
+        });
+      } else {
+        setFormData((prev) => ({ ...prev, [name]: value }));
       }
 
       setMembers(updatedMembers);
