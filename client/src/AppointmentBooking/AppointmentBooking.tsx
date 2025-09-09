@@ -33,6 +33,7 @@ import CryptoJS from "crypto-js";
 import { Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { isSlotExpired } from "../components/commonfunctions";
+import FullPageLoader from "./FullPageLoader";
 
 type Service = {
   id: number;
@@ -198,7 +199,8 @@ const AppointmentBooking = () => {
   const [serviceList, setServiceList] = useState<Service[]>([]);
   const [availablemembercount, setavailablemembercount] = useState(0);
   console.log(availablemembercount);
-
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [upcomingDatesWithSlots, setUpcomingDatesWithSlots] = useState<
     UpcomingDateSlot[]
   >([]);
@@ -228,6 +230,8 @@ const AppointmentBooking = () => {
   const [selectedslottime, setselectedslottime] = useState("");
   const [invoiceUrls, setinvoiceUrls] = useState<any[]>([]);
   const [grpavailslots, setgrpavailslots] = useState<any[]>([]);
+  const [rawSlots1, setrawSlots1] = useState<any[]>([]);
+
   const [existingapplicantdata, setexistingapplicantdata] = useState<any>({});
   const [opennewdialog, setopennewdialog] = useState(false);
   const [animateModal, setAnimateModal] = useState(false);
@@ -239,7 +243,7 @@ const AppointmentBooking = () => {
   const [txnStatus, setTxnStatus] = useState<number | null>(null);
 
   const [errorMessage, setErrorMessage] = useState("");
-
+  const [debouncedTransactionId, setDebouncedTransactionId] = useState("");
   const [shake, setShake] = useState(false);
 
   const [formData, setFormData] = useState<FormDataType>({
@@ -1076,36 +1080,46 @@ const AppointmentBooking = () => {
     console.log("ttttt----", day);
 
     setSelectedDate(day);
-
+    setrawSlots1(rawSlots);
     const formattedDay = formatDateToYYYYMMDDNew(day); // Use your date formatting function
     console.log("Selected day:", formattedDay, "rawSlots", rawSlots);
 
     // Find matching slot
-    const matchedSlot = rawSlots.find(
+    const matchedSlot = rawSlots.filter(
       (item) => item.slot?.date === formattedDay
     );
 
     console.log("Matched Slot (Before Filter):", matchedSlot);
 
-    if (matchedSlot && matchedSlot.slot && matchedSlot.slot.slottime) {
-      matchedSlot.slot.slottime = matchedSlot.slot.slottime.filter(
-        (slot: any) => slot.remaining > 0
-      );
-    }
-    console.log("Matched Slot:", matchedSlot);
+    // Calculate total remaining count across all matched slots
+    const totalRemaining = matchedSlot.reduce(
+      (sum: number, matchedSlot: any) => {
+        return (
+          sum +
+          (matchedSlot.slot?.slottime?.reduce(
+            (slotSum: number, slot: any) => slotSum + (slot.remaining || 0),
+            0
+          ) || 0)
+        );
+      },
+      0
+    );
 
-    const totalRemaining =
-      matchedSlot?.slot?.slottime?.reduce((sum: any, slot: any) => {
-        return sum + (slot.remaining || 0);
-      }, 0) || 0;
+    // Calculate available member count (total number of slottime entries with remaining > 0)
+    const availmembercount = matchedSlot.reduce(
+      (count: number, matchedSlot: any) =>
+        count + (matchedSlot.slot?.slottime?.length || 0),
+      0
+    );
 
-    const availmembercount = matchedSlot?.slot?.slottime?.length || 0;
     console.log("Available Member Count:", totalRemaining);
     console.log("Available Member Count:", availmembercount);
     console.log("matchedSlot :", matchedSlot);
-
+    const allAvailableSlottimes = matchedSlot.flatMap(
+      (matchedSlot) => matchedSlot.slot?.slottime || []
+    );
     setavailablemembercount(totalRemaining);
-    setgrpavailslots(matchedSlot?.slot?.slottime);
+    setgrpavailslots(allAvailableSlottimes);
 
     const selectedDates: string[] = [];
     const selectedDateStringsSet = new Set<string>();
@@ -1740,8 +1754,56 @@ const AppointmentBooking = () => {
     setFormErrors({});
 
     setMemberHasError(Array(members.length).fill(false));
-
+    if (appointmentType === "Group") {
+      setMembers((prev) => {
+        return prev.map((member) => ({
+          ...member,
+          patientName: "",
+          hapId: "",
+          email: "",
+          contactNumber: "",
+          alternativeNumber: "",
+          gender: "",
+          age: "",
+          visaCategory: "",
+          passportNo: "",
+          paymentPreference: "",
+          paymentMethod: "OR",
+          dob: "",
+          TransactionId: "",
+          servicecode: [],
+          totalPrice: 0,
+          slot_booking: [],
+          PaymentType: "",
+          specialAssistance: false,
+        }));
+      });
+      const formattedDay = formatDateToYYYYMMDDNew(selectedDate); // Use your date formatting function
+      // Find matching slot
+      const matchedSlot = rawSlots1.filter(
+        (item) => item.slot?.date === formattedDay
+      );
+      const allAvailableSlottimes = matchedSlot.flatMap(
+        (matchedSlot) => matchedSlot.slot?.slottime || []
+      );
+      setgrpavailslots(allAvailableSlottimes);
+    }
     // Clear only personal details in members (assumes 1 member initially)
+  };
+
+  const simulateProgress = () => {
+    return new Promise<void>((resolve) => {
+      let percent = 0;
+      const interval = setInterval(() => {
+        percent += Math.floor(Math.random() * 5) + 1; // Increase 1-5%
+        if (percent >= 95) percent = 95; // Cap at 95% until API completes
+        setProgress(percent);
+
+        if (percent >= 95) clearInterval(interval);
+      }, 500);
+
+      resolve();
+    });
   };
 
   const onSubmit = async () => {
@@ -1762,6 +1824,12 @@ const AppointmentBooking = () => {
         setFormErrors(errors);
         return;
       }
+
+      setLoading(true);
+      setProgress(0);
+
+      // Start simulated progress
+      simulateProgress();
 
       let finalData;
 
@@ -1836,9 +1904,11 @@ const AppointmentBooking = () => {
       const res = await httpClient.post(API.APPLICANT_WITH_APPT_API, finalData);
 
       const responseData = res.data.data;
+      console.log("res.data", res);
+      console.log("---finalData", res.data);
 
       console.log("vvv---responseData", responseData);
-
+      setProgress(100);
       if (res.data.status === 1) {
         setsuccessModule(true);
         if (responseData?.[0]) {
@@ -1958,6 +2028,9 @@ const AppointmentBooking = () => {
     } catch (error) {
       console.error("Submission Error:", error);
       // toast.error("An error occurred while submitting the form.");
+    } finally {
+      setLoading(false);
+      setProgress(0);
     }
   };
 
@@ -2102,6 +2175,10 @@ const AppointmentBooking = () => {
         return formErrors.age && "Enter Name";
       case "hapId":
         return formErrors.hapId ? "8- digit" : "e.g. 12345678";
+      case "TransactionId":
+        return formErrors.transactionId
+          ? "Enter Transaction ID"
+          : "Enter Transaction ID";
       default:
         return "";
     }
@@ -2167,20 +2244,18 @@ const AppointmentBooking = () => {
       }
 
       if (name === "TransactionId") {
-        setTransactionId(value); // ✅ only track TransactionId typing
-        setFormData((prev) => ({ ...prev, [name]: value }));
-        if (value == "") {
-          setTxnStatus(2);
-          setTxnMessage("Please re-validate Transaction ID");
-          setIsCheckingTxn(false);
-          return;
-        }
-        // clear errors while typing
-        setFormErrors((prevErrors) => {
-          const updatedErrors = { ...prevErrors };
-          delete updatedErrors[name];
-          return updatedErrors;
-        });
+        const sanitizedValue = value.replace(/[^a-zA-Z0-9]/g, "");
+
+        setTransactionId(sanitizedValue);
+        setFormData((prev) => ({ ...prev, [name]: sanitizedValue }));
+
+        // Clear previous status immediately on new typing
+        setTxnStatus(0);
+        setTxnMessage("");
+        setIsCheckingTxn(false);
+
+        // Still update debouncedTransactionId (already present in your code)
+        setDebouncedTransactionId(sanitizedValue);
       } else {
         setFormData((prev) => ({ ...prev, [name]: value }));
       }
@@ -2206,15 +2281,18 @@ const AppointmentBooking = () => {
         updatedMembers[index].age = calculateAge(value);
       }
       if (name === "TransactionId") {
-        setTransactionId(value); // ✅ only track TransactionId typing
-        setFormData((prev) => ({ ...prev, [name]: value }));
+        const sanitizedValue = value.replace(/[^a-zA-Z0-9]/g, "");
 
-        // clear errors while typing
-        setFormErrors((prevErrors) => {
-          const updatedErrors = { ...prevErrors };
-          delete updatedErrors[name];
-          return updatedErrors;
-        });
+        setTransactionId(sanitizedValue);
+        setFormData((prev) => ({ ...prev, [name]: sanitizedValue }));
+
+        // Clear previous status immediately on new typing
+        setTxnStatus(0);
+        setTxnMessage("");
+        setIsCheckingTxn(false);
+
+        // Still update debouncedTransactionId (already present in your code)
+        setDebouncedTransactionId(sanitizedValue);
       } else {
         setFormData((prev) => ({ ...prev, [name]: value }));
       }
@@ -2233,9 +2311,21 @@ const AppointmentBooking = () => {
   };
 
   useEffect(() => {
-    if (!transactionId) return;
+    if (transactionId === "") return;
 
-    // reset previous messages when user types new value
+    // If less than 7 chars → show error immediately, no API call
+    if (transactionId.length < 7) {
+      setTxnStatus(0);
+      setTxnMessage("Transaction ID must have minimum 7 characters.");
+      setFormErrors((prevErrors) => ({
+        ...prevErrors,
+        TransactionId: "Transaction ID must have minimum 7 characters.",
+      }));
+      setIsCheckingTxn(false);
+      return;
+    }
+
+    // Valid length → proceed to check API after 5s of inactivity
     setTxnMessage(null);
     setTxnStatus(null);
     setIsCheckingTxn(true);
@@ -2253,10 +2343,17 @@ const AppointmentBooking = () => {
         setTxnMessage(res?.data?.message || "Unexpected response");
 
         if (res?.data?.status === 1) {
-          // ✅ valid TransactionId
-          setFormData((prev) => ({ ...prev, TransactionId: transactionId }));
+          // Valid TransactionId
+          setFormData((prev) => ({
+            ...prev,
+            TransactionId: transactionId,
+          }));
+          setFormErrors((prevErrors) => {
+            const updatedErrors = { ...prevErrors };
+            delete updatedErrors.TransactionId;
+            return updatedErrors;
+          });
         } else {
-          // ❌ invalid / duplicate → also set into formErrors if needed
           setFormErrors((prevErrors) => ({
             ...prevErrors,
             TransactionId: res?.data?.message || "Invalid Transaction ID",
@@ -2276,6 +2373,7 @@ const AppointmentBooking = () => {
 
     return () => clearTimeout(timeout);
   }, [transactionId]);
+
   const downloadAllInvoices = () => {
     invoiceUrls.forEach((url, index) => {
       setTimeout(() => {
@@ -2539,6 +2637,7 @@ const AppointmentBooking = () => {
 
   return (
     <>
+      {loading && <FullPageLoader progress={progress} />}
       {rescheduledata && rescheduledata.length > 0 && (
         <div className="bg-white p-4 shadow rounded-lg border border-gray-200 mb-6">
           <h2 className="text-lg font-semibold mb-4 text-blue-700">
@@ -3159,38 +3258,6 @@ const AppointmentBooking = () => {
                         <div
                           style={{ display: "flex", flexDirection: "column" }}
                         >
-                          {/* <input
-                            type="number"
-                            value={membercount}
-                            onChange={handleMemberCountChange}
-                            onKeyDown={(e) => {
-                              if (["e", "E", ".", "+", "-"].includes(e.key)) {
-                                e.preventDefault();
-                              }
-                              const input = e.currentTarget;
-                              if (
-                                input.value.length >= 2 &&
-                                ![
-                                  "Backspace",
-                                  "ArrowLeft",
-                                  "ArrowRight",
-                                  "Delete",
-                                ].includes(e.key)
-                              ) {
-                                e.preventDefault();
-                              }
-                            }}
-                            style={{
-                              width: "120px",
-                              border: shake ? "2px solid red" : undefined,
-                              outline: shake ? "none" : undefined,
-                            }}
-                            className={`form-control ${
-                              shake ? "input-shake" : ""
-                            }`}
-                            min={2}
-                            max={5}
-                          /> */}
                           <select
                             value={membercount}
                             onChange={handleMemberCountChange}
@@ -3242,7 +3309,7 @@ const AppointmentBooking = () => {
                         </div>
                       )}
 
-                      {availablemembercount <= 1 && (
+                      {availablemembercount <= 1 && availablemembercount !== 0 && (
                         <div className="row g-2 align-items-center">
                           <div className="col-12 col-md">
                             <div className="d-flex flex-wrap align-items-center">
@@ -3533,7 +3600,7 @@ const AppointmentBooking = () => {
                         </label>
                         <span className="info-value">
                           {appointmentType === "Group"
-                            ? members[0]?.Primarymemselectedslottime
+                            ? members[0]?.slot_booking[0]?.booked_time
                             : selectedslottime}
                         </span>
                       </div>
@@ -4041,44 +4108,6 @@ const AppointmentBooking = () => {
                                                 />
                                               </div>
                                             </div>
-
-                                            {/* <div className="col-md-6 mb-3">
-                                              <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
-                                                <label className="form-label label-fixed me-md-2 mb-1 mb-md-0">
-                                                  HAP ID
-                                                </label>
-                                                <input
-                                                  type="text"
-                                                  className={`form-control ${
-                                                    formErrors[`hapId_${i}`]
-                                                      ? "is-invalid input-shake"
-                                                      : ""
-                                                  }`}
-                                                  id={`hapId_${i}`}
-                                                  inputMode="numeric"
-                                                  pattern="\d*"
-                                                  name="hapId"
-                                                  value={members[i].hapId}
-                                                  onChange={(e) => {
-                                                    const value =
-                                                      e.target.value;
-                                                    if (/^\d*$/.test(value)) {
-                                                      handleChange(e, i);
-                                                    }
-                                                  }}
-                                                  maxLength={8}
-                                                  placeholder={getDynamicPlaceholder(
-                                                    "hapId"
-                                                  )}
-                                                  autoComplete="off"
-                                                />
-                                              </div>
-                                              {formErrors[`hapId_${i}`] && (
-                                                <small className="text-danger mt-1 d-block text-end">
-                                                  eg: 12345678
-                                                </small>
-                                              )}
-                                            </div> */}
                                           </div>
 
                                           <div className="row mb-3">
@@ -4745,7 +4774,7 @@ const AppointmentBooking = () => {
                   )}
                   {stepIndex === 1 && (
                     <button
-                      disabled={txnStatus !== 1}
+                      disabled={txnStatus !== 1 && loading}
                       className={`btn-custom-orange ${
                         txnStatus !== 1 ? "disabled-btn" : ""
                       }`}
