@@ -1924,6 +1924,8 @@ const AppointmentBooking = () => {
         }
 
         const invoiceUrls1: any[] = [];
+        const seenAppointmentIds = new Set<number>();
+
         const allSuccessful = responseData.every((applicant: any) => {
           const appointments = applicant?.appointments;
           const booking = appointments?.bookings?.[0];
@@ -1934,13 +1936,20 @@ const AppointmentBooking = () => {
             booking?.appointment_id
           ) {
             const appointmentId = booking.appointment_id;
-            invoiceUrls1.push(API.APPLICANT_RECEIPT_API(appointmentId));
+
+            if (!seenAppointmentIds.has(appointmentId)) {
+              seenAppointmentIds.add(appointmentId);
+              invoiceUrls1.push(API.APPLICANT_RECEIPT_API(appointmentId));
+            }
+
             return true;
           }
 
           return false;
         });
+
         setinvoiceUrls(invoiceUrls1);
+
         // downloadPDFsSilently(invoiceUrls1);
         if (allSuccessful) {
           const firstBooking = responseData[0]?.appointments?.bookings?.[0];
@@ -3309,28 +3318,29 @@ const AppointmentBooking = () => {
                         </div>
                       )}
 
-                      {availablemembercount <= 1 && availablemembercount !== 0 && (
-                        <div className="row g-2 align-items-center">
-                          <div className="col-12 col-md">
-                            <div className="d-flex flex-wrap align-items-center">
-                              <span className="text-danger me-2">
-                                {selectedDate?.toLocaleDateString("en-US", {
-                                  weekday: "long",
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                })}{" "}
-                                - This date is only available for{" "}
-                                {availablemembercount}{" "}
-                                {availablemembercount === 1
-                                  ? "member"
-                                  : "members"}{" "}
-                                Choose another date .
-                              </span>
+                      {availablemembercount <= 1 &&
+                        availablemembercount !== 0 && (
+                          <div className="row g-2 align-items-center">
+                            <div className="col-12 col-md">
+                              <div className="d-flex flex-wrap align-items-center">
+                                <span className="text-danger me-2">
+                                  {selectedDate?.toLocaleDateString("en-US", {
+                                    weekday: "long",
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                  })}{" "}
+                                  - This date is only available for{" "}
+                                  {availablemembercount}{" "}
+                                  {availablemembercount === 1
+                                    ? "member"
+                                    : "members"}{" "}
+                                  Choose another date .
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )}
+                        )}
                     </div>
                   )}
                 </div>
