@@ -16,11 +16,14 @@ import "material-react-toastify/dist/ReactToastify.css";
 import PrivacyPolicy from "./components/PrivacyPolicy";
 import TermsOfUse from "./components/TermsofService";
 import { environment } from "../../environment/environment";
+import VisaMedicalBooking from "./components/visa-medical-booking";
 
 function Router() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      
+      <Route path="/book-visa-medical" element={<VisaMedicalBooking />} />
       <Route path="AppointmentBooking" element={<AppointmentBooking />} />
       <Route path="Privacy-Policy" element={<PrivacyPolicy />} />
       <Route path="Terms-Of-Use" element={<TermsOfUse />} />

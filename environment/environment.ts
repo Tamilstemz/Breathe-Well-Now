@@ -52,4 +52,5 @@ export const API = {
   OTP_VALIDATE_API: apiPath("/notification/validate-otp"),
   HOLIDAY_API: apiPath("/master/holiday?status=1&application=1"),
   APPLICANTCHECK_API: apiPath("/transaction/applicant-details/check"),
+  DEPARTMENT_GET_API: apiPath("/master/get_department_by_center"),
 };

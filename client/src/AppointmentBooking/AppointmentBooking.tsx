@@ -30,7 +30,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import CryptoJS from "crypto-js";
-import { Phone } from "lucide-react";
+import { CheckCircle, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { isSlotExpired } from "../components/commonfunctions";
 import FullPageLoader from "./FullPageLoader";
@@ -40,7 +40,17 @@ type Service = {
   name: string;
   code: string;
   price: string; // from your API, price is a string
+  department: Department;
 };
+
+interface Department {
+  id: number;
+  name: string;
+  code: string;
+  description?: string;
+  status: number;
+}
+
 type Slot = {
   // define relevant fields based on your API
   id: number;
@@ -183,6 +193,8 @@ type ApplicantResData = {
   applicant_number?: string;
 };
 
+
+
 const AppointmentBooking = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -194,9 +206,17 @@ const AppointmentBooking = () => {
   const [showDialog1, setShowDialog1] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedCenter, setSelectedCenter] = useState("NDK");
+  
+  const [departmentlist,setDepartmentlist]=useState([])
+  const [selectDepartment,setselectDepartment] =useState('')
+  const [selectDepartment_code,setselectDepartment_code] =useState('')
+
+
   const [selectedService, setSelectedService] = useState("");
   const [appointmentType, setAppointmentType] = useState("Self");
   const [serviceList, setServiceList] = useState<Service[]>([]);
+  const [allserviceList, setAllServiceList] = useState<Service[]>([]);
+
   const [availablemembercount, setavailablemembercount] = useState(0);
   console.log(availablemembercount);
   const [loading, setLoading] = useState(false);
@@ -305,6 +325,10 @@ const AppointmentBooking = () => {
   const navigate = useNavigate();
 
   console.log("formData[222222]", rescheduledata);
+
+
+  console.log('898988989++++++++++++',selectDepartment_code);
+  
 
   const [memberValidated, setMemberValidated] = useState<boolean[]>(() =>
     Array(members.length).fill(false)
@@ -836,9 +860,32 @@ const AppointmentBooking = () => {
     })();
   }, []);
 
+
+
+  useEffect(() => {
+
+    if(selectedCenter){
+    (async () => {
+      try {
+        const res = await httpClient.get(
+          `${API.DEPARTMENT_GET_API}?code=${selectedCenter}`
+        );
+        console.log('yyyyyy?????',res?.data?.departmentlist);
+        let departmentslist = res?.data?.departmentlist || [];
+        setDepartmentlist(departmentslist)
+
+      } catch (err) {
+        console.error("Error loading slots", err);
+      }
+    })();
+  }
+  }, [selectedCenter]); 
+
+
   const handleCenterChange = async (event: any) => {
     const selectedCode = event.target.value;
     setSelectedCenter(selectedCode);
+    setselectDepartment('')
     setUpcomingDatesWithSlots([]);
     setFormData({
       patientName: "",
@@ -890,22 +937,107 @@ const AppointmentBooking = () => {
     setselectedslottime("");
     setServiceList([]);
 
-    const selectedCenter = center.find(
-      (center: any) => center.code === selectedCode
-    );
+    // const selectedCenter = center.find(
+    //   (center: any) => center.code === selectedCode
+    // );
 
     try {
       const serviceApiUrl = `${API.AVAILABLE_SERVICE_API}&center=${selectedCode}`;
       const res = await httpClient.get(serviceApiUrl);
       setServiceList(res.data?.data || []);
+      setAllServiceList(res.data?.data || []);
+
     } catch (err) {
       console.error("Error fetching services:", err);
     }
 
+   
+  };
+
+
+useEffect(() => {
+
+   if (allserviceList.length > 0 && selectedCenter) {
+  const fetchBookingAndSlots = async () => {
+    const encrypted = localStorage.getItem("New_bookingData");
+    if (!encrypted) return;
+
+    let New_bookingData: any;
+
+    try {
+      const bytes = CryptoJS.AES.decrypt(encrypted, environment.SECRET_KEY);
+      const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+      New_bookingData = JSON.parse(decrypted);
+    } catch (error) {
+      console.error("Decryption error:", error);
+      return;
+    }
+
+    // Set department locally
+    const department = New_bookingData.country;
+    const department_code = New_bookingData.country_code;
+
+    setselectDepartment(department);
+    setselectDepartment_code(department_code)
+    
+
+     const exists = allserviceList.filter(
+        (s) => String(s?.department?.id) === String(selectDepartment)
+      );
+
+      if (exists) {
+        setServiceList(exists)
+        setSelectedServices([exists[0]?.code]);
+       }
+
     try {
       const formData = new FormData();
       formData.append("application", "1");
-      formData.append("center", selectedCode);
+      formData.append("center", selectedCenter);
+      formData.append("department", department); // ✅ use local variable
+
+      const res = await httpClient.post(API.AVAILABLE_SLOTS_API, formData);
+      const Timeslot = res.data.data || [];
+
+      // Update state
+      setTimeSlots(Timeslot);
+
+      // Green Dot Dates
+      const slotDates = Timeslot.map((item: any) =>
+        formatDateToYYYYMMDD(new Date(item.slot.date))
+      );
+      setDotDates(new Set(slotDates));
+
+      // Initialize slot view directly
+      const today = new Date();
+      setSelectedDate(today);
+      handleDateClick(today, Timeslot);
+      localStorage.removeItem("New_bookingData");
+    } catch (err) {
+      console.error("Error fetching slots:", err);
+    }
+  };
+
+  fetchBookingAndSlots();
+}
+}, [selectedCenter,allserviceList]);
+
+
+
+  const handleDepartmentSelect = async(dept: any) => {
+    const selectDepartment = dept.id
+      console.log('selectDepartment-------000000',selectDepartment);
+      
+
+        setselectDepartment(dept.id);      // store ID for selected check
+        setselectDepartment_code(dept.code);
+
+     try {
+      const formData = new FormData();
+      formData.append("application", "1");
+      formData.append("center", selectedCenter);
+      formData.append("department", selectDepartment);
+
 
       const res = await httpClient.post(API.AVAILABLE_SLOTS_API, formData);
       const Timeslot = res.data.data || [];
@@ -926,7 +1058,7 @@ const AppointmentBooking = () => {
     } catch (err) {
       console.error("Error fetching slots:", err);
     }
-  };
+  }
 
   const toggleDropdown = () => {
     setDropdownOpen((prev) => !prev);
@@ -1890,7 +2022,7 @@ const AppointmentBooking = () => {
                 booking_from: 3,
                 booking_status: 1,
 
-                department: "AU",
+                department: selectDepartment_code,
                 description: "Test Service",
                 service_code: formData.servicecode,
               },
@@ -2129,14 +2261,21 @@ const AppointmentBooking = () => {
   };
 
   useEffect(() => {
-    if (serviceList.length > 0 && selectedCenter) {
+    if (allserviceList.length > 0 && selectDepartment) {
       // Check if APPT exists in the service list
-      const exists = serviceList.some(
-        (s) => s.code === environment?.DEFAULT_SERVICE_CODE
+
+      console.log('ttttttttt',serviceList,'----',selectDepartment);
+      
+            const exists = allserviceList.filter(
+        (s) => String(s?.department?.id) === String(selectDepartment)
       );
 
+      
+
       if (exists) {
-        setSelectedServices([environment?.DEFAULT_SERVICE_CODE]);
+        setServiceList(exists)
+
+        setSelectedServices([exists[0]?.code]);
 
         if (appointmentType === "Group") {
           const price = parseFloat(
@@ -2155,7 +2294,12 @@ const AppointmentBooking = () => {
         }
       }
     }
-  }, [serviceList, selectedCenter]);
+  }, [allserviceList,selectDepartment]);
+
+  console.log('HHHHHH---====',selectedServices);
+  console.log("HHHHHH---====22222",serviceList);
+  
+  
 
   const getDynamicPlaceholder = (field: string): string => {
     switch (field) {
@@ -2671,7 +2815,7 @@ const AppointmentBooking = () => {
                 <span>{data.patient_name}</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-medium text-gray-500">HAP ID</span>
+                <span className="font-medium text-gray-500">{selectDepartment === '44' ?'HAP ID': 'NZHR ID'}</span>
                 <span>{data.hap_id}</span>
               </div>
               <div className="flex flex-col">
@@ -3075,6 +3219,7 @@ const AppointmentBooking = () => {
             <div className="card shadow-sm">
               <div className="card-body Service-card-body">
                 <div className="row g-3 mb-4">
+                  
                   <div className="col-12 col-md-6">
                     <label className="form-label fw-semibold d-flex justify-content-between">
                       Centre
@@ -3093,6 +3238,77 @@ const AppointmentBooking = () => {
                         ))}
                     </select>
                   </div>
+
+
+                  {/* <div className="col-12 col-md-6">
+                    <label className="form-label fw-semibold d-flex justify-content-between">
+                      Select Visa Medical:
+                    </label>
+                    <select
+                      className="form-select"
+                      value={selectDepartment}
+                      onChange={handeleChangedepartment}
+                    >
+                      <option value="">Select</option>
+                      {departmentlist && Array.isArray(departmentlist) &&
+                        departmentlist.map((item: any, index: number) => (
+                          <option key={index} value={item.id}>
+                            {item.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div> */}
+
+
+                  <div className="col-12 col-md-6">
+                    <label className="form-label fw-semibold mb-2 d-block">
+                      Select Visa Medical:
+                    </label>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {departmentlist &&
+                        Array.isArray(departmentlist) &&
+                        departmentlist.map((dept: any) => {
+                          const isSelected = selectDepartment_code === dept.code;
+
+                          return (
+                            <div
+                              key={dept.id}
+                              className={`border-2 rounded-lg cursor-pointer transition-all duration-300
+                                ${isSelected
+                                  ? "border-green-500 bg-green-50"
+                                  : "hover:border-orange-600 bg-orange-50"
+                                }`}
+                              onClick={() => handleDepartmentSelect(dept)}
+                            >
+                              <div className="text-center">
+                                    <div className="flex items-center justify-center text-2xl space-x-2">
+                                    <span>
+                                      {dept.code === "AU"
+                                        ? "🇦🇺"
+                                        : dept.code === "NZ"
+                                        ? "🇳🇿"
+                                        : "🏥"}
+                                    </span>
+
+                                    {isSelected && (
+                                      <CheckCircle className="w-6 h-6 text-green-500" />
+                                    )}
+                                  </div>
+
+
+      
+                                
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+
+
+
+
                   <div className="col-12 col-md-6">
                     <label className="form-label fw-semibold d-flex justify-content-between">
                       Service
@@ -3881,7 +4097,7 @@ const AppointmentBooking = () => {
                                         <div className="col-md-6 mb-3">
                                           <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
                                             <label className="form-label label-fixed me-md-2 mb-1 mb-md-0">
-                                              HAP ID
+                                              {selectDepartment === '44' ?'HAP ID': 'NZHR ID'}
                                             </label>
                                             <input
                                               type="text"
@@ -4246,7 +4462,7 @@ const AppointmentBooking = () => {
                                     htmlFor="hapId"
                                     className="form-label label-fixed me-md-2 mb-1 mb-md-0"
                                   >
-                                    HAP ID
+                                    {selectDepartment === '44' ?'HAP ID': 'NZHR ID'}
                                   </label>
                                   <div className="position-relative w-100">
                                     <input

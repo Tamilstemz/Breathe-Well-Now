@@ -11,7 +11,7 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigate = useNavigate()
- 
+
 
 
   const scrollToSection = (sectionId: string) => {
@@ -22,7 +22,7 @@ export default function Header() {
         const computedStyle = getComputedStyle(header);
         const marginBottom = parseFloat(computedStyle.marginBottom) || 0;
         const paddingBottom = parseFloat(computedStyle.paddingBottom) || 0;
-        return Math.round( marginBottom + paddingBottom + 70);
+        return Math.round(marginBottom + paddingBottom + 70);
       }
       return 100; // fallback
     };
@@ -55,7 +55,7 @@ export default function Header() {
       }
     };
     // console.log('window.location.pathname',window.location.hash);
-    
+
     if (window.location.hash !== '') {
       navigate(environment.BASE_PATH);
       setTimeout(() => {
@@ -67,7 +67,7 @@ export default function Header() {
         scrollWithOffset(sectionId);
       }, 300);
       setMobileMenuOpen(false);
-      
+
     }
   };
 
@@ -138,6 +138,7 @@ export default function Header() {
               { id: "home", label: "Home" },
               { id: "about", label: "About Us" },
               { id: "services", label: "Services" },
+              { id: "visa-medicals", label: "Visa Medical" },
               { id: "documents", label: "Documents Required" },
               { id: "contact", label: "Contact" },
             ].map((item, index) => (
@@ -168,7 +169,7 @@ export default function Header() {
               className="Navlinks phone-link text-brand-black hover:text-brand-orange font-medium flex items-center transition-all duration-300 hover:scale-105 px-3 py-2 rounded-lg hover:bg-light-orange"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              
+
             >
               <Phone className="mr-2 h-4 w-4" />
               +91 9582-116116
@@ -206,7 +207,7 @@ export default function Header() {
           </motion.button>
         </div>
 
-      {/* Mobile Menu */}
+        {/* Mobile Menu */}
         <AnimatePresence>
           {mobileMenuOpen && (
             <motion.div
@@ -221,6 +222,7 @@ export default function Header() {
                   { id: "home", label: "Home" },
                   { id: "about", label: "About Us" },
                   { id: "services", label: "Services" },
+                  { id: "visa-medicals", label: "Visa Medical" },
                   { id: "documents", label: "Documents Required" },
                   { id: "contact", label: "Contact" },
                 ].map((item, index) => (
@@ -235,27 +237,27 @@ export default function Header() {
                     {item.label}
                   </motion.button>
                 ))}
-      
-                  <a
-                    href="tel:+919582116116"
-                    className="text-brand-blue hover:text-accent-blue font-medium flex items-center mb-4"
-                  >
-                    <Phone className="mr-2 h-4 w-4" />
-                    +91 9582-116116
-                  </a>
-                  <Button
-                    onClick={() => {
-                      navigate(`${environment.BASE_PATH}AppointmentBooking`);
-                      setMobileMenuOpen(false);
-                      setTimeout(() => {
-                        window.scrollTo({ top: 0, behavior: "smooth" });
-                      }, 50);
-                    }}
-                    className="card-gradient-orange w-full px-6 py-2 text-white font-medium hover:shadow-lg transition-all duration-300 border-0"
-                  >
-                    Book Appointment
-                  </Button>
-              
+
+                <a
+                  href="tel:+919582116116"
+                  className="text-brand-blue hover:text-accent-blue font-medium flex items-center mb-4"
+                >
+                  <Phone className="mr-2 h-4 w-4" />
+                  +91 9582-116116
+                </a>
+                <Button
+                  onClick={() => {
+                    navigate(`${environment.BASE_PATH}AppointmentBooking`);
+                    setMobileMenuOpen(false);
+                    setTimeout(() => {
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }, 50);
+                  }}
+                  className="card-gradient-orange w-full px-6 py-2 text-white font-medium hover:shadow-lg transition-all duration-300 border-0"
+                >
+                  Book Appointment
+                </Button>
+
               </nav>
             </motion.div>
           )}

@@ -6,6 +6,7 @@ import About from "@/components/about";
 import Process from "@/components/process";
 import Documents from "@/components/documents";
 import Contact from "@/components/contact";
+import VisaMedicals from "@/components/visa-medicals";
 
 const pageVariants = {
   initial: { opacity: 0, y: 20 },
@@ -84,6 +85,15 @@ export default function Home() {
           variants={sectionVariants}
         >
           <Services />
+        </motion.div>
+
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          variants={sectionVariants}
+        >
+          <VisaMedicals />
         </motion.div>
 
         
