@@ -198,7 +198,7 @@ type ApplicantResData = {
 const AppointmentBooking = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  // console.log(selectedDate);
+  console.log(selectedDate);
   const { toast } = useToast();
   const [viewMode, setViewMode] = useState("month");
   const [center, setcenter] = useState([]);
@@ -311,9 +311,9 @@ const AppointmentBooking = () => {
   const [successModule, setsuccessModule] = useState(false);
   const [appicantResdata, setAppicantResdata] = useState<ApplicantResData>({});
 
-  console.log("selectDepartment------111000000???", selectDepartment,'???????????',typeof(selectDepartment));
+  console.log("serviceList-----------111", serviceList);
 
-
+  console.log("members-----------222", members);
 
   // --------------------------- Reschedule -----------------------------
 
@@ -937,17 +937,11 @@ const AppointmentBooking = () => {
     setselectedslottime("");
     setServiceList([]);
 
-    selectServicelist(selectedCode)
     // const selectedCenter = center.find(
     //   (center: any) => center.code === selectedCode
     // );
 
-      
-  };
-
-
-  const selectServicelist =async(selectedCode :any)=>{
-     try {
+    try {
       const serviceApiUrl = `${API.AVAILABLE_SERVICE_API}&center=${selectedCode}`;
       const res = await httpClient.get(serviceApiUrl);
       setServiceList(res.data?.data || []);
@@ -956,7 +950,9 @@ const AppointmentBooking = () => {
     } catch (err) {
       console.error("Error fetching services:", err);
     }
-  }
+
+   
+  };
 
 
 useEffect(() => {
@@ -1030,7 +1026,7 @@ useEffect(() => {
 
   const handleDepartmentSelect = async(dept: any) => {
     const selectDepartment = dept.id
-      // console.log('selectDepartment-------000000',selectDepartment);
+      console.log('selectDepartment-------000000',selectDepartment);
       
 
         setselectDepartment(dept.id);      // store ID for selected check
@@ -1110,7 +1106,7 @@ useEffect(() => {
     }
   };
 
-  // console.log(selectedServices);
+  console.log(selectedServices);
 
   const handleCheckboxChange = (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -1124,10 +1120,10 @@ useEffect(() => {
     } else {
       updatedSelected = selectedServices.filter((c) => c !== code);
     }
-    // console.log(updatedSelected);
+    console.log(updatedSelected);
 
     setSelectedServices(updatedSelected);
-    // console.log(appointmentType);
+    console.log(appointmentType);
 
     // Update all members if appointment type is Group
     if (appointmentType === "Group") {
@@ -1213,19 +1209,19 @@ useEffect(() => {
 
   const handleDateClick = (day: Date, rawSlots: any[]) => {
     if (day && isPastDate(day)) return;
-    // console.log("ttttt----", day);
+    console.log("ttttt----", day);
 
     setSelectedDate(day);
     setrawSlots1(rawSlots);
     const formattedDay = formatDateToYYYYMMDDNew(day); // Use your date formatting function
-    // console.log("Selected day:", formattedDay, "rawSlots", rawSlots);
+    console.log("Selected day:", formattedDay, "rawSlots", rawSlots);
 
     // Find matching slot
     const matchedSlot = rawSlots.filter(
       (item) => item.slot?.date === formattedDay
     );
 
-    // console.log("Matched Slot (Before Filter):", matchedSlot);
+    console.log("Matched Slot (Before Filter):", matchedSlot);
 
     // Calculate total remaining count across all matched slots
     const totalRemaining = matchedSlot.reduce(
@@ -1248,9 +1244,9 @@ useEffect(() => {
       0
     );
 
-    // console.log("Available Member Count:", totalRemaining);
-    // console.log("Available Member Count:", availmembercount);
-    // console.log("matchedSlot :", matchedSlot);
+    console.log("Available Member Count:", totalRemaining);
+    console.log("Available Member Count:", availmembercount);
+    console.log("matchedSlot :", matchedSlot);
     const allAvailableSlottimes = matchedSlot.flatMap(
       (matchedSlot) => matchedSlot.slot?.slottime || []
     );
@@ -1271,14 +1267,14 @@ useEffect(() => {
         selectedDates.push(dateStr);
         selectedDateStringsSet.add(dateStr);
 
-        // console.log("Valid Date:", currentDate);
+        console.log("Valid Date:", currentDate);
         count++;
       }
 
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    // console.log("Selected Dates Set:", selectedDateStringsSet);
+    console.log("Selected Dates Set:", selectedDateStringsSet);
 
     // Initialize grouped data
     const grouped: Record<string, any[]> = {};
@@ -1291,7 +1287,7 @@ useEffect(() => {
       selectedDateStringsSet.has(slotItem.slot.date)
     );
 
-    // console.log("Filtered Slot Data:", filteredSlotData);
+    console.log("Filtered Slot Data:", filteredSlotData);
 
     // Group and sort slots
     for (const slotItem of filteredSlotData) {
@@ -1943,7 +1939,7 @@ useEffect(() => {
   };
 
   const onSubmit = async () => {
-    // console.log("Submitting form with data:", selectedDate);
+    console.log("Submitting form with data:", selectedDate);
 
     try {
       if (!selectedDate || (!selectedSlot && appointmentType === "Self")) {
@@ -2035,15 +2031,15 @@ useEffect(() => {
         ];
       }
 
-      // console.log("finalData-----------vvvv", finalData);
+      console.log("finalData-----------vvvv", finalData);
 
       const res = await httpClient.post(API.APPLICANT_WITH_APPT_API, finalData);
 
       const responseData = res.data.data;
-      // console.log("res.data", res);
-      // console.log("---finalData", res.data);
+      console.log("res.data", res);
+      console.log("---finalData", res.data);
 
-      // console.log("vvv---responseData", responseData);
+      console.log("vvv---responseData", responseData);
       setProgress(100);
       if (res.data.status === 1) {
         setsuccessModule(true);
@@ -2243,7 +2239,7 @@ useEffect(() => {
       setHelperText("");
       return;
     }
-    // console.log(file.type);
+    console.log(file.type);
 
     const allowedTypes = [
       "image/png",
@@ -2268,7 +2264,7 @@ useEffect(() => {
     if (allserviceList.length > 0 && selectDepartment) {
       // Check if APPT exists in the service list
 
-      // console.log('ttttttttt',serviceList,'----',selectDepartment);
+      console.log('ttttttttt',serviceList,'----',selectDepartment);
       
             const exists = allserviceList.filter(
         (s) => String(s?.department?.id) === String(selectDepartment)
@@ -2300,7 +2296,8 @@ useEffect(() => {
     }
   }, [allserviceList,selectDepartment]);
 
-
+  console.log('HHHHHH---====',selectedServices);
+  console.log("HHHHHH---====22222",serviceList);
   
   
 
@@ -2362,7 +2359,7 @@ useEffect(() => {
     const ninetyDaysLater = new Date();
     ninetyDaysLater.setDate(today.getDate() + 90);
 
-    // console.log("meeeee-2222", date, "eeeeee", date <= ninetyDaysLater);
+    console.log("meeeee-2222", date, "eeeeee", date <= ninetyDaysLater);
 
     return date <= ninetyDaysLater;
   };
@@ -2566,68 +2563,22 @@ useEffect(() => {
   };
 
   useEffect(() => {
-  const fetchData = async () => {
-    const update_data = getDecryptedAppointments();
-
+    let update_data = getDecryptedAppointments();
     if (update_data && update_data.length > 0) {
       const appointmentType = localStorage.getItem("appointmentType");
-
-      // Set state values
       setRescheduledata(update_data);
-      const departmentPk = update_data[0].slot_department__department__pk;
-      const departmentCode = update_data[0].slot_department__department__code;
-
-      console.log("update_data??????eeeee", departmentCode);
-
-      setselectDepartment(departmentPk);
-      setselectDepartment_code(departmentCode);
-      selectServicelist(departmentCode);
-
-      try {
-        if (!selectedCenter) {
-          console.warn("No selected center found, skipping slot fetch.");
-          return;
-        }
-
-        const formData = new FormData();
-        formData.append("application", "1");
-        formData.append("center", selectedCenter);
-        formData.append("department", departmentPk);
-
-        const res = await httpClient.post(API.AVAILABLE_SLOTS_API, formData);
-        const Timeslot = res.data.data || [];
-
-        setTimeSlots(Timeslot);
-
-        // Green Dot Dates
-        const slotDates = Timeslot.map((item: any) =>
-          formatDateToYYYYMMDD(new Date(item.slot.date))
-        );
-        setDotDates(new Set(slotDates));
-
-        // Preselect today's date
-        const today = new Date();
-        setSelectedDate(today);
-        handleDateClick(today, Timeslot);
-
-        localStorage.removeItem("New_bookingData");
-      } catch (err) {
-        console.error("Error fetching slots:", err);
-      }
+      console.log("update_data", update_data);
 
       if (appointmentType === "Group") {
         setAppointmentType("Group");
-        setmembercount(update_data.length);
+        setmembercount(update_data?.length || 0);
       }
     }
-  };
-
-  fetchData();
-}, [selectedCenter]); // ✅ re-run if selectedCenter changes
-
+    // console.log('update_data______000', update_data);
+  }, []);
 
   const rescheduleSlotbook = (slot: any) => {
-    console.log("Reschedule Slot Selected:-----------", slot);
+    console.log("Reschedule Slot Selected:", slot);
 
     if (rescheduledata && rescheduledata.length > 0 && slot) {
       let selectdate = slot?.slotItem?.slot?.date;
@@ -2667,7 +2618,7 @@ useEffect(() => {
                   booked_time: selectTime,
                   booking_from: 3,
                   booking_status: 1,
-                  department: selectDepartment_code,
+                  department: "AU",
                   description: "Test Service",
                   service_code: formData.servicecode,
                 },
@@ -2749,7 +2700,7 @@ useEffect(() => {
                   booking_from: 3,
                   booking_status: 1,
 
-                  department: selectDepartment_code,
+                  department: "AU",
                   description: "Test Service",
                   service_code: formData.servicecode,
                 },
@@ -2864,7 +2815,7 @@ useEffect(() => {
                 <span>{data.patient_name}</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-medium text-gray-500">{Number(selectDepartment) === 43 ? "HAP ID" : "NZHR ID"}</span>
+                <span className="font-medium text-gray-500">{selectDepartment === '44' ?'HAP ID': 'NZHR ID'}</span>
                 <span>{data.hap_id}</span>
               </div>
               <div className="flex flex-col">
@@ -4146,7 +4097,7 @@ useEffect(() => {
                                         <div className="col-md-6 mb-3">
                                           <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
                                             <label className="form-label label-fixed me-md-2 mb-1 mb-md-0">
-                                              {Number(selectDepartment) === 43 ? "HAP ID" : "NZHR ID"}
+                                              {selectDepartment === '44' ?'HAP ID': 'NZHR ID'}
                                             </label>
                                             <input
                                               type="text"
@@ -4511,7 +4462,7 @@ useEffect(() => {
                                     htmlFor="hapId"
                                     className="form-label label-fixed me-md-2 mb-1 mb-md-0"
                                   >
-                                    {Number(selectDepartment) === 43 ? "HAP ID" : "NZHR ID"}
+                                    {selectDepartment === '44' ?'HAP ID': 'NZHR ID'}
                                   </label>
                                   <div className="position-relative w-100">
                                     <input
