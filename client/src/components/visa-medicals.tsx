@@ -161,26 +161,53 @@ useEffect(() => {
     }
   };
 
-  const updateBookingData = (field: string, value: any) => {
-
-    if(field === 'center'){
-
-      setBookingData(prev =>({
+const updateBookingData = (field: string, value: any) => {
+  if (field === "center") {
+    setBookingData((prev) => ({
+      ...prev,
+      center: value.code,
+      application: value.application,
+    }));
+  } else {
+    setBookingData((prev) => {
+      const updatedData = {
         ...prev,
-        center:value.code,
-        application:value.application,
-      }))
+        country: value.id,
+        country_code: value.code,
+      };
 
-    }
-    else{
-    setBookingData(prev => ({
-          ...prev,
-          country: value.id,
-          country_code:value.code
-        }));
-    }
-   
-  };
+      // ✅ Call after we have the updated data
+      handledotobooking(updatedData);
+
+      return updatedData;
+    });
+  }
+
+  console.log("Booking Data on Continue:", bookingData);
+
+  // Store current booking data in array
+  setBookings((prev) => [...prev, { ...bookingData }]);
+
+  if (currentStep < steps.length) {
+    setCurrentStep(currentStep + 1);
+  }
+};
+
+const handledotobooking = (data: any) => {
+  localStorage.removeItem("New_bookingData");
+
+  // ✅ Use updated data passed as argument
+  const reEncrypted = CryptoJS.AES.encrypt(
+    JSON.stringify(data),
+    environment.SECRET_KEY
+  ).toString();
+
+  localStorage.setItem("New_bookingData", reEncrypted);
+
+  navigate(`${environment.BASE_PATH}AppointmentBooking`);
+  window.scrollTo(0, 0);
+};
+
 
   
 
@@ -217,62 +244,60 @@ useEffect(() => {
     }
   };
 
-  const handlegoToBooking = () => {
-    // remove old data explicitly
-    localStorage.removeItem("New_bookingData");
 
-    // encrypt and save new data
-    const reEncrypted = CryptoJS.AES.encrypt(
-      JSON.stringify(bookingData),
-      environment.SECRET_KEY
-    ).toString();
-
-    localStorage.setItem("New_bookingData", reEncrypted);
-
-    navigate(`${environment.BASE_PATH}AppointmentBooking`);
-
-    window.scrollTo(0, 0);
-  };
 
 
 
   const renderStepIndicator = () => (
-    <div className="w-full mb-8">
-      <div className="flex items-center justify-between max-w-3xl mx-auto">
-        {steps.map((step, index) => (
-          <div key={step.id} className="flex items-center">
-            <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-300 ${currentStep > step.id
-                ? 'bg-green-500 border-green-500 text-white'
+  <div className="w-full mb-8">
+    {/* Step Circles */}
+    <div className="flex items-center justify-center gap-6 max-w-3xl mx-auto">
+      {steps.map((step, index) => (
+        <div key={step.id} className="flex items-center">
+          <div
+            className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-300 ${
+              currentStep > step.id
+                ? "bg-green-500 border-green-500 text-white"
                 : currentStep === step.id
-                  ? "bg-orange-500 border-orange-500 text-white"
-                  : 'bg-gray-200 border-gray-300 text-gray-500'
-              }`}>
-              {currentStep > step.id ? (
-                <CheckCircle className="w-5 h-5" />
-              ) : (
-                <span className="font-semibold">{step.id}</span>
-              )}
-            </div>
-            {index < steps.length - 1 && (
-              <div className={`w-16 lg:w-24 h-1 mx-2 lg:mx-4 transition-all duration-300 ${currentStep > step.id ? 'bg-green-500' : 'bg-gray-300'
-                }`} />
+                ? "bg-orange-500 border-orange-500 text-white"
+                : "bg-gray-200 border-gray-300 text-gray-500"
+            }`}
+          >
+            {currentStep > step.id ? (
+              <CheckCircle className="w-5 h-5" />
+            ) : (
+              <span className="font-semibold">{step.id}</span>
             )}
           </div>
-        ))}
-      </div>
-      <div className="flex justify-between mt-4 max-w-3xl mx-auto">
-        {steps.map((step) => (
-          <div key={step.id} className="text-center" style={{ width: '120px' }}>
-            <h3 className={`text-sm font-medium ${currentStep >= step.id ? 'text-brand-blue' : 'text-gray-500'
-              }`}>
-              {step.title}
-            </h3>
-            <p className="text-xs text-gray-500 mt-1">{step.description}</p>
-          </div>
-        ))}
-      </div>
+          {index < steps.length - 1 && (
+            <div
+              className={`w-8 lg:w-12 h-1 mx-2 lg:mx-3 transition-all duration-300 ${
+                currentStep > step.id ? "bg-green-500" : "bg-gray-300"
+              }`}
+            />
+          )}
+        </div>
+      ))}
     </div>
-  );
+
+    {/* Step Titles */}
+    <div className="flex justify-center gap-12 mt-4 max-w-3xl mx-auto">
+      {steps.map((step) => (
+        <div key={step.id} className="text-center w-[100px]">
+          <h3
+            className={`text-sm font-medium ${
+              currentStep >= step.id ? "text-brand-blue" : "text-gray-500"
+            }`}
+          >
+            {step.title}
+          </h3>
+          <p className="text-xs text-gray-500 mt-1">{step.description}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
 
   const renderStep1 = () => (
     <Card className="w-full max-w-2xl mx-auto">
@@ -323,16 +348,7 @@ useEffect(() => {
 
         </div>
 
-        <div className="flex justify-end pt-6">
-          <Button
-            onClick={handleNext}
-            disabled={!isStepValid(1)}
-            className="bg-brand-blue text-brand-orange px-6 py-2"
-            data-testid="button-continue-step1"
-          >
-            Continue <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
+       
       </CardContent>
     </Card>
   );
@@ -386,14 +402,6 @@ useEffect(() => {
             data-testid="button-back-step2"
           >
             <ArrowLeft className="mr-2 h-4 w-4" /> Back
-          </Button>
-          <Button
-            disabled={!isStepValid(2)}
-            className="bg-green-600 hover:bg-green-700 text-white px-8 py-3"
-            data-testid="button-submit-booking"
-            onClick={handlegoToBooking}
-          >
-            Go To Booking <CheckCircle className="ml-2 h-4 w-4" />
           </Button>
         </div>
       </CardContent>
