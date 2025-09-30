@@ -131,7 +131,8 @@ useEffect(() => {
 
         console.log("yyyyyy?????", res?.data?.departmentlist);
 
-        let departmentslist = res?.data?.departmentlist || [];
+        let departmentslist = res?.data?.departmentlist.filter((ele: any) => ele.name !== 'ALL') || [];
+
         setDepartmentlist(departmentslist);
       } catch (err) {
         console.error("Error loading slots", err);
@@ -547,12 +548,12 @@ const handledotobooking = (data: any) => {
 
           {bookingData.country === 'newzealand' && (
             <div>
-              <Label htmlFor="nzhrId">NZHR ID *</Label>
+              <Label htmlFor="nzhrId">NZER ID *</Label>
               <Input
                 id="nzhrId"
                 value={bookingData.personalDetails.nzhrId || ''}
                 onChange={(e) => updatePersonalDetails('nzhrId', e.target.value)}
-                placeholder="Enter your NZHR ID"
+                placeholder="Enter your NZER ID"
                 data-testid="input-nzhr-id"
               />
             </div>

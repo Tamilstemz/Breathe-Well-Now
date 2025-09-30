@@ -53,4 +53,6 @@ export const API = {
   HOLIDAY_API: apiPath("/master/holiday?status=1&application=1"),
   APPLICANTCHECK_API: apiPath("/transaction/applicant-details/check"),
   DEPARTMENT_GET_API: apiPath("/master/get_department_by_center"),
+  APPLICATION_MASTER: apiPath("/master/application?status=1&id=1"),
+
 };

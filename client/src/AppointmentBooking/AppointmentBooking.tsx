@@ -312,8 +312,8 @@ const AppointmentBooking = () => {
   const [appicantResdata, setAppicantResdata] = useState<ApplicantResData>({});
 
   console.log("selectDepartment------111000000???", selectDepartment,'???????????',typeof(selectDepartment));
-
-
+  const [apllicationdata,setapllicationdata] =useState([])
+  const [selected_get_Department,setselected_get_Department] =useState('')
 
   // --------------------------- Reschedule -----------------------------
 
@@ -429,7 +429,7 @@ const AppointmentBooking = () => {
         booking_from: 3,
         booking_status: 1,
         date_booked: formatDateToYYYYMMDDNew(selectedDate),
-        department: "AU",
+        department: selectDepartment_code,
         description: "Test Service",
         service_code: formData.servicecode,
       },
@@ -715,7 +715,7 @@ const AppointmentBooking = () => {
       booking_from: 3,
       booking_status: 1,
       date_booked: formatDateToYYYYMMDDNew(new Date()),
-      department: "AU",
+      department: selectDepartment_code,
       description: "Test Service",
       service_code: formData.servicecode,
     };
@@ -854,6 +854,25 @@ const AppointmentBooking = () => {
         );
 
         setcenter(filterdedata || []);
+
+      } catch (err) {
+        console.error("Error loading slots", err);
+      }
+    })();
+  }, []);
+
+    useEffect(() => {
+    (async () => {
+      try {
+        const res = await httpClient.get(API.APPLICATION_MASTER);
+        const filterdedata = res.data.data
+
+        setapllicationdata(filterdedata)
+        console.log('filterdedata??????',res.data.data);
+
+        if(res?.data?.data && res?.data?.data?.length > 0){
+          setselected_get_Department(res?.data?.data[0].appointment_slot)
+        }
       } catch (err) {
         console.error("Error loading slots", err);
       }
@@ -936,8 +955,9 @@ const AppointmentBooking = () => {
     setSelectedDate(null);
     setselectedslottime("");
     setServiceList([]);
-
+    if(selectedCode){
     selectServicelist(selectedCode)
+    }
     // const selectedCenter = center.find(
     //   (center: any) => center.code === selectedCode
     // );
@@ -946,13 +966,24 @@ const AppointmentBooking = () => {
   };
 
 
+
+
+
+
+
+
   const selectServicelist =async(selectedCode :any)=>{
      try {
+
+      console.log('update_data?????7777',selectedCode);
+      
       const serviceApiUrl = `${API.AVAILABLE_SERVICE_API}&center=${selectedCode}`;
       const res = await httpClient.get(serviceApiUrl);
       setServiceList(res.data?.data || []);
       setAllServiceList(res.data?.data || []);
 
+      console.log('update_data?????666',res.data?.data);
+      
     } catch (err) {
       console.error("Error fetching services:", err);
     }
@@ -978,16 +1009,42 @@ useEffect(() => {
     }
 
     // Set department locally
-    const department = New_bookingData.country;
+    let department = New_bookingData.country;
     const department_code = New_bookingData.country_code;
-
+    console.log('update_data????55555',department);
+    
     setselectDepartment(department);
     setselectDepartment_code(department_code)
     
+      let exists;
 
-     const exists = allserviceList.filter(
-        (s) => String(s?.department?.id) === String(selectDepartment)
-      );
+      if (+selected_get_Department === 1) {
+        exists = allserviceList.filter(
+          (s: { department?: { id: number | string; name: string } }) =>
+            s?.department?.name === "ALL"
+        );
+
+        const selectservice = allserviceList.find(
+          (s: { department?: { id: number | string; name: string } }) =>
+            s?.department?.name === "ALL"
+        );
+        console.log('department???555',selectservice);
+        
+        department = selectservice?.department?.id
+
+       setselectDepartment_code(selectservice?.department?.code ?? '')
+
+
+
+      } else {
+        exists = allserviceList.filter(
+          (s: { department?: { id: number | string; name: string } }) =>
+            String(s?.department?.id) === String(selectDepartment)
+        );
+      }
+
+      console.log('eeeeeeeeee1111111111',exists);
+      
 
       if (exists) {
         setServiceList(exists)
@@ -995,6 +1052,9 @@ useEffect(() => {
        }
 
     try {
+
+      console.log('department???1111',department);
+      
       const formData = new FormData();
       formData.append("application", "1");
       formData.append("center", selectedCenter);
@@ -1024,19 +1084,34 @@ useEffect(() => {
 
   fetchBookingAndSlots();
 }
-}, [selectedCenter,allserviceList]);
+}, [selectedCenter,allserviceList,selected_get_Department]);
 
 
 
   const handleDepartmentSelect = async(dept: any) => {
-    const selectDepartment = dept.id
-      // console.log('selectDepartment-------000000',selectDepartment);
+    let selectDepartment = dept.id
+      console.log('selectDepartment-------000000',selectDepartment);
       
 
         setselectDepartment(dept.id);      // store ID for selected check
         setselectDepartment_code(dept.code);
 
+      if(+selected_get_Department === 1){
+        const exists = allserviceList.find(
+            (s: { id?: number | string; department?: { id: number | string; name: string } }) =>
+              s?.department?.name === "ALL"
+          );
+
+        selectDepartment =exists?.department?.id
+        setselectDepartment_code(exists?.department?.code ?? '');
+
+      }
+
+
      try {
+
+      console.log('department???2222',selectDepartment);
+
       const formData = new FormData();
       formData.append("application", "1");
       formData.append("center", selectedCenter);
@@ -1993,6 +2068,7 @@ useEffect(() => {
           appointmentType: appointmentType,
           specialAssistance: member.specialAssistance,
           slot_booking: member.slot_booking,
+          selectedDepartment:selectDepartment
         }));
       } else {
         finalData = [
@@ -2018,6 +2094,7 @@ useEffect(() => {
             center: selectedCenter,
             appointmentType: appointmentType,
             specialAssistance: formData.specialAssistance,
+            selectedDepartment:selectDepartment,
             slot_booking: [
               {
                 action_date: formatDateToYYYYMMDDNew(new Date()),
@@ -2270,9 +2347,21 @@ useEffect(() => {
 
       // console.log('ttttttttt',serviceList,'----',selectDepartment);
       
-            const exists = allserviceList.filter(
-        (s) => String(s?.department?.id) === String(selectDepartment)
-      );
+      let exists;
+
+      if (+selected_get_Department === 1) {
+        exists = allserviceList.filter(
+          (s: { department?: { id: number | string; name: string } }) =>
+            s?.department?.name === "ALL"
+        );
+      } else {
+        exists = allserviceList.filter(
+          (s: { department?: { id: number | string; name: string } }) =>
+            String(s?.department?.id) === String(selectDepartment)
+        );
+      }
+
+      console.log('eeeeeeeeee22222222',exists);
 
       
 
@@ -2298,7 +2387,7 @@ useEffect(() => {
         }
       }
     }
-  }, [allserviceList,selectDepartment]);
+  }, [allserviceList,selectDepartment,selected_get_Department]);
 
 
   
@@ -2569,25 +2658,45 @@ useEffect(() => {
   const fetchData = async () => {
     const update_data = getDecryptedAppointments();
 
+    console.log('update_data?????111111',update_data);
+    
+
     if (update_data && update_data.length > 0) {
       const appointmentType = localStorage.getItem("appointmentType");
 
       // Set state values
       setRescheduledata(update_data);
-      const departmentPk = update_data[0].slot_department__department__pk;
-      const departmentCode = update_data[0].slot_department__department__code;
+      let departmentPk = update_data[0].selectedDepartment_id;
+      let departmentCode = update_data[0].slot_department__department__code;
 
-      console.log("update_data??????eeeee", departmentCode);
+      console.log("update_data??????eeeee", departmentCode,'00000',departmentPk,'------',selected_get_Department);
 
       setselectDepartment(departmentPk);
       setselectDepartment_code(departmentCode);
-      selectServicelist(departmentCode);
+
+       
+      if(+selected_get_Department === 1){
+        const exists = allserviceList.find(
+            (s: { id?: number | string; department?: { id: number | string; name: string } }) =>
+              s?.department?.name === "ALL"
+          );
+
+        departmentPk =exists?.department?.id
+        setselectDepartment_code(exists?.department?.code ?? '');
+
+      }
+
+      console.log("update_data??????4444",departmentCode);
+      
+      selectServicelist(selectedCenter);
+  
 
       try {
         if (!selectedCenter) {
           console.warn("No selected center found, skipping slot fetch.");
           return;
         }
+      console.log('department???3333',departmentPk);
 
         const formData = new FormData();
         formData.append("application", "1");
@@ -2623,7 +2732,7 @@ useEffect(() => {
   };
 
   fetchData();
-}, [selectedCenter]); // ✅ re-run if selectedCenter changes
+}, [selectedCenter,selected_get_Department]); // ✅ re-run if selectedCenter changes
 
 
   const rescheduleSlotbook = (slot: any) => {
@@ -2660,6 +2769,7 @@ useEffect(() => {
               transaction_amt: item.transaction_amt,
               appointmentType: appointmentType,
               specialAssistance: item.specialAssistance,
+              selectedDepartment:selectDepartment,
               slot_booking: [
                 {
                   action_date: formatDateToYYYYMMDDNew(new Date()),
@@ -2740,6 +2850,7 @@ useEffect(() => {
               transaction_amt: singledata.transaction_amt,
               appointmentType: appointmentType,
               specialAssistance: singledata.specialAssistance,
+              selectedDepartment:selectDepartment,
               slot_booking: [
                 {
                   action_date: formatDateToYYYYMMDDNew(new Date()),
@@ -2864,7 +2975,7 @@ useEffect(() => {
                 <span>{data.patient_name}</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-medium text-gray-500">{Number(selectDepartment) === 43 ? "HAP ID" : "NZHR ID"}</span>
+                <span className="font-medium text-gray-500">{Number(selectDepartment) === 43 ? "HAP ID" : "NZER ID"}</span>
                 <span>{data.hap_id}</span>
               </div>
               <div className="flex flex-col">
@@ -3315,10 +3426,12 @@ useEffect(() => {
                     </label>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {departmentlist &&
+                    {departmentlist &&
                         Array.isArray(departmentlist) &&
-                        departmentlist.map((dept: any) => {
-                          const isSelected = selectDepartment_code === dept.code;
+                        departmentlist
+                          .filter((ele: Department) => ele.name !== "ALL")
+                          .map((dept: Department) => {
+                            const isSelected = +selectDepartment === dept.id;
 
                           return (
                             <div
@@ -4146,7 +4259,7 @@ useEffect(() => {
                                         <div className="col-md-6 mb-3">
                                           <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
                                             <label className="form-label label-fixed me-md-2 mb-1 mb-md-0">
-                                              {Number(selectDepartment) === 43 ? "HAP ID" : "NZHR ID"}
+                                              {Number(selectDepartment) === 43 ? "HAP ID" : "NZER ID"}
                                             </label>
                                             <input
                                               type="text"
@@ -4511,7 +4624,7 @@ useEffect(() => {
                                     htmlFor="hapId"
                                     className="form-label label-fixed me-md-2 mb-1 mb-md-0"
                                   >
-                                    {Number(selectDepartment) === 43 ? "HAP ID" : "NZHR ID"}
+                                    {Number(selectDepartment) === 43 ? "HAP ID" : "NZER ID"}
                                   </label>
                                   <div className="position-relative w-100">
                                     <input
