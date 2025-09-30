@@ -2661,7 +2661,7 @@ useEffect(() => {
     console.log('update_data?????111111',update_data);
     
 
-    if (update_data && update_data.length > 0) {
+    if (update_data && update_data.length > 0 && allserviceList.length) {
       const appointmentType = localStorage.getItem("appointmentType");
 
       // Set state values
@@ -3445,13 +3445,14 @@ useEffect(() => {
                             >
                               <div className="text-center">
                                     <div className="flex items-center justify-center text-2xl space-x-2">
-                                    <span>
-                                      {dept.code === "AU"
-                                        ? "🇦🇺"
-                                        : dept.code === "NZ"
-                                        ? "🇳🇿"
-                                        : "🏥"}
-                                    </span>
+                                      <span style={{ fontSize: "1rem"}}>
+                                        {dept.code === "AU"
+                                          ? "Australia"
+                                          : dept.code === "NZ"
+                                          ? "New Zealand"
+                                          : "Other"}
+                                      </span>
+
 
                                     {isSelected && (
                                       <CheckCircle className="w-6 h-6 text-green-500" />

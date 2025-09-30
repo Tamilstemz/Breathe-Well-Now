@@ -1,6 +1,6 @@
 export const isSlotExpired = (slotTimeStr: string, slotDateStr: string): boolean => {
   const now = new Date();
-  console.log('slots--oooo',slotDateStr,'-----',slotTimeStr);
+  // console.log('slots--oooo',slotDateStr,'-----',slotTimeStr);
   
   // Extract start time
   const [startTimeStr] = slotTimeStr.split(" to ");
@@ -26,7 +26,7 @@ export const isSlotExpired = (slotTimeStr: string, slotDateStr: string): boolean
   // Subtract 5 minutes from the slot time
   slotStartTime.setMinutes(slotStartTime.getMinutes() - 5);
 
-  console.log('slots--oooo---now >= slotStartTime',now >= slotStartTime);
+  // console.log('slots--oooo---now >= slotStartTime',now >= slotStartTime);
   
 
   return now >= slotStartTime;
