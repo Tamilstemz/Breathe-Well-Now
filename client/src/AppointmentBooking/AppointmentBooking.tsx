@@ -193,8 +193,6 @@ type ApplicantResData = {
   applicant_number?: string;
 };
 
-
-
 const AppointmentBooking = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -206,11 +204,10 @@ const AppointmentBooking = () => {
   const [showDialog1, setShowDialog1] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [selectedCenter, setSelectedCenter] = useState("NDK");
-  
-  const [departmentlist,setDepartmentlist]=useState([])
-  const [selectDepartment,setselectDepartment] =useState('')
-  const [selectDepartment_code,setselectDepartment_code] =useState('')
 
+  const [departmentlist, setDepartmentlist] = useState([]);
+  const [selectDepartment, setselectDepartment] = useState("");
+  const [selectDepartment_code, setselectDepartment_code] = useState("");
 
   const [selectedService, setSelectedService] = useState("");
   const [appointmentType, setAppointmentType] = useState("Self");
@@ -261,6 +258,7 @@ const AppointmentBooking = () => {
   const [isCheckingTxn, setIsCheckingTxn] = useState(false);
   const [txnMessage, setTxnMessage] = useState<string | null>(null);
   const [txnStatus, setTxnStatus] = useState<number | null>(null);
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
   const [errorMessage, setErrorMessage] = useState("");
   const [debouncedTransactionId, setDebouncedTransactionId] = useState("");
@@ -311,9 +309,14 @@ const AppointmentBooking = () => {
   const [successModule, setsuccessModule] = useState(false);
   const [appicantResdata, setAppicantResdata] = useState<ApplicantResData>({});
 
-  console.log("selectDepartment------111000000???", selectDepartment,'???????????',typeof(selectDepartment));
-  const [apllicationdata,setapllicationdata] =useState([])
-  const [selected_get_Department,setselected_get_Department] =useState('')
+  console.log(
+    "selectDepartment------111000000???",
+    selectDepartment,
+    "???????????",
+    typeof selectDepartment
+  );
+  const [apllicationdata, setapllicationdata] = useState([]);
+  const [selected_get_Department, setselected_get_Department] = useState("");
 
   // --------------------------- Reschedule -----------------------------
 
@@ -326,9 +329,7 @@ const AppointmentBooking = () => {
 
   console.log("formData[222222]", rescheduledata);
 
-
-  console.log('898988989++++++++++++',selectDepartment_code);
-  
+  console.log("898988989++++++++++++", selectDepartment_code);
 
   const [memberValidated, setMemberValidated] = useState<boolean[]>(() =>
     Array(members.length).fill(false)
@@ -646,23 +647,108 @@ const AppointmentBooking = () => {
     }
   };
 
+  // const goToPrevious = () => {
+  //   setCurrentDate(
+  //     new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
+  //   );
+  //   handleslotfil();
+  // };
+
+  // const handleslotfil = async (date: Date) => {
+  //   if (!selectedCenter || !selectDepartment) return;
+
+  //   const formData = new FormData();
+  //   formData.append("application", "1");
+  //   formData.append("center", selectedCenter);
+  //   formData.append("department", selectDepartment);
+
+  //   let fromDate: Date;
+  //   let toDate: Date;
+
+  //   const today = new Date();
+
+  //   if (isCurrentMonth(date)) {
+  //     // If it's the current month, from today to end of month
+  //     fromDate = today;
+  //     toDate = new Date(today.getFullYear(), today.getMonth() + 1, 0); // last day of current month
+  //   } else {
+  //     // Any other month, fetch from 1st to last day of that month
+  //     fromDate = new Date(date.getFullYear(), date.getMonth(), 1);
+  //     toDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  //   }
+
+  //   formData.append("from_date", fromDate.toISOString().split("T")[0]);
+  //   formData.append("to_date", toDate.toISOString().split("T")[0]);
+
+  //   const res = await httpClient.post(API.AVAILABLE_SLOTS_API, formData);
+  //   const Timeslot = res.data.data || [];
+
+  //   setTimeSlots(Timeslot);
+
+  //   const slotDates = Timeslot.map((item: any) =>
+  //     formatDateToYYYYMMDD(new Date(item.slot.date))
+  //   );
+  //   setDotDates(new Set(slotDates));
+  //     setSelectedDate(today);
+  //     handleDateClick(today, Timeslot);
+  // };
+
   const goToPrevious = () => {
-    setCurrentDate(
-      new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
+    const prevMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() - 1,
+      1
     );
+    setCurrentDate(prevMonth);
+
+    // Calculate start and end of previous month
+    const fromDate = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1);
+    const toDate = new Date(
+      prevMonth.getFullYear(),
+      prevMonth.getMonth() + 1,
+      0
+    );
+
+    const dept = {
+      id: selectDepartment,
+      code: selectDepartment_code,
+      fromdate: fromDate.toISOString().split("T")[0],
+      todate: toDate.toISOString().split("T")[0],
+    };
+    handleDepartmentSelect(dept, true); // 👈 pass flag so function knows it's month navigation
   };
 
   const goToNext = () => {
-    setCurrentDate(
-      new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
+    const nextMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 1,
+      1
     );
+    setCurrentDate(nextMonth);
+
+    // Calculate start and end of next month
+    const fromDate = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1);
+    const toDate = new Date(
+      nextMonth.getFullYear(),
+      nextMonth.getMonth() + 1,
+      0
+    );
+
+    const dept = {
+      id: selectDepartment,
+      code: selectDepartment_code,
+      fromdate: fromDate.toISOString().split("T")[0],
+      todate: toDate.toISOString().split("T")[0],
+    };
+    handleDepartmentSelect(dept, true); // 👈 pass flag
   };
 
   const goToToday = () => {
-    setCurrentDate(new Date());
-    setSelectedDate(new Date());
+    const today = new Date();
+    setCurrentDate(today);
+    setSelectedDate(today);
+    // handleslotfil(today);
   };
-
   const bookTimeSlot = (slot: any) => {
     setStepIndex(0);
     if (selectedServices.length === 0) {
@@ -854,24 +940,23 @@ const AppointmentBooking = () => {
         );
 
         setcenter(filterdedata || []);
-
       } catch (err) {
         console.error("Error loading slots", err);
       }
     })();
   }, []);
 
-    useEffect(() => {
+  useEffect(() => {
     (async () => {
       try {
         const res = await httpClient.get(API.APPLICATION_MASTER);
-        const filterdedata = res.data.data
+        const filterdedata = res.data.data;
 
-        setapllicationdata(filterdedata)
-        console.log('filterdedata??????',res.data.data);
+        setapllicationdata(filterdedata);
+        console.log("filterdedata??????", res.data.data);
 
-        if(res?.data?.data && res?.data?.data?.length > 0){
-          setselected_get_Department(res?.data?.data[0].appointment_slot)
+        if (res?.data?.data && res?.data?.data?.length > 0) {
+          setselected_get_Department(res?.data?.data[0].appointment_slot);
         }
       } catch (err) {
         console.error("Error loading slots", err);
@@ -879,32 +964,27 @@ const AppointmentBooking = () => {
     })();
   }, []);
 
-
-
   useEffect(() => {
-
-    if(selectedCenter){
-    (async () => {
-      try {
-        const res = await httpClient.get(
-          `${API.DEPARTMENT_GET_API}?code=${selectedCenter}`
-        );
-        console.log('yyyyyy?????',res?.data?.departmentlist);
-        let departmentslist = res?.data?.departmentlist || [];
-        setDepartmentlist(departmentslist)
-
-      } catch (err) {
-        console.error("Error loading slots", err);
-      }
-    })();
-  }
-  }, [selectedCenter]); 
-
+    if (selectedCenter) {
+      (async () => {
+        try {
+          const res = await httpClient.get(
+            `${API.DEPARTMENT_GET_API}?code=${selectedCenter}`
+          );
+          console.log("yyyyyy?????", res?.data?.departmentlist);
+          let departmentslist = res?.data?.departmentlist || [];
+          setDepartmentlist(departmentslist);
+        } catch (err) {
+          console.error("Error loading slots", err);
+        }
+      })();
+    }
+  }, [selectedCenter]);
 
   const handleCenterChange = async (event: any) => {
     const selectedCode = event.target.value;
     setSelectedCenter(selectedCode);
-    setselectDepartment('')
+    setselectDepartment("");
     setUpcomingDatesWithSlots([]);
     setFormData({
       patientName: "",
@@ -955,189 +1035,209 @@ const AppointmentBooking = () => {
     setSelectedDate(null);
     setselectedslottime("");
     setServiceList([]);
-    if(selectedCode){
-    selectServicelist(selectedCode)
+    if (selectedCode) {
+      selectServicelist(selectedCode);
     }
     // const selectedCenter = center.find(
     //   (center: any) => center.code === selectedCode
     // );
-
-      
   };
 
+  const selectServicelist = async (selectedCode: any) => {
+    try {
+      console.log("update_data?????7777", selectedCode);
 
-
-
-
-
-
-
-  const selectServicelist =async(selectedCode :any)=>{
-     try {
-
-      console.log('update_data?????7777',selectedCode);
-      
       const serviceApiUrl = `${API.AVAILABLE_SERVICE_API}&center=${selectedCode}`;
       const res = await httpClient.get(serviceApiUrl);
       setServiceList(res.data?.data || []);
       setAllServiceList(res.data?.data || []);
 
-      console.log('update_data?????666',res.data?.data);
-      
+      console.log("update_data?????666", res.data?.data);
     } catch (err) {
       console.error("Error fetching services:", err);
     }
-  }
-
-
-useEffect(() => {
-
-   if (allserviceList.length > 0 && selectedCenter) {
-  const fetchBookingAndSlots = async () => {
-    const encrypted = localStorage.getItem("New_bookingData");
-    if (!encrypted) return;
-
-    let New_bookingData: any;
-
-    try {
-      const bytes = CryptoJS.AES.decrypt(encrypted, environment.SECRET_KEY);
-      const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-      New_bookingData = JSON.parse(decrypted);
-    } catch (error) {
-      console.error("Decryption error:", error);
-      return;
-    }
-
-    // Set department locally
-    let department = New_bookingData.country;
-    const department_code = New_bookingData.country_code;
-    console.log('update_data????55555',department);
-    
-    setselectDepartment(department);
-    setselectDepartment_code(department_code)
-    
-      let exists;
-
-      if (+selected_get_Department === 1) {
-        exists = allserviceList.filter(
-          (s: { department?: { id: number | string; name: string } }) =>
-            s?.department?.name === "ALL"
-        );
-
-        const selectservice = allserviceList.find(
-          (s: { department?: { id: number | string; name: string } }) =>
-            s?.department?.name === "ALL"
-        );
-        console.log('department???555',selectservice);
-        
-        department = selectservice?.department?.id
-
-       setselectDepartment_code(selectservice?.department?.code ?? '')
-
-
-
-      } else {
-        exists = allserviceList.filter(
-          (s: { department?: { id: number | string; name: string } }) =>
-            String(s?.department?.id) === String(selectDepartment)
-        );
-      }
-
-      console.log('eeeeeeeeee1111111111',exists);
-      
-
-      if (exists) {
-        setServiceList(exists)
-        setSelectedServices([exists[0]?.code]);
-       }
-
-    try {
-
-      console.log('department???1111',department);
-      
-      const formData = new FormData();
-      formData.append("application", "1");
-      formData.append("center", selectedCenter);
-      formData.append("department", department); // ✅ use local variable
-
-      const res = await httpClient.post(API.AVAILABLE_SLOTS_API, formData);
-      const Timeslot = res.data.data || [];
-
-      // Update state
-      setTimeSlots(Timeslot);
-
-      // Green Dot Dates
-      const slotDates = Timeslot.map((item: any) =>
-        formatDateToYYYYMMDD(new Date(item.slot.date))
-      );
-      setDotDates(new Set(slotDates));
-
-      // Initialize slot view directly
-      const today = new Date();
-      setSelectedDate(today);
-      handleDateClick(today, Timeslot);
-      localStorage.removeItem("New_bookingData");
-    } catch (err) {
-      console.error("Error fetching slots:", err);
-    }
   };
 
-  fetchBookingAndSlots();
-}
-}, [selectedCenter,allserviceList,selected_get_Department]);
+  useEffect(() => {
+    if (allserviceList.length > 0 && selectedCenter) {
+      const fetchBookingAndSlots = async () => {
+        const encrypted = localStorage.getItem("New_bookingData");
+        if (!encrypted) return;
 
+        let New_bookingData: any;
 
+        try {
+          const bytes = CryptoJS.AES.decrypt(encrypted, environment.SECRET_KEY);
+          const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+          New_bookingData = JSON.parse(decrypted);
+        } catch (error) {
+          console.error("Decryption error:", error);
+          return;
+        }
 
-  const handleDepartmentSelect = async(dept: any) => {
-    let selectDepartment = dept.id
-      console.log('selectDepartment-------000000',selectDepartment);
-      
+        // Set department locally
+        let department = New_bookingData.country;
+        const department_code = New_bookingData.country_code;
+        console.log("update_data????55555", department);
 
-        setselectDepartment(dept.id);      // store ID for selected check
-        setselectDepartment_code(dept.code);
+        setselectDepartment(department);
+        setselectDepartment_code(department_code);
 
-      if(+selected_get_Department === 1){
-        const exists = allserviceList.find(
-            (s: { id?: number | string; department?: { id: number | string; name: string } }) =>
+        let exists;
+
+        if (+selected_get_Department === 1) {
+          exists = allserviceList.filter(
+            (s: { department?: { id: number | string; name: string } }) =>
               s?.department?.name === "ALL"
           );
 
-        selectDepartment =exists?.department?.id
-        setselectDepartment_code(exists?.department?.code ?? '');
+          const selectservice = allserviceList.find(
+            (s: { department?: { id: number | string; name: string } }) =>
+              s?.department?.name === "ALL"
+          );
+          console.log("department???555", selectservice);
 
-      }
+          department = selectservice?.department?.id;
 
+          setselectDepartment_code(selectservice?.department?.code ?? "");
+        } else {
+          exists = allserviceList.filter(
+            (s: { department?: { id: number | string; name: string } }) =>
+              String(s?.department?.id) === String(selectDepartment)
+          );
+        }
 
-     try {
+        console.log("eeeeeeeeee1111111111", exists);
 
-      console.log('department???2222',selectDepartment);
+        if (exists) {
+          setServiceList(exists);
+          setSelectedServices([exists[0]?.code]);
+        }
 
-      const formData = new FormData();
-      formData.append("application", "1");
-      formData.append("center", selectedCenter);
-      formData.append("department", selectDepartment);
+        try {
+          console.log("department???1111", department);
+          const today1 = new Date();
 
+          // Get last day of the current month
+          const lastDayOfMonth = new Date(
+            today1.getFullYear(),
+            today1.getMonth() + 1,
+            0
+          );
 
-      const res = await httpClient.post(API.AVAILABLE_SLOTS_API, formData);
-      const Timeslot = res.data.data || [];
+          const fromDateStr = today1.toISOString().split("T")[0];
+          const toDateStr = lastDayOfMonth.toISOString().split("T")[0];
 
-      // ✅ Update state
-      setTimeSlots(Timeslot);
+          const formData = new FormData();
+          formData.append("application", "1");
+          formData.append("center", selectedCenter);
+          formData.append("department", department); // ✅ use local variable
 
-      // ✅ Green Dot Dates
-      const slotDates = Timeslot.map((item: any) =>
-        formatDateToYYYYMMDD(new Date(item.slot.date))
-      );
-      setDotDates(new Set(slotDates));
+          formData.append("from_date", fromDateStr); // ✅ today's date
+          formData.append("to_date", toDateStr); // ✅ last date of current month
 
-      // ✅ Initialize slot view directly (fix mismatch)
-      const today = new Date();
-      setSelectedDate(today);
-      handleDateClick(today, Timeslot); // ✅ use fresh Timeslot
-    } catch (err) {
-      console.error("Error fetching slots:", err);
+          const res = await httpClient.post(API.AVAILABLE_SLOTS_API, formData);
+          const Timeslot = res.data.data || [];
+
+          // Update state
+          setTimeSlots(Timeslot);
+
+          // Green Dot Dates
+          const slotDates = Timeslot.map((item: any) =>
+            formatDateToYYYYMMDD(new Date(item.slot.date))
+          );
+          setDotDates(new Set(slotDates));
+
+          // Initialize slot view directly
+          const today = new Date();
+          setSelectedDate(today);
+          handleDateClick(today, Timeslot);
+          localStorage.removeItem("New_bookingData");
+        } catch (err) {
+          console.error("Error fetching slots:", err);
+        }
+      };
+
+      fetchBookingAndSlots();
     }
+  }, [selectedCenter, allserviceList, selected_get_Department]);
+
+const handleDepartmentSelect = async (dept: any, isMonthNav = false) => {
+  setLoadingSlots(true);
+
+  let selectDepartment = dept.id;
+  setselectDepartment(dept.id);
+  setselectDepartment_code(dept.code);
+
+  if (+selected_get_Department === 1) {
+    const exists = allserviceList.find(
+      (s: { id?: number | string; department?: { id: number | string; name: string } }) =>
+        s?.department?.name === "ALL"
+    );
+
+    selectDepartment = exists?.department?.id;
+    setselectDepartment_code(exists?.department?.code ?? "");
   }
+
+  try {
+    const formData = new FormData();
+    formData.append("application", "1");
+    formData.append("center", selectedCenter);
+    formData.append("department", selectDepartment);
+
+    if (isMonthNav) {
+      formData.append("from_date", dept.fromdate);
+      formData.append("to_date", dept.todate);
+    } else {
+      const today1 = new Date();
+      const lastDayOfMonth = new Date(today1.getFullYear(), today1.getMonth() + 1, 0);
+      formData.append("from_date", today1.toISOString().split("T")[0]);
+      formData.append("to_date", lastDayOfMonth.toISOString().split("T")[0]);
+    }
+
+    const res = await httpClient.post(API.AVAILABLE_SLOTS_API, formData);
+    const Timeslot = res.data.data || [];
+
+    setTimeSlots(Timeslot);
+
+    const slotDates = Timeslot.map((item: any) =>
+      formatDateToYYYYMMDD(new Date(item.slot.date))
+    );
+    setDotDates(new Set(slotDates));
+
+  if (isMonthNav) {
+  // Find the first day in Timeslot data for that month
+  const slotDates = Timeslot
+    .map((s: any) => s.slot.date)
+    .filter((d: string) => new Date(d).getMonth() === new Date(dept.fromdate).getMonth());
+
+  if (slotDates.length === 0) {
+    // No slots for this month
+    return;
+  }
+
+  // Pick the earliest non-Sunday slot date
+  let firstDay = new Date(slotDates.sort()[0]);
+  while (firstDay.getDay() === 0) {
+    firstDay.setDate(firstDay.getDate() + 1);
+  }
+
+  setSelectedDate(firstDay);
+  handleDateClick(firstDay, Timeslot);
+}
+ else {
+  const today = new Date();
+  setSelectedDate(today);
+  handleDateClick(today, Timeslot);
+}
+
+  } catch (err) {
+    console.error("Error fetching slots:", err);
+  } finally {
+    setLoadingSlots(false);
+  }
+};
+
 
   const toggleDropdown = () => {
     setDropdownOpen((prev) => !prev);
@@ -2068,7 +2168,7 @@ useEffect(() => {
           appointmentType: appointmentType,
           specialAssistance: member.specialAssistance,
           slot_booking: member.slot_booking,
-          selectedDepartment:selectDepartment
+          selectedDepartment: selectDepartment,
         }));
       } else {
         finalData = [
@@ -2094,7 +2194,7 @@ useEffect(() => {
             center: selectedCenter,
             appointmentType: appointmentType,
             specialAssistance: formData.specialAssistance,
-            selectedDepartment:selectDepartment,
+            selectedDepartment: selectDepartment,
             slot_booking: [
               {
                 action_date: formatDateToYYYYMMDDNew(new Date()),
@@ -2346,7 +2446,7 @@ useEffect(() => {
       // Check if APPT exists in the service list
 
       // console.log('ttttttttt',serviceList,'----',selectDepartment);
-      
+
       let exists;
 
       if (+selected_get_Department === 1) {
@@ -2361,12 +2461,10 @@ useEffect(() => {
         );
       }
 
-      console.log('eeeeeeeeee22222222',exists);
-
-      
+      console.log("eeeeeeeeee22222222", exists);
 
       if (exists) {
-        setServiceList(exists)
+        setServiceList(exists);
 
         setSelectedServices([exists[0]?.code]);
 
@@ -2387,11 +2485,7 @@ useEffect(() => {
         }
       }
     }
-  }, [allserviceList,selectDepartment,selected_get_Department]);
-
-
-  
-  
+  }, [allserviceList, selectDepartment, selected_get_Department]);
 
   const getDynamicPlaceholder = (field: string): string => {
     switch (field) {
@@ -2655,85 +2749,64 @@ useEffect(() => {
   };
 
   useEffect(() => {
-  const fetchData = async () => {
-    const update_data = getDecryptedAppointments();
+    const fetchData = async () => {
+      const update_data = getDecryptedAppointments();
 
-    console.log('update_data?????111111',update_data);
-    
+      if (update_data && update_data.length > 0 && allserviceList.length) {
+        let departmentPk = update_data[0].selectedDepartment_id;
+        let departmentCode = update_data[0].slot_department__department__code;
 
-    if (update_data && update_data.length > 0 && allserviceList.length) {
-      const appointmentType = localStorage.getItem("appointmentType");
+        setselectDepartment(departmentPk);
+        setselectDepartment_code(departmentCode);
 
-      // Set state values
-      setRescheduledata(update_data);
-      let departmentPk = update_data[0].selectedDepartment_id;
-      let departmentCode = update_data[0].slot_department__department__code;
+        selectServicelist(selectedCenter);
 
-      console.log("update_data??????eeeee", departmentCode,'00000',departmentPk,'------',selected_get_Department);
+        try {
+          if (!selectedCenter) {
+            console.warn("No selected center found, skipping slot fetch.");
+            return;
+          }
 
-      setselectDepartment(departmentPk);
-      setselectDepartment_code(departmentCode);
+          const today1 = new Date();
 
-       
-      if(+selected_get_Department === 1){
-        const exists = allserviceList.find(
-            (s: { id?: number | string; department?: { id: number | string; name: string } }) =>
-              s?.department?.name === "ALL"
+          // Get last day of the current month
+          const lastDayOfMonth = new Date(
+            today1.getFullYear(),
+            today1.getMonth() + 1,
+            0
           );
 
-        departmentPk =exists?.department?.id
-        setselectDepartment_code(exists?.department?.code ?? '');
+          const fromDateStr = today1.toISOString().split("T")[0];
+          const toDateStr = lastDayOfMonth.toISOString().split("T")[0];
 
-      }
+          const formData = new FormData();
+          formData.append("from_date", fromDateStr); // ✅ today's date
+          formData.append("to_date", toDateStr); // ✅ last date of current month
 
-      console.log("update_data??????4444",departmentCode);
-      
-      selectServicelist(selectedCenter);
-  
+          formData.append("application", "1");
+          formData.append("center", selectedCenter);
+          formData.append("department", departmentPk);
 
-      try {
-        if (!selectedCenter) {
-          console.warn("No selected center found, skipping slot fetch.");
-          return;
+          const res = await httpClient.post(API.AVAILABLE_SLOTS_API, formData);
+          const Timeslot = res.data.data || [];
+
+          setTimeSlots(Timeslot);
+
+          const slotDates = Timeslot.map((item: any) =>
+            formatDateToYYYYMMDD(new Date(item.slot.date))
+          );
+          setDotDates(new Set(slotDates));
+
+          setSelectedDate(today1);
+          handleDateClick(today1, Timeslot);
+        } catch (err) {
+          console.error("Error fetching slots:", err);
         }
-      console.log('department???3333',departmentPk);
-
-        const formData = new FormData();
-        formData.append("application", "1");
-        formData.append("center", selectedCenter);
-        formData.append("department", departmentPk);
-
-        const res = await httpClient.post(API.AVAILABLE_SLOTS_API, formData);
-        const Timeslot = res.data.data || [];
-
-        setTimeSlots(Timeslot);
-
-        // Green Dot Dates
-        const slotDates = Timeslot.map((item: any) =>
-          formatDateToYYYYMMDD(new Date(item.slot.date))
-        );
-        setDotDates(new Set(slotDates));
-
-        // Preselect today's date
-        const today = new Date();
-        setSelectedDate(today);
-        handleDateClick(today, Timeslot);
-
-        localStorage.removeItem("New_bookingData");
-      } catch (err) {
-        console.error("Error fetching slots:", err);
       }
+    };
 
-      if (appointmentType === "Group") {
-        setAppointmentType("Group");
-        setmembercount(update_data.length);
-      }
-    }
-  };
-
-  fetchData();
-}, [selectedCenter,selected_get_Department]); // ✅ re-run if selectedCenter changes
-
+    fetchData();
+  }, [selectedCenter, selected_get_Department]);
 
   const rescheduleSlotbook = (slot: any) => {
     console.log("Reschedule Slot Selected:-----------", slot);
@@ -2769,7 +2842,7 @@ useEffect(() => {
               transaction_amt: item.transaction_amt,
               appointmentType: appointmentType,
               specialAssistance: item.specialAssistance,
-              selectedDepartment:selectDepartment,
+              selectedDepartment: selectDepartment,
               slot_booking: [
                 {
                   action_date: formatDateToYYYYMMDDNew(new Date()),
@@ -2850,7 +2923,7 @@ useEffect(() => {
               transaction_amt: singledata.transaction_amt,
               appointmentType: appointmentType,
               specialAssistance: singledata.specialAssistance,
-              selectedDepartment:selectDepartment,
+              selectedDepartment: selectDepartment,
               slot_booking: [
                 {
                   action_date: formatDateToYYYYMMDDNew(new Date()),
@@ -2975,7 +3048,9 @@ useEffect(() => {
                 <span>{data.patient_name}</span>
               </div>
               <div className="flex flex-col">
-                <span className="font-medium text-gray-500">{Number(selectDepartment) === 43 ? "HAP ID" : "NZER ID"}</span>
+                <span className="font-medium text-gray-500">
+                  {Number(selectDepartment) === 43 ? "HAP ID" : "NZER ID"}
+                </span>
                 <span>{data.hap_id}</span>
               </div>
               <div className="flex flex-col">
@@ -3125,110 +3200,6 @@ useEffect(() => {
                 </div>
 
                 <div className="calendar-wrapper">
-                  {/* <div
-                    className={`calendar-grid ${
-                      selectedCenter ? "active" : ""
-                    }`}
-                    style={{
-                      opacity: !selectedCenter ? 0.5 : 1,
-                      pointerEvents: !selectedCenter ? "none" : "auto",
-                      cursor: !selectedCenter ? "not-allowed" : "pointer",
-                    }}
-                  >
-                    {getCalendarDays().map((day, index) => {
-                      const isSunday = day.getDay() === 0;
-                      const past = isPastDate(day) || isSunday;
-                      const today = isToday(day);
-                      const selected = isSelected(day);
-                      const hasSlot = hasEvent(day);
-                      const totaldaycount = totalcount(day);
-                      console.log(totaldaycount);
-
-                      const currentMonth = isCurrentMonth(day);
-
-                      const isDisabled =
-                        isPastDate(day) || // Disable past
-                        day.getDay() === 0 || // Disable Sundays
-                        !isWithin90DaysFromToday(day) ||
-                        isHoliday(day) ||
-                        (totaldaycount === 0 && hasSlot); // Disable if no available slots
-
-                      const dayStyle: React.CSSProperties = {
-                        opacity: isDisabled ? 0.5 : 1,
-                        border: isHoliday(day)
-                          ? "1px solid red"
-                          : isDisabled
-                          ? "1px solid #ccc"
-                          : "none",
-                        cursor: isDisabled ? "not-allowed" : "pointer",
-                        borderRadius: "5px",
-                        background: today ? "orange" : "",
-                        // backgroundColor: today ? "#fe9647" : "transparent",
-                        height: "35px",
-                      };
-
-                      return (
-                        <div
-                          key={index}
-                          className="d-flex align-items-center justify-content-center position-relative calendardaybox"
-                          style={{
-                            pointerEvents: isDisabled ? "none" : "auto",
-                          }}
-                          onClick={() => {
-                            if (!isDisabled) {
-                              handleDateClick(day, timeSlots);
-                            }
-                          }}
-                        >
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div
-                                className={`calendardaystyle d-flex align-items-center justify-content-center rounded-square position-relative z-9999 ${
-                                  !isDisabled ? "calendar-day" : ""
-                                } ${isSelecteddate(day) ? "selected" : ""}`}
-                                style={dayStyle}
-                              >
-                                {day.getDate()}
-
-                                {(isHoliday(day) || hasSlot) && (
-                                  <div
-                                    className="calendarAvalSlot"
-                                    style={{
-                                      backgroundColor: isHoliday(day)
-                                        ? "#ffc107" // Yellow for holiday
-                                        : totaldaycount === 0
-                                        ? "red" // Red for no slots
-                                        : "#5ebe5e", // Green for available slots
-                                    }}
-                                  >
-                                    {isHoliday(day)
-                                      ? "" // Empty badge or show "H" if you prefer
-                                      : totaldaycount === 0
-                                      ? ""
-                                      : totaldaycount}
-                                  </div>
-                                )}
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent
-                              style={{
-                                backgroundColor: "rgb(33 55 96)",
-                                color: "white",
-                                zIndex: 1000,
-                              }}
-                            >
-                              {isHoliday(day)
-                                ? "Holiday"
-                                : totaldaycount === 0 ||
-                                  totaldaycount === undefined
-                                ? "No slot available"
-                                : `Available Slots: ${totaldaycount}`}
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                      );
-                    })}
-                  </div> */}
                   <div
                     className={`calendar-grid ${
                       selectedCenter ? "active" : ""
@@ -3335,43 +3306,61 @@ useEffect(() => {
                       );
                     })}
                   </div>
-
-                  {!selectedCenter && (
-                    <div className="calendar-tooltip">
-                      Please choose a center to enable calendar
+                  {loadingSlots && timeSlots.length != 0 && (
+                    <div
+                      className="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
+                      style={{
+                        backgroundColor: "rgba(255, 255, 255, 0.7)",
+                        backdropFilter: "blur(2px)",
+                        zIndex: 20,
+                      }}
+                    >
+                      <div
+                        className="spinner-border text-primary"
+                        role="status"
+                      >
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                    </div>
+                  )}
+                  {(!selectedCenter || !selectDepartment) && (
+                    <div
+                      className="calendar-overlay"
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        height: "100%",
+                        backdropFilter: "blur(4px)",
+                        backgroundColor: "rgba(255,255,255,0.5)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        zIndex: 999,
+                        pointerEvents: "none", // so clicks still don’t pass
+                      }}
+                    >
+                      <div
+                        className="calendar-tooltip"
+                        style={{
+                          pointerEvents: "auto",
+                          padding: "10px 15px",
+                          borderRadius: "5px",
+                          // background: "#214760",
+                          color: "red",
+                          fontWeight: 500,
+                        }}
+                      >
+                        {!selectedCenter
+                          ? "Please choose a center to enable calendar"
+                          : "Please Select Visa Medical"}
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
             </div>
-
-            {/* <div
-              className="card border-0 shadow-sm mt-3 px-3 py-2 small"
-              style={{ backgroundColor: '#fff3f3', borderLeft: '4px solid #e74c3c', fontSize: '13px' }}
-            >
-              <div className="row g-2 align-items-center">
-                <div className="col-12 col-md-auto">
-                  <span className="text-danger fw-bold">Note:</span>
-                </div>
-                <div className="col-12 col-md">
-                  <div className="d-flex flex-wrap align-items-center">
-                    <span className="text-danger me-2">
-                      For rescheduling or cancelling appointments, please contact Customer Care -
-                    </span>
-                    <a
-                      href="tel:+919582116116"
-                      className="text-primary d-flex align-items-center fw-semibold"
-                      style={{ textDecoration: 'none' }}
-                    >
-                      <Phone className="me-2 h-4 w-4" />
-                      +91 9582-116116
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div> */}
-
-            {/* Time Slots Panel */}
           </div>
 
           {/* Service Selection Section */}
@@ -3379,7 +3368,6 @@ useEffect(() => {
             <div className="card shadow-sm">
               <div className="card-body Service-card-body">
                 <div className="row g-3 mb-4">
-                  
                   <div className="col-12 col-md-6">
                     <label className="form-label fw-semibold d-flex justify-content-between">
                       Centre
@@ -3398,79 +3386,50 @@ useEffect(() => {
                         ))}
                     </select>
                   </div>
-
-
-                  {/* <div className="col-12 col-md-6">
-                    <label className="form-label fw-semibold d-flex justify-content-between">
-                      Select Visa Medical:
-                    </label>
-                    <select
-                      className="form-select"
-                      value={selectDepartment}
-                      onChange={handeleChangedepartment}
-                    >
-                      <option value="">Select</option>
-                      {departmentlist && Array.isArray(departmentlist) &&
-                        departmentlist.map((item: any, index: number) => (
-                          <option key={index} value={item.id}>
-                            {item.name}
-                          </option>
-                        ))}
-                    </select>
-                  </div> */}
-
-
                   <div className="col-12 col-md-6">
                     <label className="form-label fw-semibold mb-2 d-block">
                       Select Visa Medical:
                     </label>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {departmentlist &&
+                      {departmentlist &&
                         Array.isArray(departmentlist) &&
                         departmentlist
                           .filter((ele: Department) => ele.name !== "ALL")
                           .map((dept: Department) => {
                             const isSelected = +selectDepartment === dept.id;
 
-                          return (
-                            <div
-                              key={dept.id}
-                              className={`border-2 rounded-lg cursor-pointer transition-all duration-300
-                                ${isSelected
-                                  ? "border-green-500 bg-green-50"
-                                  : "hover:border-orange-600 bg-orange-50"
+                            return (
+                              <div
+                                key={dept.id}
+                                className={`border-2 rounded-lg cursor-pointer transition-all duration-300
+                                ${
+                                  isSelected
+                                    ? "border-green-500 bg-green-50"
+                                    : "hover:border-orange-600 bg-orange-50"
                                 }`}
-                              onClick={() => handleDepartmentSelect(dept)}
-                            >
-                              <div className="text-center">
-                                    <div className="flex items-center justify-center text-2xl space-x-2">
-                                      <span style={{ fontSize: "1rem"}}>
-                                        {dept.code === "AU"
-                                          ? "Australia"
-                                          : dept.code === "NZ"
-                                          ? "New Zealand"
-                                          : "Other"}
-                                      </span>
-
+                                onClick={() => handleDepartmentSelect(dept)}
+                              >
+                                <div className="text-center">
+                                  <div className="flex items-center justify-center text-2xl space-x-2">
+                                    <span style={{ fontSize: "1rem" }}>
+                                      {dept.code === "AU"
+                                        ? "Australia"
+                                        : dept.code === "NZ"
+                                        ? "New Zealand"
+                                        : "Other"}
+                                    </span>
 
                                     {isSelected && (
                                       <CheckCircle className="w-6 h-6 text-green-500" />
                                     )}
                                   </div>
-
-
-      
-                                
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
                     </div>
                   </div>
-
-
-
 
                   <div className="col-12 col-md-6">
                     <label className="form-label fw-semibold d-flex justify-content-between">
@@ -3823,7 +3782,6 @@ useEffect(() => {
                                     })}
                                   </h5>
                                 </div>
-
                                 {slots.length > 0 &&
                                 slots.filter(
                                   (slot: any) =>
@@ -3833,7 +3791,7 @@ useEffect(() => {
                                       slot?.slotItem?.slot?.date
                                     )
                                 ).length > 0 ? (
-                                  <div className="row g-3 px-2 slottimebox">
+                                  <div className="row row-cols-2 row-cols-sm-3 row-cols-md-5 g-3 px-2 slottimebox">
                                     {slots
                                       .filter(
                                         (slot: any) =>
@@ -3846,9 +3804,9 @@ useEffect(() => {
                                       .map((slot: any, idx: number) => (
                                         <div
                                           key={`${slot.time}-${slot.slotItem?.slot?.date}`}
-                                          className="col-12 col-sm-6 col-md-4 mb-3 position-relative"
+                                          className="col mb-3 position-relative d-flex"
                                         >
-                                          <>
+                                          <div className="slot-card w-100 d-flex flex-column align-items-center">
                                             <span
                                               className={`position-absolute badge Slotcountview ${
                                                 slot.remaining < membercount
@@ -3860,7 +3818,7 @@ useEffect(() => {
                                             </span>
 
                                             <button
-                                              className={`btn w-70 text-start btnclr ${
+                                              className={`btn w-100 text-center btnclr ${
                                                 slot.remaining < membercount
                                                   ? "btn-outline-secondary"
                                                   : "btn-outline-primary"
@@ -3890,25 +3848,16 @@ useEffect(() => {
                                                   slot.remaining < membercount
                                                     ? "not-allowed"
                                                     : "pointer",
+                                                minHeight: "40px", // 🔑 fix equal height
+                                                display: "flex",
+                                                alignItems: "center",
+                                                justifyContent: "center",
+                                                fontSize: "13px",
                                               }}
-                                              aria-disabled={
-                                                slot.remaining < membercount ||
-                                                selectedServices.length === 0
-                                                // ||
-                                                // isSlotExpired(
-                                                //   slot?.time,
-                                                //   slot?.slotItem?.slot?.date
-                                                // )
-                                              }
-                                              aria-label={
-                                                slot.remaining < membercount
-                                                  ? "Not enough available slots"
-                                                  : "Select time slot"
-                                              }
                                             >
                                               {slot.time}
                                             </button>
-                                          </>
+                                          </div>
                                         </div>
                                       ))}
                                   </div>
@@ -4267,7 +4216,9 @@ useEffect(() => {
                                         <div className="col-md-6 mb-3">
                                           <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
                                             <label className="form-label label-fixed me-md-2 mb-1 mb-md-0">
-                                              {Number(selectDepartment) === 43 ? "HAP ID" : "NZER ID"}
+                                              {Number(selectDepartment) === 43
+                                                ? "HAP ID"
+                                                : "NZER ID"}
                                             </label>
                                             <input
                                               type="text"
@@ -4632,7 +4583,9 @@ useEffect(() => {
                                     htmlFor="hapId"
                                     className="form-label label-fixed me-md-2 mb-1 mb-md-0"
                                   >
-                                    {Number(selectDepartment) === 43 ? "HAP ID" : "NZER ID"}
+                                    {Number(selectDepartment) === 43
+                                      ? "HAP ID"
+                                      : "NZER ID"}
                                   </label>
                                   <div className="position-relative w-100">
                                     <input
