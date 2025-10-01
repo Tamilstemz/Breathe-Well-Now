@@ -1162,82 +1162,91 @@ const AppointmentBooking = () => {
     }
   }, [selectedCenter, allserviceList, selected_get_Department]);
 
-const handleDepartmentSelect = async (dept: any, isMonthNav = false) => {
-  setLoadingSlots(true);
+  const handleDepartmentSelect = async (dept: any, isMonthNav = false) => {
+    setLoadingSlots(true);
 
-  let selectDepartment = dept.id;
-  setselectDepartment(dept.id);
-  setselectDepartment_code(dept.code);
+    let selectDepartment = dept.id;
+    setselectDepartment(dept.id);
+    setselectDepartment_code(dept.code);
 
-  if (+selected_get_Department === 1) {
-    const exists = allserviceList.find(
-      (s: { id?: number | string; department?: { id: number | string; name: string } }) =>
-        s?.department?.name === "ALL"
-    );
+    if (+selected_get_Department === 1) {
+      const exists = allserviceList.find(
+        (s: {
+          id?: number | string;
+          department?: { id: number | string; name: string };
+        }) => s?.department?.name === "ALL"
+      );
 
-    selectDepartment = exists?.department?.id;
-    setselectDepartment_code(exists?.department?.code ?? "");
-  }
-
-  try {
-    const formData = new FormData();
-    formData.append("application", "1");
-    formData.append("center", selectedCenter);
-    formData.append("department", selectDepartment);
-
-    if (isMonthNav) {
-      formData.append("from_date", dept.fromdate);
-      formData.append("to_date", dept.todate);
-    } else {
-      const today1 = new Date();
-      const lastDayOfMonth = new Date(today1.getFullYear(), today1.getMonth() + 1, 0);
-      formData.append("from_date", today1.toISOString().split("T")[0]);
-      formData.append("to_date", lastDayOfMonth.toISOString().split("T")[0]);
+      selectDepartment = exists?.department?.id;
+      setselectDepartment_code(exists?.department?.code ?? "");
     }
 
-    const res = await httpClient.post(API.AVAILABLE_SLOTS_API, formData);
-    const Timeslot = res.data.data || [];
+    try {
+      const formData = new FormData();
+      formData.append("application", "1");
+      formData.append("center", selectedCenter);
+      formData.append("department", selectDepartment);
 
-    setTimeSlots(Timeslot);
+      if (isMonthNav) {
+        formData.append("from_date", dept.fromdate);
+        formData.append("to_date", dept.todate);
+      } else {
+        const today1 = new Date();
+        const lastDayOfMonth = new Date(
+          today1.getFullYear(),
+          today1.getMonth() + 1,
+          0
+        );
+        formData.append("from_date", today1.toISOString().split("T")[0]);
+        formData.append("to_date", lastDayOfMonth.toISOString().split("T")[0]);
+      }
 
-    const slotDates = Timeslot.map((item: any) =>
-      formatDateToYYYYMMDD(new Date(item.slot.date))
-    );
-    setDotDates(new Set(slotDates));
+      const res = await httpClient.post(API.AVAILABLE_SLOTS_API, formData);
+      const Timeslot = res.data.data || [];
 
-  if (isMonthNav) {
-  // Find the first day in Timeslot data for that month
-  const slotDates = Timeslot
-    .map((s: any) => s.slot.date)
-    .filter((d: string) => new Date(d).getMonth() === new Date(dept.fromdate).getMonth());
+      setTimeSlots(Timeslot);
 
-  if (slotDates.length === 0) {
-    // No slots for this month
-    return;
-  }
+      const slotDates = Timeslot.map((item: any) =>
+        formatDateToYYYYMMDD(new Date(item.slot.date))
+      );
+      setDotDates(new Set(slotDates));
 
-  // Pick the earliest non-Sunday slot date
-  let firstDay = new Date(slotDates.sort()[0]);
-  while (firstDay.getDay() === 0) {
+    if (isMonthNav) {
+  const monthStart = new Date(dept.fromdate);
+  const monthEnd = new Date(dept.todate);
+
+  // Filter only slots within the month
+  const monthSlots = Timeslot.filter((s: any) => {
+    const slotDate = new Date(s.slot.date);
+    return slotDate >= monthStart && slotDate <= monthEnd;
+  });
+
+  if (monthSlots.length === 0) return;
+
+  // Pick the earliest non-Sunday slot
+  let firstDay = new Date(monthStart); // start from 1st of month
+  while (
+    firstDay.getDay() === 0 ||
+    !monthSlots.some((s: any) => s.slot.date === formatDateToYYYYMMDD(firstDay))
+  ) {
     firstDay.setDate(firstDay.getDate() + 1);
+    if (firstDay > monthEnd) break;
   }
 
   setSelectedDate(firstDay);
-  handleDateClick(firstDay, Timeslot);
+  handleDateClick(firstDay, monthSlots);
 }
  else {
-  const today = new Date();
-  setSelectedDate(today);
-  handleDateClick(today, Timeslot);
-}
-
-  } catch (err) {
-    console.error("Error fetching slots:", err);
-  } finally {
-    setLoadingSlots(false);
-  }
-};
-
+        const today = new Date();
+        setSelectedDate(today);
+        handleDateClick(today, Timeslot);
+      }
+    } catch (err) {
+      console.error("Error fetching slots:", err);
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
 
   const toggleDropdown = () => {
     setDropdownOpen((prev) => !prev);
@@ -3306,7 +3315,7 @@ const handleDepartmentSelect = async (dept: any, isMonthNav = false) => {
                       );
                     })}
                   </div>
-                  {loadingSlots && timeSlots.length != 0 && (
+                  {loadingSlots && (
                     <div
                       className="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center"
                       style={{
