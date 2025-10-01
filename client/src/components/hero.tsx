@@ -524,7 +524,7 @@ export default function Hero() {
             setResendDisabled(true);
             setShowAppointmentModal(false);
             setAppointmentData([]);
-
+            resetAppointmentState()
             setsuccessModule(true);
             if (responseData?.[0]) {
               const applicant = responseData[0].applicant || {};

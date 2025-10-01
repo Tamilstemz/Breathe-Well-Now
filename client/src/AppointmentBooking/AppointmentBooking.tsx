@@ -3481,7 +3481,11 @@ useEffect(() => {
                       {/* Trigger */}
                       <div
                         className="form-select"
-                        onClick={toggleDropdown}
+                        onClick={() => {
+                          if (selectDepartment !== "") {
+                            toggleDropdown();
+                          }
+                        }}
                         style={{
                           cursor: "pointer",
                           paddingRight: "2rem", // space for arrow
@@ -3491,7 +3495,14 @@ useEffect(() => {
                         <span style={{ float: "right" }}>&#9662;</span>
                       </div>
 
-                      {dropdownOpen && (
+                      {/* Validation message */}
+                      {selectDepartment === "" && (
+                        <div className="text-danger mt-1">
+                          Please select a Visa Medical first
+                        </div>
+                      )}
+
+                      {dropdownOpen && selectDepartment !== "" && (
                         <div className="dropdown-menu show custom-dropdown">
                           {selectedCenter && serviceList.length > 1 && (
                             <label
@@ -3545,15 +3556,9 @@ useEffect(() => {
                                   <input
                                     type="checkbox"
                                     // disabled={bookingType === "family"}
-                                    checked={selectedServices.includes(
-                                      service.code
-                                    )}
+                                    checked={selectedServices.includes(service.code)}
                                     onChange={(e) =>
-                                      handleCheckboxChange(
-                                        e,
-                                        service.code,
-                                        service.price
-                                      )
+                                      handleCheckboxChange(e, service.code, service.price)
                                     }
                                   />
                                   <span>{service.name}</span>
@@ -3564,6 +3569,8 @@ useEffect(() => {
                       )}
                     </div>
                   </div>
+
+                  
                 </div>
 
                 <div className="row g-3 mb-2">
