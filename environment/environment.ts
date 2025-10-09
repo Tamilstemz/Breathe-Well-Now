@@ -4,7 +4,7 @@ export const ACTIVE_ENV = "PROD";  // Change to "LOCAL", "UAT", or "PROD"
 // Configuration Object
 const CONFIG = {
   LOCAL: {
-    BASE_URL: "http://localhost:8001",
+    BASE_URL: "http://192.168.60.124:8001",
     SECRET_KEY: "Ndhelthcheck_@local",
     ENCRYPTION_KEY: "ND-HealthCheck-Web!local",
   },
