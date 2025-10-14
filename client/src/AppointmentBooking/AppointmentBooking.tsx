@@ -2347,9 +2347,17 @@ useEffect(() => {
           });
         }
       } else {
-        setShowDialog(false);
-        setopennewdialog(true);
-        setexistingapplicantdata(res.data.applicant_data);
+        // setShowDialog(false);
+        const message = `${res.data.message || "Submission failed."}`;
+        toast({
+          title: "error",
+          description: message,
+          variant: "error",
+          duration: 4000,
+        });
+        
+        // setopennewdialog(true);
+        // setexistingapplicantdata(res.data.applicant_data);
       }
 
       // ✅ You can now use invoiceUrls wherever needed
