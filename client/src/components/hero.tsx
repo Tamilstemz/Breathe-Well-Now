@@ -306,18 +306,18 @@ export default function Hero() {
     e: React.ChangeEvent<HTMLInputElement>,
     index: number
   ) => {
-      const value = e.target.value.replace(/\D/g, ""); // Only digits
-      if (value.length > 1) return;
+    const value = e.target.value.replace(/\D/g, ""); // Only digits
+    if (value.length > 1) return;
 
-      const newOtp = [...otp];
-      newOtp[index] = value;
-      setOtp(newOtp);
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
 
-      // Move to next input
-      const nextInput = e.target.nextElementSibling as HTMLInputElement | null;
-      if (nextInput) {
-        nextInput.focus();
-      }
+    // Move to next input
+    const nextInput = e.target.nextElementSibling as HTMLInputElement | null;
+    if (nextInput) {
+      nextInput.focus();
+    }
   };
   const handleKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>,
@@ -991,7 +991,6 @@ export default function Hero() {
                     ) : (
                       <>
                         <div>
-                          
                           <p className="otpSubheading">
                             We’ve sent a 6-digit code to{" "}
                             {appointmentData[0]?.contact_number}
@@ -1087,11 +1086,17 @@ export default function Hero() {
                             onClick={
                               otpButtontype === "Reschedule"
                                 ? () => {
+                                    localStorage.removeItem("appointments");
+                                    localStorage.removeItem("Newslot");
                                     navigate(
                                       `${environment.BASE_PATH}AppointmentBooking`
                                     );
                                   }
-                                : () => setOtpVisible(false)
+                                : () => {
+                                    localStorage.removeItem("appointments");
+                                    localStorage.removeItem("Newslot");
+                                    setOtpVisible(false);
+                                  }
                             }
                           >
                             Back
@@ -1472,11 +1477,7 @@ export default function Hero() {
                       },
                       {
                         label: "Date",
-                        value: appicantResdata.date
-                          ? new Date(appicantResdata.date)
-                              .toLocaleDateString("en-GB") // → "17/07/2025"
-                              .replaceAll("/", "-") // → "17-07-2025"
-                          : "",
+                        value: appicantResdata.date,
                       },
                       { label: "Time", value: appicantResdata.time },
                       { label: "Reference", value: appicantResdata.reference },
