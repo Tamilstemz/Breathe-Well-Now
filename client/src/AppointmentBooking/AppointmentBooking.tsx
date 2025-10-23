@@ -2925,12 +2925,14 @@ const AppointmentBooking = () => {
 
   const cancelreschudule = () => {
     localStorage.removeItem("appointments");
+    localStorage.removeItem("appointmentType")
     navigate("/");
   };
 
   const getDecryptedAppointments = (): any[] => {
     const encrypted = localStorage.getItem("appointments");
     if (!encrypted) return [];
+
 
     try {
       const bytes = CryptoJS.AES.decrypt(encrypted, environment.SECRET_KEY);
