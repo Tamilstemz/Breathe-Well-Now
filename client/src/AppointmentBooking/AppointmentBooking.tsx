@@ -195,6 +195,8 @@ type ApplicantResData = {
 
 const AppointmentBooking = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
+  console.log("currentDate :", currentDate);
+
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   // console.log(selectedDate);
   const { toast } = useToast();
@@ -558,60 +560,71 @@ const AppointmentBooking = () => {
     return dotDates.has(dateStr);
   };
 
+  // const totalcount = (day: Date) => {
+  //   const dateStr = formatDateToYYYYMMDD(day);
+  //   // console.log("Date:", dateStr);
+  //   // console.log('timeSlots-----',timeSlots);
+
+  //   const today = new Date();
+  //   const formattedToday = today.toISOString().split("T")[0]; // e.g., "2025-06-19"
+  //   // console.log("Today:", formattedToday);
+
+  //   if (dateStr >= formattedToday) {
+  //     const matchedSlots = timeSlots.filter((i) => i.slot?.date === dateStr);
+
+  //     let checktimeing = true;
+
+  //     matchedSlots.forEach((ele, ind) => {
+  //       // console.log('fffff1111', ele.slot.date);
+
+  //       ele.slot.slottime.forEach((time: any) => {
+  //         const timeRange = `${formatTo12Hour(
+  //           time.start_time
+  //         )} to ${formatTo12Hour(time.end_time)}`;
+  //         // console.log('fffff2222', timeRange);
+
+  //         // Check expiration for each time slot
+  //         const isExpired = isSlotExpired(timeRange, ele.slot.date);
+
+  //         if (isExpired) {
+  //           // console.log('meeee---',timeRange, ele.slot.date);
+
+  //           checktimeing = false;
+  //         }
+  //       });
+  //     });
+
+  //     // console.log("Matched Slots:", matchedSlots);
+
+  //     const seenSlots = new Set<string>();
+  //     let totalRemaining = 0;
+
+  //     matchedSlots.forEach((item) => {
+  //       const slottimes = item.slot?.slottime || [];
+
+  //       slottimes.forEach((slot: any) => {
+  //         const key = `${slot.start_time}-${slot.end_time}`;
+  //         if (!seenSlots.has(key)) {
+  //           seenSlots.add(key);
+  //           totalRemaining += slot.remaining || 0;
+  //         }
+  //       });
+  //     });
+
+  //     // console.log("Total Remaining (No Duplicates):", totalRemaining);
+  //     return !checktimeing ? 0 : totalRemaining;
+  //   }
+  // };
+
   const totalcount = (day: Date) => {
-    const dateStr = formatDateToYYYYMMDD(day);
-    // console.log("Date:", dateStr);
-    // console.log('timeSlots-----',timeSlots);
+    // console.log("day :");
 
-    const today = new Date();
-    const formattedToday = today.toISOString().split("T")[0]; // e.g., "2025-06-19"
-    // console.log("Today:", formattedToday);
+    const dateStr = formatDateToYYYYMMDD(day); // format: "YYYY-MM-DD"
+    // console.log("datestr :",dateStr , "slotCounts :",slotCounts);
+    const daycount = slotCounts[dateStr];
+    // console.log("daycount :",daycount);
 
-    if (dateStr >= formattedToday) {
-      const matchedSlots = timeSlots.filter((i) => i.slot?.date === dateStr);
-
-      let checktimeing = true;
-
-      matchedSlots.forEach((ele, ind) => {
-        // console.log('fffff1111', ele.slot.date);
-
-        ele.slot.slottime.forEach((time: any) => {
-          const timeRange = `${formatTo12Hour(
-            time.start_time
-          )} to ${formatTo12Hour(time.end_time)}`;
-          // console.log('fffff2222', timeRange);
-
-          // Check expiration for each time slot
-          const isExpired = isSlotExpired(timeRange, ele.slot.date);
-
-          if (isExpired) {
-            // console.log('meeee---',timeRange, ele.slot.date);
-
-            checktimeing = false;
-          }
-        });
-      });
-
-      // console.log("Matched Slots:", matchedSlots);
-
-      const seenSlots = new Set<string>();
-      let totalRemaining = 0;
-
-      matchedSlots.forEach((item) => {
-        const slottimes = item.slot?.slottime || [];
-
-        slottimes.forEach((slot: any) => {
-          const key = `${slot.start_time}-${slot.end_time}`;
-          if (!seenSlots.has(key)) {
-            seenSlots.add(key);
-            totalRemaining += slot.remaining || 0;
-          }
-        });
-      });
-
-      // console.log("Total Remaining (No Duplicates):", totalRemaining);
-      return !checktimeing ? 0 : totalRemaining;
-    }
+    return slotCounts[dateStr] ?? 0; // return 0 if no slots
   };
 
   const isTimeSlotBooked = (date: Date, timeSlot: string): boolean => {
@@ -682,7 +695,34 @@ const AppointmentBooking = () => {
       fromdate: fromDate.toISOString().split("T")[0],
       todate: toDate.toISOString().split("T")[0],
     };
-    handleDepartmentSelect(dept, true); // 👈 pass flag so function knows it's month navigation
+    // handleDepartmentSelect(dept, true); // 👈 pass flag so function knows it's month navigation
+    handleDepartmentSelect1(dept, true);
+  };
+
+  const goToPrevious1 = () => {
+    const prevMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() - 1,
+      1
+    );
+    setCurrentDate(prevMonth);
+
+    // Calculate start and end of previous month
+    const fromDate = new Date(prevMonth.getFullYear(), prevMonth.getMonth(), 1);
+    const toDate = new Date(
+      prevMonth.getFullYear(),
+      prevMonth.getMonth() + 1,
+      0
+    );
+
+    const dept = {
+      id: selectDepartment,
+      code: selectDepartment_code,
+      fromdate: fromDate,
+      todate: toDate,
+    };
+    // handleDepartmentSelect(dept, true); // 👈 pass flag so function knows it's month navigation
+    handleDepartmentSelect1(dept, true);
   };
 
   const goToNext = () => {
@@ -710,12 +750,50 @@ const AppointmentBooking = () => {
     handleDepartmentSelect(dept, true); // 👈 pass flag
   };
 
+  const goToNext1 = () => {
+    const nextMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 1,
+      1
+    );
+    setCurrentDate(nextMonth);
+
+    // Calculate start and end of next month
+    const fromDate = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1);
+    const toDate = new Date(
+      nextMonth.getFullYear(),
+      nextMonth.getMonth() + 1,
+      0
+    );
+
+    const dept = {
+      id: selectDepartment,
+      code: selectDepartment_code,
+      fromdate: fromDate,
+      todate: toDate,
+    };
+    handleDepartmentSelect1(dept, true); // 👈 pass flag
+  };
+
   const goToToday = () => {
     setCurrentDate(new Date());
     setSelectedDate(new Date());
   };
 
+  const goToToday1 = () => {
+    setCurrentDate(new Date());
+    setSelectedDate(new Date());
+    const dept = {
+      id: selectDepartment,
+      code: selectDepartment_code,
+      fromdate: new Date(),
+    };
+    handleDepartmentSelect1(dept, true);
+  };
+
   const bookTimeSlot = (slot: any) => {
+    console.log("slot :", slot);
+
     setStepIndex(0);
     if (selectedServices.length === 0) {
       toast({
@@ -757,7 +835,7 @@ const AppointmentBooking = () => {
     }
 
     if (!slot.available) return;
-    const slotDateStr = slot.slotItem.slot.date; // "YYYY-MM-DD"
+    const slotDateStr = slot.slot__date; // "YYYY-MM-DD"
     const slotDateObj = new Date(slotDateStr);
     setSelectedDate(slotDateObj); // ✅ Update selected date on slot click
 
@@ -1120,6 +1198,118 @@ const AppointmentBooking = () => {
     }
   }, [selectedCenter, allserviceList, selected_get_Department]);
 
+  const [slotCounts, setSlotCounts] = useState<{ [key: string]: number }>({});
+
+  const handleDepartmentSelect1 = async (dept: any, iscal: boolean) => {
+    let selectDepartment = dept.id;
+    setLoadingSlots(true);
+    setselectDepartment(dept.id); // store ID for selected check
+    setselectDepartment_code(dept.code);
+    if (+selected_get_Department === 1) {
+      const exists = allserviceList.find(
+        (s: {
+          id?: number | string;
+          department?: { id: number | string; name: string };
+        }) => s?.department?.name === "ALL"
+      );
+
+      selectDepartment = exists?.department?.id;
+      setselectDepartment_code(exists?.department?.code ?? "");
+    }
+
+    let monthForPayload = "";
+    if (iscal && dept.fromdate) {
+      // Use dept.fromdate
+      const fromDate = new Date(dept.fromdate);
+      const year = fromDate.getFullYear();
+      const month = (fromDate.getMonth() + 1).toString().padStart(2, "0");
+      monthForPayload = `${year}-${month}`;
+    } else {
+      // Use current month
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = (now.getMonth() + 1).toString().padStart(2, "0");
+      monthForPayload = `${year}-${month}`;
+    }
+    console.log("monthForPayload :", monthForPayload);
+
+    const formData = {
+      month: monthForPayload,
+      application: 1,
+      center: "NDK",
+      department: "45",
+    };
+    console.log("API.SLOTCOUNT_API:", API.SLOTCOUNT_API);
+
+    try {
+      const res = await httpClient.post(API.SLOTCOUNT_API, formData);
+      console.log("res :", res);
+
+      // Convert API array into { dateStr: total_slots }
+      const counts: { [key: string]: number } = {};
+      res.data.data.forEach((item: any) => {
+        counts[item.date] = item.total_slots;
+      });
+      console.log("counts :L", counts);
+      const slotDates = res.data.data.map((item: any) =>
+        formatDateToYYYYMMDD(new Date(item.date))
+      );
+      setDotDates(new Set(slotDates));
+
+      setSlotCounts(counts);
+
+      const today = new Date();
+      let startDate: Date;
+
+      if (iscal) {
+        const fromDateObj = new Date(dept.fromdate); // ensure it's a Date object
+        const isCurrentMonth =
+          fromDateObj.getFullYear() === today.getFullYear() &&
+          fromDateObj.getMonth() === today.getMonth();
+
+        if (isCurrentMonth) {
+          startDate = today;
+        } else {
+          // first day of fromDate's month
+          startDate = new Date(
+            fromDateObj.getFullYear(),
+            fromDateObj.getMonth(),
+            1
+          );
+        }
+      } else {
+        startDate = currentDate;
+      }
+      console.log("startDate :", startDate);
+
+      setSelectedDate(startDate);
+      const formData1 = { start_date: startDate };
+      const res1 = await httpClient.post(API.NEW_SLOT_API, formData1);
+
+      const rawSlots = res1.data.data; // raw API response
+
+      // Group slots by date (simplified)
+      const grouped: Record<string, any[]> = {};
+      rawSlots.forEach((slot: any) => {
+        const date = slot.slot__date;
+        if (!grouped[date]) grouped[date] = [];
+        grouped[date].push({
+          ...slot,
+          time: `${formatTo12Hour(slot.start_time)} to ${formatTo12Hour(
+            slot.end_time
+          )}`,
+        });
+      });
+
+      setSlotsGroupedByDate(grouped);
+    } catch (error) {
+      console.error("Error fetching slot counts:", error);
+      setSlotCounts({});
+    } finally {
+      setLoadingSlots(false);
+    }
+  };
+
   const handleDepartmentSelect = async (dept: any, isMonthNav = false) => {
     setLoadingSlots(true);
     let selectDepartment = dept.id;
@@ -1165,7 +1355,6 @@ const AppointmentBooking = () => {
       const res = await httpClient.post(API.AVAILABLE_SLOTS_API, formData);
       const Timeslot = res.data.data || [];
 
-      // ✅ Update state
       setTimeSlots(Timeslot);
 
       // ✅ Green Dot Dates
@@ -1361,21 +1550,15 @@ const AppointmentBooking = () => {
 
   const handleDateClick = (day: Date, rawSlots: any[]) => {
     if (day && isPastDate(day)) return;
-    // console.log("ttttt----", day);
 
     setSelectedDate(day);
     setrawSlots1(rawSlots);
-    const formattedDay = formatDateToYYYYMMDDNew(day); // Use your date formatting function
-    // console.log("Selected day:", formattedDay, "rawSlots", rawSlots);
+    const formattedDay = formatDateToYYYYMMDDNew(day);
 
-    // Find matching slot
     const matchedSlot = rawSlots.filter(
       (item) => item.slot?.date === formattedDay
     );
 
-    // console.log("Matched Slot (Before Filter):", matchedSlot);
-
-    // Calculate total remaining count across all matched slots
     const totalRemaining = matchedSlot.reduce(
       (sum: number, matchedSlot: any) => {
         return (
@@ -1389,16 +1572,11 @@ const AppointmentBooking = () => {
       0
     );
 
-    // Calculate available member count (total number of slottime entries with remaining > 0)
     const availmembercount = matchedSlot.reduce(
       (count: number, matchedSlot: any) =>
         count + (matchedSlot.slot?.slottime?.length || 0),
       0
     );
-
-    // console.log("Available Member Count:", totalRemaining);
-    // console.log("Available Member Count:", availmembercount);
-    // console.log("matchedSlot :", matchedSlot);
     const allAvailableSlottimes = matchedSlot.flatMap(
       (matchedSlot) => matchedSlot.slot?.slottime || []
     );
@@ -1410,38 +1588,26 @@ const AppointmentBooking = () => {
 
     let currentDate = new Date(day.getTime());
     let count = 0;
-
-    // ✅ Skip Sundays and get next 4 valid days
     while (count < 4) {
       if (currentDate.getDay() !== 0) {
-        // Skip Sunday
         const dateStr = formatDateToYYYYMMDD(currentDate);
         selectedDates.push(dateStr);
         selectedDateStringsSet.add(dateStr);
 
-        // console.log("Valid Date:", currentDate);
         count++;
       }
 
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    // console.log("Selected Dates Set:", selectedDateStringsSet);
-
-    // Initialize grouped data
     const grouped: Record<string, any[]> = {};
     selectedDates.forEach((date) => {
       grouped[date] = [];
     });
 
-    // Filter relevant slot data
     const filteredSlotData = rawSlots.filter((slotItem: any) =>
       selectedDateStringsSet.has(slotItem.slot.date)
     );
-
-    // console.log("Filtered Slot Data:", filteredSlotData);
-
-    // Group and sort slots
     for (const slotItem of filteredSlotData) {
       const slotDate = slotItem.slot.date;
 
@@ -1464,12 +1630,47 @@ const AppointmentBooking = () => {
         });
       }
     }
-
-    // Set grouped slots to state
     setSlotsGroupedByDate(grouped);
   };
 
   // Format date to yyyy-mm-dd
+
+  const handleDateClick1 = async (day: Date) => {
+    // Format date to YYYY-MM-DD
+    setSelectedDate(day);
+
+    const formattedDay = formatDateToYYYYMMDDNew(day);
+
+    const formData1 = { start_date: formattedDay };
+    const res1 = await httpClient.post(API.NEW_SLOT_API, formData1);
+
+    const rawSlots = res1.data.data;
+    setrawSlots1(rawSlots);
+    const grouped: Record<string, any[]> = {};
+    rawSlots.forEach((slot: any) => {
+      const date = slot.slot__date;
+      if (!grouped[date]) grouped[date] = [];
+      grouped[date].push({
+        ...slot,
+        time: `${formatTo12Hour(slot.start_time)} to ${formatTo12Hour(
+          slot.end_time
+        )}`,
+      });
+    });
+
+    setSlotsGroupedByDate(grouped);
+    console.log("rawSlots :",rawSlots);
+    
+const matchedSlot = rawSlots.filter(
+      (item:any) => item?.slot__date === formattedDay
+    );
+    console.log("matchedSlot :",matchedSlot);
+     setavailablemembercount(matchedSlot.length);
+    setgrpavailslots(matchedSlot);
+
+
+  };
+
   const formatDate = (date: Date) => date.toISOString().split("T")[0];
 
   // Calculate age from dob
@@ -2322,7 +2523,7 @@ const AppointmentBooking = () => {
           variant: "error",
           duration: 4000,
         });
-        
+
         // setopennewdialog(true);
         // setexistingapplicantdata(res.data.applicant_data);
       }
@@ -3160,7 +3361,7 @@ const AppointmentBooking = () => {
                           ? "none"
                           : "auto",
                       }}
-                      onClick={goToPrevious}
+                      onClick={goToPrevious1}
                       disabled={isCurrentMonth(currentDate)}
                     >
                       ‹
@@ -3175,7 +3376,7 @@ const AppointmentBooking = () => {
                         fontSize: "14px",
                         fontWeight: "500",
                       }}
-                      onClick={goToToday}
+                      onClick={goToToday1}
                     >
                       Today
                     </button>
@@ -3193,7 +3394,7 @@ const AppointmentBooking = () => {
                           ? "none"
                           : "auto",
                       }}
-                      onClick={goToNext}
+                      onClick={goToNext1}
                       disabled={isBeyond90Days(currentDate)}
                     >
                       ›
@@ -3245,110 +3446,6 @@ const AppointmentBooking = () => {
                 </div>
 
                 <div className="calendar-wrapper">
-                  {/* <div
-                    className={`calendar-grid ${
-                      selectedCenter ? "active" : ""
-                    }`}
-                    style={{
-                      opacity: !selectedCenter ? 0.5 : 1,
-                      pointerEvents: !selectedCenter ? "none" : "auto",
-                      cursor: !selectedCenter ? "not-allowed" : "pointer",
-                    }}
-                  >
-                    {getCalendarDays().map((day, index) => {
-                      const isSunday = day.getDay() === 0;
-                      const past = isPastDate(day) || isSunday;
-                      const today = isToday(day);
-                      const selected = isSelected(day);
-                      const hasSlot = hasEvent(day);
-                      const totaldaycount = totalcount(day);
-                      console.log(totaldaycount);
-
-                      const currentMonth = isCurrentMonth(day);
-
-                      const isDisabled =
-                        isPastDate(day) || // Disable past
-                        day.getDay() === 0 || // Disable Sundays
-                        !isWithin90DaysFromToday(day) ||
-                        isHoliday(day) ||
-                        (totaldaycount === 0 && hasSlot); // Disable if no available slots
-
-                      const dayStyle: React.CSSProperties = {
-                        opacity: isDisabled ? 0.5 : 1,
-                        border: isHoliday(day)
-                          ? "1px solid red"
-                          : isDisabled
-                          ? "1px solid #ccc"
-                          : "none",
-                        cursor: isDisabled ? "not-allowed" : "pointer",
-                        borderRadius: "5px",
-                        background: today ? "orange" : "",
-                        // backgroundColor: today ? "#fe9647" : "transparent",
-                        height: "35px",
-                      };
-
-                      return (
-                        <div
-                          key={index}
-                          className="d-flex align-items-center justify-content-center position-relative calendardaybox"
-                          style={{
-                            pointerEvents: isDisabled ? "none" : "auto",
-                          }}
-                          onClick={() => {
-                            if (!isDisabled) {
-                              handleDateClick(day, timeSlots);
-                            }
-                          }}
-                        >
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div
-                                className={`calendardaystyle d-flex align-items-center justify-content-center rounded-square position-relative z-9999 ${
-                                  !isDisabled ? "calendar-day" : ""
-                                } ${isSelecteddate(day) ? "selected" : ""}`}
-                                style={dayStyle}
-                              >
-                                {day.getDate()}
-
-                                {(isHoliday(day) || hasSlot) && (
-                                  <div
-                                    className="calendarAvalSlot"
-                                    style={{
-                                      backgroundColor: isHoliday(day)
-                                        ? "#ffc107" // Yellow for holiday
-                                        : totaldaycount === 0
-                                        ? "red" // Red for no slots
-                                        : "#5ebe5e", // Green for available slots
-                                    }}
-                                  >
-                                    {isHoliday(day)
-                                      ? "" // Empty badge or show "H" if you prefer
-                                      : totaldaycount === 0
-                                      ? ""
-                                      : totaldaycount}
-                                  </div>
-                                )}
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent
-                              style={{
-                                backgroundColor: "rgb(33 55 96)",
-                                color: "white",
-                                zIndex: 1000,
-                              }}
-                            >
-                              {isHoliday(day)
-                                ? "Holiday"
-                                : totaldaycount === 0 ||
-                                  totaldaycount === undefined
-                                ? "No slot available"
-                                : `Available Slots: ${totaldaycount}`}
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                      );
-                    })}
-                  </div> */}
                   <div
                     className={`calendar-grid ${
                       selectedCenter ? "active" : ""
@@ -3402,8 +3499,11 @@ const AppointmentBooking = () => {
                           style={{
                             pointerEvents: isDisabled ? "none" : "auto",
                           }}
+                          // onClick={() => {
+                          //   if (!isDisabled) handleDateClick(day, timeSlots);
+                          // }}
                           onClick={() => {
-                            if (!isDisabled) handleDateClick(day, timeSlots);
+                            if (!isDisabled) handleDateClick1(day);
                           }}
                         >
                           <Tooltip>
@@ -3423,7 +3523,7 @@ const AppointmentBooking = () => {
                                       backgroundColor: isHoliday(day)
                                         ? "#ffc107"
                                         : totaldaycount === 0
-                                        ? "red"
+                                        ? ""
                                         : "#5ebe5e",
                                     }}
                                   >
@@ -3516,34 +3616,6 @@ const AppointmentBooking = () => {
                 </div>
               </div>
             </div>
-
-            {/* <div
-              className="card border-0 shadow-sm mt-3 px-3 py-2 small"
-              style={{ backgroundColor: '#fff3f3', borderLeft: '4px solid #e74c3c', fontSize: '13px' }}
-            >
-              <div className="row g-2 align-items-center">
-                <div className="col-12 col-md-auto">
-                  <span className="text-danger fw-bold">Note:</span>
-                </div>
-                <div className="col-12 col-md">
-                  <div className="d-flex flex-wrap align-items-center">
-                    <span className="text-danger me-2">
-                      For rescheduling or cancelling appointments, please contact Customer Care -
-                    </span>
-                    <a
-                      href="tel:+919582116116"
-                      className="text-primary d-flex align-items-center fw-semibold"
-                      style={{ textDecoration: 'none' }}
-                    >
-                      <Phone className="me-2 h-4 w-4" />
-                      +91 9582-116116
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div> */}
-
-            {/* Time Slots Panel */}
           </div>
 
           {/* Service Selection Section */}
@@ -3611,8 +3683,11 @@ const AppointmentBooking = () => {
                                     ? "border-green-500 bg-green-50"
                                     : "hover:border-orange-600 bg-orange-50"
                                 }`}
+                                // onClick={() =>
+                                //   handleDepartmentSelect(dept, false)
+                                // }
                                 onClick={() =>
-                                  handleDepartmentSelect(dept, false)
+                                  handleDepartmentSelect1(dept, false)
                                 }
                               >
                                 <div className="text-center">
@@ -3936,9 +4011,6 @@ const AppointmentBooking = () => {
 
                           const sortedSlotDates =
                             getNextFourNonSundayDates(selected);
-
-                          // console.log('slots------?????',sortedSlotDates,'777777',slotsGroupedByDate);
-
                           return sortedSlotDates.map((date) => {
                             const dateKey = Object.keys(
                               slotsGroupedByDate
@@ -3947,7 +4019,7 @@ const AppointmentBooking = () => {
                                 new Date(key).toDateString() ===
                                 date.toDateString()
                             );
-                            // console.log('slots------?????-2222',dateKey);
+                            console.log("dateKey :", dateKey);
 
                             const slots = dateKey
                               ? Array.from(
@@ -3958,17 +4030,16 @@ const AppointmentBooking = () => {
                                   ).values()
                                 )
                               : [];
-                            // console.log('slots----------',slots);
 
                             return (
                               <div
-                                key={dateKey || date.toISOString()}
+                                key={dateKey}
                                 className="mb-3"
                                 style={{
                                   display: "flex",
                                   gap: "10px",
                                   flexDirection: "column",
-                                  border: "1px solid rgb(216, 188, 148)", // light orange border
+                                  border: "1px solid rgb(216, 188, 148)",
                                   borderRadius: "8px",
                                   backgroundColor: "#fff",
                                   boxShadow: `
@@ -4001,7 +4072,14 @@ const AppointmentBooking = () => {
                                       slot?.slotItem?.slot?.date
                                     )
                                 ).length > 0 ? (
-                                  <div className="row g-3 px-2 slottimebox">
+                                  <div
+                                    className="row g-3 px-2 slottimebox"
+                                    style={{
+                                      display: "flex",
+                                      flexWrap: "wrap",
+                                      gap: "0px",
+                                    }}
+                                  >
                                     {slots
                                       .filter(
                                         (slot: any) =>
@@ -4014,6 +4092,12 @@ const AppointmentBooking = () => {
                                       .map((slot: any, idx: number) => (
                                         <div
                                           key={`${slot.time}-${slot.slotItem?.slot?.date}`}
+                                          style={{
+                                            flex: "0 0 19%",
+                                            minWidth: "180px",
+                                            position: "relative",
+                                            marginRight: "10px",
+                                          }}
                                           className="col-12 col-sm-6 col-md-4 mb-3 position-relative"
                                         >
                                           <>
@@ -4062,11 +4146,6 @@ const AppointmentBooking = () => {
                                               aria-disabled={
                                                 slot.remaining < membercount ||
                                                 selectedServices.length === 0
-                                                // ||
-                                                // isSlotExpired(
-                                                //   slot?.time,
-                                                //   slot?.slotItem?.slot?.date
-                                                // )
                                               }
                                               aria-label={
                                                 slot.remaining < membercount
@@ -4089,6 +4168,61 @@ const AppointmentBooking = () => {
                             );
                           });
                         })()}
+                        {/* {Object.keys(slotsGroupedByDate).map((dateKey) => {
+                          const slots = slotsGroupedByDate[dateKey] || [];
+
+                          return (
+                            <div key={dateKey} className="mb-3"  style={{
+                                  display: "flex",
+                                  gap: "10px",
+                                  flexDirection: "column",
+                                  border: "1px solid rgb(216, 188, 148)", 
+                                  borderRadius: "8px",
+                                  backgroundColor: "#fff",
+                                  boxShadow: `
+                                0 2px 4px rgba(255, 255, 255, 0.7),     
+                                0 4px 10px rgba(230, 126, 34, 0.3)   
+                              `,
+                                }}>
+                              <div className="card-header bg-blue">
+                                 Available Slots from{" "} {new Date(dateKey).toDateString()}
+                              </div>
+                              {slots.length > 0 ? (
+                                <div className="row g-3 px-2 slottimebox">
+                                  {slots.map((slot: any) => (
+                                    <div
+                                      key={slot.id}
+                                     className="col-12 col-sm-6 col-md-4 mb-3 position-relative"
+                                    >
+                                      <span
+                                        className={`badge ${
+                                          slot.remaining < membercount
+                                            ? "badge-disabled"
+                                            : "slotNum-success"
+                                        }`}
+                                      >
+                                        {slot.remaining}
+                                      </span>
+                                      <button
+                                        className={`btn w-70 ${
+                                          slot.remaining < membercount
+                                            ? "btn-outline-secondary"
+                                            : "btn-outline-primary"
+                                        }`}
+                                        disabled={slot.remaining < membercount}
+                                        onClick={() => bookTimeSlot(slot)}
+                                      >
+                                        {slot.time}
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p>No slots for this date</p>
+                              )}
+                            </div>
+                          );
+                        })} */}
                       </div>
                     </>
                   )}

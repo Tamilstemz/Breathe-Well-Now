@@ -54,5 +54,6 @@ export const API = {
   APPLICANTCHECK_API: apiPath("/transaction/applicant-details/check"),
   DEPARTMENT_GET_API: apiPath("/master/get_department_by_center"),
   APPLICATION_MASTER: apiPath("/master/application?status=1&id=1"),
-
+  SLOTCOUNT_API : apiPath("/transaction/slotcount"),
+  NEW_SLOT_API: apiPath("/transaction/new/slotapi")
 };
