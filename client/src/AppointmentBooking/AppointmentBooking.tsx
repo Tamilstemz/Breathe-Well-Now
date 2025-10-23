@@ -2507,6 +2507,7 @@ const matchedSlot = rawSlots.filter(
           setUpcomingDatesWithSlots([]);
           setSelectedDate(null);
           setselectedslottime("");
+          setTransactionId("")
         } else {
           toast({
             title: "error",
