@@ -2293,10 +2293,10 @@ const matchedSlot = rawSlots.filter(
   };
 
   const onSubmit = async () => {
-    // console.log("Submitting form with data:", selectedDate);
+    console.log("Submitting form with data:", selectedDate , "selectedSlot :",selectedSlot , "appointmentType :",appointmentType);
 
     try {
-      if (!selectedDate || (!selectedSlot && appointmentType === "Self")) {
+      if (!selectedDate || (!selectedslottime && appointmentType === "Self")) {
         // toast.error("Please select a date and slot before submitting.");
         return;
       }
