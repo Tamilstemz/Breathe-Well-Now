@@ -617,7 +617,7 @@ const AppointmentBooking = () => {
   // };
 
   const totalcount = (day: Date) => {
-    // console.log("day :");
+    console.log("day :",day);
 
     const dateStr = formatDateToYYYYMMDD(day); // format: "YYYY-MM-DD"
     // console.log("datestr :",dateStr , "slotCounts :",slotCounts);
@@ -1226,7 +1226,8 @@ const AppointmentBooking = () => {
       monthForPayload = `${year}-${month}`;
     } else {
       // Use current month
-      const now = new Date();
+      const now = currentDate;
+      // totalcount(now)
       const year = now.getFullYear();
       const month = (now.getMonth() + 1).toString().padStart(2, "0");
       monthForPayload = `${year}-${month}`;
@@ -1257,7 +1258,7 @@ const AppointmentBooking = () => {
       setDotDates(new Set(slotDates));
 
       setSlotCounts(counts);
-
+// totalcount()
       const today = new Date();
       let startDate: Date;
 
