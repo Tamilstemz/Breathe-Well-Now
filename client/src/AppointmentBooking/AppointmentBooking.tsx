@@ -617,7 +617,7 @@ const AppointmentBooking = () => {
   // };
 
   const totalcount = (day: Date) => {
-    console.log("day :",day);
+    console.log("day :", day);
 
     const dateStr = formatDateToYYYYMMDD(day); // format: "YYYY-MM-DD"
     // console.log("datestr :",dateStr , "slotCounts :",slotCounts);
@@ -1258,7 +1258,7 @@ const AppointmentBooking = () => {
       setDotDates(new Set(slotDates));
 
       setSlotCounts(counts);
-// totalcount()
+      // totalcount()
       const today = new Date();
       let startDate: Date;
 
@@ -1660,16 +1660,14 @@ const AppointmentBooking = () => {
     });
 
     setSlotsGroupedByDate(grouped);
-    console.log("rawSlots :",rawSlots);
-    
-const matchedSlot = rawSlots.filter(
-      (item:any) => item?.slot__date === formattedDay
+    console.log("rawSlots :", rawSlots);
+
+    const matchedSlot = rawSlots.filter(
+      (item: any) => item?.slot__date === formattedDay
     );
-    console.log("matchedSlot :",matchedSlot);
-     setavailablemembercount(matchedSlot.length);
+    console.log("matchedSlot :", matchedSlot);
+    setavailablemembercount(matchedSlot.length);
     setgrpavailslots(matchedSlot);
-
-
   };
 
   const formatDate = (date: Date) => date.toISOString().split("T")[0];
@@ -2293,7 +2291,14 @@ const matchedSlot = rawSlots.filter(
   };
 
   const onSubmit = async () => {
-    console.log("Submitting form with data:", selectedDate , "selectedSlot :",selectedSlot , "appointmentType :",appointmentType);
+    console.log(
+      "Submitting form with data:",
+      selectedDate,
+      "selectedSlot :",
+      selectedSlot,
+      "appointmentType :",
+      appointmentType
+    );
 
     try {
       if (!selectedDate || (!selectedslottime && appointmentType === "Self")) {
@@ -2918,6 +2923,11 @@ const matchedSlot = rawSlots.filter(
 
   //------------------------------------update
 
+  const cancelreschudule = () => {
+    localStorage.removeItem("appointments");
+    navigate("/");
+  };
+
   const getDecryptedAppointments = (): any[] => {
     const encrypted = localStorage.getItem("appointments");
     if (!encrypted) return [];
@@ -3009,37 +3019,16 @@ const matchedSlot = rawSlots.filter(
         const dept = {
           id: departmentPk,
           code: departmentCode,
-          fromdate: fromDate.toISOString().split("T")[0],
-          todate: toDate.toISOString().split("T")[0],
+          fromdate: fromDate,
+          todate: toDate,
         };
-        handleDepartmentSelect(dept, false);
+        handleDepartmentSelect1(dept, false);
         try {
           if (!selectedCenter) {
             console.warn("No selected center found, skipping slot fetch.");
             return;
           }
           console.log("department???3333", departmentPk);
-
-          // const formData = new FormData();
-          // formData.append("application", "1");
-          // formData.append("center", selectedCenter);
-          // formData.append("department", departmentPk);
-
-          // const res = await httpClient.post(API.AVAILABLE_SLOTS_API, formData);
-          // const Timeslot = res.data.data || [];
-
-          // setTimeSlots(Timeslot);
-
-          // Green Dot Dates
-          // const slotDates = Timeslot.map((item: any) =>
-          //   formatDateToYYYYMMDD(new Date(item.slot.date))
-          // );
-          // setDotDates(new Set(slotDates));
-
-          // // Preselect today's date
-          // const today = new Date();
-          // setSelectedDate(today);
-          // handleDateClick(today, Timeslot);
 
           localStorage.removeItem("New_bookingData");
         } catch (err) {
@@ -3274,9 +3263,24 @@ const matchedSlot = rawSlots.filter(
       {loading && <FullPageLoader progress={progress} />}
       {rescheduledata && rescheduledata.length > 0 && (
         <div className="bg-white p-4 shadow rounded-lg border border-gray-200 mb-6">
-          <h2 className="text-lg font-semibold mb-4 text-blue-700">
-            Appointment Details
-          </h2>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <h2 className="text-lg font-semibold text-blue-700">
+              Appointment Details
+            </h2>
+            <button
+              type="button"
+              onClick={cancelreschudule}
+              className="btn btn-danger"
+            >
+              Cancel
+            </button>
+          </div>
           {rescheduledata.map((data: any, index: number) => (
             <div
               key={index}
