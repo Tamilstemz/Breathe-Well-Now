@@ -2926,6 +2926,7 @@ const AppointmentBooking = () => {
   const cancelreschudule = () => {
     localStorage.removeItem("appointments");
     localStorage.removeItem("appointmentType")
+    localStorage.removeItem("Newslot")
     navigate("/");
   };
 
@@ -3051,12 +3052,12 @@ const AppointmentBooking = () => {
     console.log("Reschedule Slot Selected:-----------", slot);
 
     if (rescheduledata && rescheduledata.length > 0 && slot) {
-      let selectdate = slot?.slotItem?.slot?.date;
+      let selectdate = slot?.slot__date;
 
       let selectTime = slot?.time;
 
       const rescheduleConfirm = window.confirm(
-        `You are about to reschedule your appointment to:\n\nDate: ${selectdate}\nTime: ${selectTime}\n\nDo you want to proceed?`
+        `You are about to reschedule your appointment to:\n\nDate: ${formatDateToDDMMYYYY(selectdate)}\nTime: ${selectTime}\n\nDo you want to proceed?`
       );
 
       if (rescheduleConfirm) {
@@ -4077,7 +4078,7 @@ const AppointmentBooking = () => {
                                     +slot.remaining > 0 &&
                                     !isSlotExpired(
                                       slot?.time,
-                                      slot?.slotItem?.slot?.date
+                                      slot?.slot__date
                                     )
                                 ).length > 0 ? (
                                   <div
@@ -4094,12 +4095,12 @@ const AppointmentBooking = () => {
                                           +slot.remaining > 0 &&
                                           !isSlotExpired(
                                             slot?.time,
-                                            slot?.slotItem?.slot?.date
+                                            slot?.slot__date
                                           )
                                       )
                                       .map((slot: any, idx: number) => (
                                         <div
-                                          key={`${slot.time}-${slot.slotItem?.slot?.date}`}
+                                          key={`${slot.time}-${slot.slot__date}`}
                                           style={{
                                             flex: "0 0 19%",
                                             minWidth: "180px",

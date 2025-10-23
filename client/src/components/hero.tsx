@@ -446,6 +446,9 @@ export default function Hero() {
     setOtpError("");
   };
 
+  console.log("appointmentData :",appointmentData);
+  
+
   const handleConfirmReschedule = async (item: any) => {
     // if (!/^\d{6}$/.test(otp)) {
     //   setOtpError("Please enter a valid 6-digit OTP");
@@ -458,7 +461,7 @@ export default function Hero() {
       );
 
       if (!rescheduleConfirm) return;
-
+console.log("selectedApplicants :",selectedApplicants)
       try {
         let payload = {};
         console.log("payload :", payload);
