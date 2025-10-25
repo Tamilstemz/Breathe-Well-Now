@@ -56,7 +56,7 @@ export default function Services() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         <div className="text-center mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-            <span className="text-brand-black">Complete Australia Visa</span><br/>
+            <span className="text-brand-black">Complete Medical Visa</span><br/>
             <span className="text-brand-orange">Medical Services</span>
           </h2>
           <p className="text-xl text-brand-black max-w-3xl mx-auto">

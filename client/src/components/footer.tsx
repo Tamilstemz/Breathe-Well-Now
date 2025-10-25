@@ -81,11 +81,11 @@ export default function Footer() {
                 className="h-20 w-auto"
               />
               <div>
-                <p className="text-gray-400">Australia Visa Medical Centre</p>
+                <p className="text-gray-400"> Visa Medical Centre</p>
               </div>
             </div>
             <p className="text-gray-400 mb-6 max-w-lg">
-              Your trusted partner for Australia visa medical examinations.
+              Your trusted partner for visa medical examinations.
             </p>
             <div className="flex flex-col sm:flex-row sm:items-center gap-6 sm:gap-0 sm:space-x-20">
               {/* Social Media Icons */}

@@ -20,7 +20,7 @@ export default function MissionVision() {
               <h3 className="text-2xl font-bold text-brand-black group-hover:text-brand-orange transition-colors">Mission</h3>
             </div>
             <p className="text-lg text-brand-black leading-relaxed">
-              To provide authorized, accurate, and compassionate medical services tailored for Australia visa applicants with speed and professionalism.
+              To provide authorized, accurate, and compassionate medical services tailored for visa applicants with speed and professionalism.
             </p>
           </div>
           

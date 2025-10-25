@@ -78,6 +78,8 @@ export default function Hero() {
   const [appointmentData, setAppointmentData] = useState<AppointmentData[]>([]);
 
   const [newappointmentSlot, setNewAppointmentSlot] = useState<any[]>([]);
+  console.log("newappointmentSlot:",newappointmentSlot);
+  
   const [appointmentType, setappointmentType] = useState("");
 
   const [otpButtontype, setotpButtontype] = useState("Reschedule");
@@ -92,6 +94,7 @@ export default function Hero() {
   const [timerVisible, setTimerVisible] = useState(true);
   const [appointmentCancelBtn, setAppointmentCancelBtn] = useState(false);
   const [selectedApplicants, setSelectedApplicants] = useState<any[]>([]);
+console.log("selectedApplicants :",selectedApplicants);
 
   const [errors, setErrors] = useState<{
     searchValue?: string;
@@ -145,7 +148,13 @@ export default function Hero() {
 
   useEffect(() => {
     const processNewSlotData = async () => {
-      const encrypted = localStorage.getItem("Newslot");
+      let encrypted
+      if (localStorage.getItem("NewRescheduleData")) {
+        encrypted = localStorage.getItem("NewRescheduleData");
+      } else {
+        encrypted = localStorage.getItem("Newslot");
+      }
+      // const encrypted = localStorage.getItem("Newslot");
 
       if (encrypted) {
         try {
@@ -468,10 +477,11 @@ console.log("selectedApplicants :",selectedApplicants)
         console.log("API :", API.APPOINMENT_REPORT_CANCEL);
 
         if (appointmentType === "Group") {
-          const groupdata = selectedApplicants.map((item) => ({
-            booked_time: item.booked_time,
+          const data = localStorage.getItem("NewRescheduleData");
+          const groupdata = newappointmentSlot.map((item) => ({
+            booked_time: item.slot_booking.booked_time,
             booking_status: 3,
-            date_booked: item.date_booked,
+            date_booked: item.slot_booking.date_booked,
             id: item.id,
             visa_number: item.visa_number,
             otp: otp,
@@ -709,14 +719,14 @@ console.log("selectedApplicants :",selectedApplicants)
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-center">
           <div className="space-y-8">
             <h1 className="text-4xl xl:text-6xl font-bold leading-tight break-words">
-              <span className="text-brand-black">Australia Visa</span>
+              <span className="text-brand-black">Visa Medical</span>
               <br />
-              <span className="text-brand-orange">Medical Examinations</span>
+              <span className="text-brand-orange">Examinations</span>
             </h1>
             <p className="text-xl text-brand-black leading-relaxed">
               Welcome to ND Diagnostics India Private Limited, your trusted
               partner for comprehensive medical examinations required for
-              Australia visa applications.
+              visa applications.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
               <Button

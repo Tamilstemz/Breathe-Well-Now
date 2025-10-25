@@ -12,7 +12,7 @@ export default function Contact() {
             <span className="text-brand-orange">Today</span>
           </h2>
           <p className="text-lg sm:text-xl text-brand-black max-w-3xl mx-auto px-2 sm:px-0">
-            Ready to begin your Australia visa medical examination? Get in touch with our professional team for scheduling and information.
+            Ready to begin your visa medical examination? Get in touch with our professional team for scheduling and information.
           </p>
         </div>
 

@@ -19,7 +19,7 @@ interface BookingState {
   appointmentDate: Date | undefined;
   personalDetails: {
     name: string;
-    hapId?: string; // For Australia
+    hapId?: string; // For 
     nahrId?: string; // For New Zealand
     email: string;
     contactNumber: string;

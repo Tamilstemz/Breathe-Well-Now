@@ -14,23 +14,23 @@ export default function About() {
                 </span>
                 <br />
                 <span className="text-brand-orange">
-                  for Australia Immigration
+                  for Visa Medical Immigration
                 </span>
               </h2>
               <div className="text-lg text-brand-black leading-relaxed space-y-4">
                 <p>
                   Welcome to ND DIAGNOSTICS INDIA PRIVATE LIMITED, specialists
-                  in Medical Examinations for Australia Visa Applicants.
+                  in Medical Examinations for Visa Applicants.
                 </p>
 
                 <p>
                   We are an accredited medical centre authorized to conduct visa
-                  medical exams for Australia. We comply with the Department of
+                  medical exams . We comply with the Department of
                   Home Affairs requirements.
                 </p>
 
                 <p>
-                  Our clinic is purpose-built for Australia's health assessment
+                  Our clinic is purpose-built for visa medical health assessment
                   needs, meeting strict medical, IT, and privacy protocols.
                 </p>
 
@@ -73,7 +73,7 @@ export default function About() {
                   </h3>
                   <p className="text-brand-black leading-relaxed">
                     Our advanced IT systems ensure secure data handling and
-                    seamless integration with Australian immigration processes.
+                    seamless integration with Medical immigration processes.
                   </p>
                 </div>
               </div>
@@ -87,7 +87,7 @@ export default function About() {
                     Purpose-Built Facility
                   </h3>
                   <p className="text-brand-black leading-relaxed">
-                    Our clinic is specifically designed for Australia's health
+                    Our clinic is specifically designed for visa medical health
                     assessment needs, meeting strict medical, IT, and privacy
                     protocols.
                   </p>

@@ -70,7 +70,7 @@ export default function Process() {
               Ready to Get Started?
             </h3>
             <p className="text-brand-black mb-6">
-              Book your appointment today and complete your Australia visa medical examination with confidence.
+              Book your appointment today and complete your Medical visa medical examination with confidence.
             </p>
             <button 
               onClick={() => {

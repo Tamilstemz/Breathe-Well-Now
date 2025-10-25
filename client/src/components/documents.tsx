@@ -74,7 +74,7 @@ export default function Documents() {
             <span className="text-brand-black">Documents Required</span><br/>
             </h2>
           <p className="text-xl text-brand-black max-w-3xl mx-auto">
-            Please ensure you bring the following documents for your Australia visa medical examination. Having all required documents will ensure a smooth and efficient process.
+            Please ensure you bring the following documents for your visa medical examination. Having all required documents will ensure a smooth and efficient process.
           </p>
         </div>
         

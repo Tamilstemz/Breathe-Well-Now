@@ -617,7 +617,7 @@ const AppointmentBooking = () => {
   // };
 
   const totalcount = (day: Date) => {
-    console.log("day :", day);
+    // console.log("day :", day);
 
     const dateStr = formatDateToYYYYMMDD(day); // format: "YYYY-MM-DD"
     // console.log("datestr :",dateStr , "slotCounts :",slotCounts);
@@ -1199,13 +1199,19 @@ const AppointmentBooking = () => {
   }, [selectedCenter, allserviceList, selected_get_Department]);
 
   const [slotCounts, setSlotCounts] = useState<{ [key: string]: number }>({});
-
+  const [selecteddeptid, setselecteddeptid] = useState(45);
   const handleDepartmentSelect1 = async (dept: any, iscal: boolean) => {
+    console.log("dept :", dept);
+
     let selectDepartment = dept.id;
     setLoadingSlots(true);
     setselectDepartment(dept.id); // store ID for selected check
     setselectDepartment_code(dept.code);
     if (+selected_get_Department === 1) {
+      console.log("selected_get_Department exists:", selected_get_Department);
+
+      console.log("if exists");
+
       const exists = allserviceList.find(
         (s: {
           id?: number | string;
@@ -1213,7 +1219,11 @@ const AppointmentBooking = () => {
         }) => s?.department?.name === "ALL"
       );
 
+      console.log("exists :", exists);
+
       selectDepartment = exists?.department?.id;
+      console.log("exists selectDepartment:", selectDepartment);
+      setselecteddeptid(selectDepartment);
       setselectDepartment_code(exists?.department?.code ?? "");
     }
 
@@ -1237,8 +1247,8 @@ const AppointmentBooking = () => {
     const formData = {
       month: monthForPayload,
       application: 1,
-      center: "NDK",
-      department: "45",
+      center: selectedCenter,
+      department: selecteddeptid,
     };
     console.log("API.SLOTCOUNT_API:", API.SLOTCOUNT_API);
 
@@ -1499,9 +1509,11 @@ const AppointmentBooking = () => {
     try {
       // 🔹 Set loading state by reusing formErrors
       setFormErrors((prev) => ({ ...prev, hapId: "loading" }));
+
       const payload = new FormData();
       payload.append("data_value", hapId);
       payload.append("data_type", "hap_id");
+
       const res = await httpClient.post(API.APPLICANTCHECK_API, payload);
       const data = res.data;
 
@@ -1519,6 +1531,48 @@ const AppointmentBooking = () => {
       setFormErrors((prev) => ({
         ...prev,
         hapId: "Error checking HAP ID. Try again.",
+      }));
+    }
+  };
+
+  const checkDuplicate = async (
+    value: string,
+    index: number,
+    field: string
+  ) => {
+    try {
+      // Set loading state for this specific field
+      setFormErrors((prev) => ({ ...prev, [`${field}_${index}`]: "loading" }));
+
+      const payload = new FormData();
+      payload.append("data_value", value);
+      payload.append(
+        "data_type",
+        field === "hapId" ? "hap_id" : "passport_number"
+      );
+
+      const res = await httpClient.post(API.APPLICANTCHECK_API, payload);
+      const data = res.data;
+
+      if (data?.status === 1) {
+        // Duplicate → error
+        setFormErrors((prev) => ({
+          ...prev,
+          [`${field}_${index}`]: `${
+            field === "hapId" ? "HAP ID" : "Passport No"
+          } already exists. Please try another.`,
+        }));
+      } else if (data?.status === 2) {
+        // Not found → clear error
+        setFormErrors((prev) => ({ ...prev, [`${field}_${index}`]: "" }));
+      } else {
+        // Valid → clear error
+        setFormErrors((prev) => ({ ...prev, [`${field}_${index}`]: "" }));
+      }
+    } catch (err) {
+      setFormErrors((prev) => ({
+        ...prev,
+        [`${field}_${index}`]: "Error checking. Try again.",
       }));
     }
   };
@@ -1668,29 +1722,59 @@ const AppointmentBooking = () => {
     console.log("matchedSlot :", matchedSlot);
     setavailablemembercount(matchedSlot.length);
     setgrpavailslots(matchedSlot);
+
+    if (appointmentType === "Group" && rescheduledata) {
+      // setmembercount(rescheduledata.length)
+      handleMemberCountChange(rescheduledata.length, rescheduledata);
+    }
   };
 
   const formatDate = (date: Date) => date.toISOString().split("T")[0];
 
   // Calculate age from dob
   const calculateAge = (dob: string): string => {
-    const birthDate = new Date(dob);
-    const today = new Date();
+    if (!dob) return "0 Y 0 M";
 
-    let years = today.getFullYear() - birthDate.getFullYear();
-    let months = today.getMonth() - birthDate.getMonth();
+    let birthDate: Date;
 
-    // Adjust years and months based on the day of the month
-    if (today.getDate() < birthDate.getDate()) {
-      months--; // Not completed the full month yet
+    try {
+      // Handle both "yyyy-MM-dd" and "dd-MM-yyyy"
+      if (/^\d{2}-\d{2}-\d{4}$/.test(dob)) {
+        // Format: dd-MM-yyyy → convert to yyyy-MM-dd
+        const [day, month, year] = dob.split("-");
+        birthDate = new Date(`${year}-${month}-${day}`);
+      } else if (/^\d{4}-\d{2}-\d{2}$/.test(dob)) {
+        // Format: yyyy-MM-dd
+        birthDate = new Date(dob);
+      } else {
+        // Try fallback parse (e.g., "2025/09/11" or ISO)
+        birthDate = new Date(dob);
+      }
+
+      if (isNaN(birthDate.getTime())) {
+        console.warn("Invalid DOB format:", dob);
+        return "0 Y 0 M";
+      }
+
+      const today = new Date();
+
+      let years = today.getFullYear() - birthDate.getFullYear();
+      let months = today.getMonth() - birthDate.getMonth();
+
+      if (today.getDate() < birthDate.getDate()) {
+        months--;
+      }
+
+      if (months < 0) {
+        years--;
+        months += 12;
+      }
+
+      return `${years} Y ${months} M`;
+    } catch (err) {
+      console.error("Error calculating age:", err);
+      return "0 Y 0 M";
     }
-
-    if (months < 0) {
-      years--;
-      months += 12;
-    }
-
-    return `${years} Y ${months} M`;
   };
 
   // Calculate dob from age (returns yyyy-01-01)
@@ -2117,16 +2201,78 @@ const AppointmentBooking = () => {
     setTimeout(() => setAnimateModal(true), 10);
   };
 
-  const handleMemberCountChange = (e: any) => {
-    const rawValue = e.target.value;
+  // const handleMemberCountChange = (e: any,rescheduledata?:any) => {
+  //   const rawValue = e.target.value;
 
-    // Reject decimals, zero, empty, or more than 2 digits
-    if (
-      rawValue.includes(".") ||
-      rawValue === "0" ||
-      rawValue === "" ||
-      rawValue.length > 2
-    ) {
+  //   // Reject decimals, zero, empty, or more than 2 digits
+  //   if (
+  //     rawValue.includes(".") ||
+  //     rawValue === "0" ||
+  //     rawValue === "" ||
+  //     rawValue.length > 2
+  //   ) {
+  //     triggerShake();
+  //     setmembercount(0);
+  //     return;
+  //   }
+
+  //   const value = parseInt(rawValue, 10);
+
+  //   if (!isNaN(value) && value >= 2 && value <= availablemembercount) {
+  //     setmembercount(value);
+
+  //     const servicedetail = members[0]?.servicecode;
+
+  //     const servicetotalPrice = serviceList[0]
+  //       ? parseInt(serviceList[0]?.price)
+  //       : 100;
+
+  //     const updatedMembers = Array.from({ length: value }, () => ({
+  //       patientName: "",
+  //       hapId: "",
+  //       email: "",
+  //       contactNumber: "",
+  //       alternativeNumber: "",
+  //       gender: "",
+  //       age: "",
+  //       visaCategory: "",
+  //       passportNo: "",
+  //       paymentPreference: "",
+  //       paymentMethod: "QR",
+  //       dob: "",
+  //       TransactionId: "",
+  //       servicecode: servicedetail,
+  //       totalPrice: servicetotalPrice,
+  //       slot_booking: [],
+  //     }));
+
+  //     setFormData((prev) => ({
+  //       ...prev,
+  //       totalPrice: value * servicetotalPrice,
+  //     }));
+
+  //     setMembers(updatedMembers);
+  //     setOpenAccordion(undefined);
+  //     setTimeout(() => {
+  //       openDialog();
+  //     }, 200);
+  //   } else {
+  //     triggerShake();
+  //     setmembercount(0);
+  //   }
+  // };
+
+  const handleMemberCountChange = (e: any, rescheduledata?: any) => {
+    let rawValue;
+
+    if (rescheduledata) {
+      rawValue = e;
+    } else {
+      rawValue = e.target.value;
+    }
+
+    // Reject invalid values
+    if (rawValue === "0" || rawValue === "" || rawValue.length > 2) {
       triggerShake();
       setmembercount(0);
       return;
@@ -2134,44 +2280,94 @@ const AppointmentBooking = () => {
 
     const value = parseInt(rawValue, 10);
 
-    if (!isNaN(value) && value >= 2 && value <= availablemembercount) {
-      setmembercount(value);
+    // 🔹 If reschedule data exists, override `value` with that length
+    const memberCount = rescheduledata ? rescheduledata.length : value;
+
+    if (
+      !isNaN(memberCount) &&
+      memberCount >= 1 &&
+      memberCount <= availablemembercount
+    ) {
+      setmembercount(memberCount);
 
       const servicedetail = members[0]?.servicecode;
-
       const servicetotalPrice = serviceList[0]
         ? parseInt(serviceList[0]?.price)
         : 100;
 
-      const updatedMembers = Array.from({ length: value }, () => ({
-        patientName: "",
-        hapId: "",
-        email: "",
-        contactNumber: "",
-        alternativeNumber: "",
-        gender: "",
-        age: "",
-        visaCategory: "",
-        passportNo: "",
-        paymentPreference: "",
-        paymentMethod: "QR",
-        dob: "",
-        TransactionId: "",
-        servicecode: servicedetail,
-        totalPrice: servicetotalPrice,
-        slot_booking: [],
-      }));
+      let updatedMembers: any[] = [];
+
+      if (rescheduledata && rescheduledata.length > 0) {
+        // ✅ Prefill from existing booking data
+        updatedMembers = rescheduledata.map((data: any) => ({
+          patientName: data.patient_name || "",
+          hapId: data.hap_id || "",
+          email: data.email || data.Applicant_PersonalDetails__email || "",
+          contactNumber:
+            data.contact_number ||
+            data.Applicant_PersonalDetails__contact_number ||
+            "",
+          alternativeNumber: "",
+          gender:
+            data.gender?.toLowerCase?.() ||
+            data.Applicant_PersonalDetails__gender?.toLowerCase?.() ||
+            "",
+
+          age: calculateAge(data.Applicant_PersonalDetails__dob) || "",
+          visaCategory: data.selectedDepartment__name || "",
+          passportNo:
+            data.passport_number ||
+            data.Applicant_PersonalDetails__passport_number ||
+            "",
+          paymentPreference: "",
+          paymentMethod: data.payment_method || "QR",
+          dob: data.Applicant_PersonalDetails__dob || "",
+          TransactionId: data.transaction_id || "",
+          servicecode: servicedetail,
+          totalPrice: servicetotalPrice,
+          slot_booking: [
+            {
+              date: data.date_booked || "",
+              time: data.booked_time || "",
+              department: data.slot_department__department__name || "",
+              center: data.slot_department__slot__center__city__name || "",
+            },
+          ],
+        }));
+      } else {
+        // 🔹 Create fresh blank members
+        updatedMembers = Array.from({ length: memberCount }, () => ({
+          patientName: "",
+          hapId: "",
+          email: "",
+          contactNumber: "",
+          alternativeNumber: "",
+          gender: "",
+          age: "",
+          visaCategory: "",
+          passportNo: "",
+          paymentPreference: "",
+          paymentMethod: "QR",
+          dob: "",
+          TransactionId: "",
+          servicecode: servicedetail,
+          totalPrice: servicetotalPrice,
+          slot_booking: [],
+        }));
+      }
 
       setFormData((prev) => ({
         ...prev,
-        totalPrice: value * servicetotalPrice,
+        totalPrice: memberCount * servicetotalPrice,
       }));
 
       setMembers(updatedMembers);
-      setOpenAccordion(undefined);
+
+      // ✅ Automatically open the accordion(s)
       setTimeout(() => {
+        setOpenAccordion("item-0"); // open the first one
         openDialog();
-      }, 200);
+      }, 300);
     } else {
       triggerShake();
       setmembercount(0);
@@ -2288,6 +2484,63 @@ const AppointmentBooking = () => {
 
       resolve();
     });
+  };
+
+  const navigatereschedule = async () => {
+    console.log("Submitting form with data:");
+    const finalData1 = members.map((member, index) => {
+      const reschedule = rescheduledata?.[index]; // get matching reschedule data, if any
+
+      return {
+        type: "I",
+        applicant_number: reschedule?.applicant_number || "", // use from rescheduledata if available
+        fullname: member.patientName,
+        email: member.email,
+        contact_number: member.contactNumber,
+        alt_number: member.alternativeNumber,
+        hap_id: member.hapId,
+        relationship: index === 0 ? "Self" : "Family",
+        reference_applicant_number: "",
+        passport_number: member.passportNo,
+        dob: formatDateToDDMMYYYY(member.dob),
+        gender: member.gender,
+        address: "123 Street, City",
+        transaction_id: transactionId,
+        payment_method: member.paymentMethod,
+        transaction_amt: member.totalPrice,
+        status: 1,
+        created_by: 1,
+        center: selectedCenter,
+        appointmentType: appointmentType,
+        specialAssistance: member.specialAssistance,
+        slot_booking: member.slot_booking,
+        selectedDepartment: selectDepartment,
+      };
+    });
+
+    const slotDetails = members
+      .map(
+        (m, i) =>
+          `${i + 1}. ${m.fullname || "Member"} → ${
+            formatDateToDDMMYYYY(m.slot_booking?.[0]?.date_booked) || "N/A"
+          } | ${m.slot_booking?.[0]?.booked_time || "N/A"}`
+      )
+      .join("\n");
+
+    const rescheduleConfirm = window.confirm(
+      `You are about to reschedule the following appointments:\n\n${slotDetails}\n\nDo you want to proceed?`
+    );
+
+    const reEncrypted = CryptoJS.AES.encrypt(
+      JSON.stringify(finalData1),
+      environment.SECRET_KEY
+    ).toString();
+
+    localStorage.setItem("NewRescheduleData", reEncrypted);
+    navigate(environment.BASE_PATH);
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 50);
   };
 
   const onSubmit = async () => {
@@ -2925,15 +3178,14 @@ const AppointmentBooking = () => {
 
   const cancelreschudule = () => {
     localStorage.removeItem("appointments");
-    localStorage.removeItem("appointmentType")
-    localStorage.removeItem("Newslot")
+    localStorage.removeItem("appointmentType");
+    localStorage.removeItem("Newslot");
     navigate("/");
   };
 
   const getDecryptedAppointments = (): any[] => {
     const encrypted = localStorage.getItem("appointments");
     if (!encrypted) return [];
-
 
     try {
       const bytes = CryptoJS.AES.decrypt(encrypted, environment.SECRET_KEY);
@@ -3048,6 +3300,8 @@ const AppointmentBooking = () => {
     fetchData();
   }, [selectedCenter, selected_get_Department, allserviceList]); // ✅ re-run if selectedCenter changes
 
+  console.log("rescheduledata------------???", rescheduledata);
+
   const rescheduleSlotbook = (slot: any) => {
     console.log("Reschedule Slot Selected:-----------", slot);
 
@@ -3057,7 +3311,9 @@ const AppointmentBooking = () => {
       let selectTime = slot?.time;
 
       const rescheduleConfirm = window.confirm(
-        `You are about to reschedule your appointment to:\n\nDate: ${formatDateToDDMMYYYY(selectdate)}\nTime: ${selectTime}\n\nDo you want to proceed?`
+        `You are about to reschedule your appointment to:\n\nDate: ${formatDateToDDMMYYYY(
+          selectdate
+        )}\nTime: ${selectTime}\n\nDo you want to proceed?`
       );
 
       if (rescheduleConfirm) {
@@ -3260,6 +3516,8 @@ const AppointmentBooking = () => {
       return holidayDate.toDateString() === day.toDateString();
     });
   };
+
+  // console.clear()
 
   return (
     <>
@@ -4076,10 +4334,7 @@ const AppointmentBooking = () => {
                                 slots.filter(
                                   (slot: any) =>
                                     +slot.remaining > 0 &&
-                                    !isSlotExpired(
-                                      slot?.time,
-                                      slot?.slot__date
-                                    )
+                                    !isSlotExpired(slot?.time, slot?.slot__date)
                                 ).length > 0 ? (
                                   <div
                                     className="row g-3 px-2 slottimebox"
@@ -4548,17 +4803,39 @@ const AppointmentBooking = () => {
 
                                             <input
                                               type="text"
+                                              // className={`form-control ${
+                                              //   formErrors[`passportNo_${i}`]
+                                              //     ? "is-invalid input-shake"
+                                              //     : ""
+                                              // }`}
                                               className={`form-control ${
-                                                formErrors[`passportNo_${i}`]
+                                                formErrors[`passportNo_${i}`] &&
+                                                formErrors[
+                                                  `passportNo_${i}`
+                                                ] !== "loading"
                                                   ? "is-invalid input-shake"
                                                   : ""
                                               }`}
                                               id={`passportNo_${i}`}
                                               name="passportNo"
                                               value={member.passportNo}
-                                              onChange={(e) =>
-                                                handleChange(e, i)
-                                              }
+                                              // onChange={(e) =>
+                                              //   handleChange(e, i)
+                                              // }
+                                              onChange={(e) => {
+                                                const value = e.target.value;
+                                                if (/^\d*$/.test(value)) {
+                                                  handleChange(e, i);
+                                                  if (value.length >= 8) {
+                                                    // adjust length if passport length differs
+                                                    checkDuplicate(
+                                                      value,
+                                                      i,
+                                                      "passportNo"
+                                                    );
+                                                  }
+                                                }
+                                              }}
                                               maxLength={12}
                                               placeholder={getDynamicPlaceholder(
                                                 "passportNo"
@@ -4566,6 +4843,15 @@ const AppointmentBooking = () => {
                                               autoComplete="off"
                                             />
                                           </div>
+
+                                          {formErrors[`passportNo_${i}`] &&
+                                            formErrors[`passportNo_${i}`] !==
+                                              "loading" && (
+                                              <small className="text-danger mt-1 d-block text-end">
+                                                {formErrors[`passportNo_${i}`]}
+                                              </small>
+                                            )}
+
                                           {formErrors[`passportNo_${i}`] && (
                                             <small className="text-danger mt-1 d-block text-end">
                                               eg: A12345623 and 8-12 characters
@@ -4585,7 +4871,9 @@ const AppointmentBooking = () => {
                                             <input
                                               type="text"
                                               className={`form-control ${
-                                                formErrors[`hapId_${i}`]
+                                                formErrors[`hapId_${i}`] &&
+                                                formErrors[`hapId_${i}`] !==
+                                                  "loading"
                                                   ? "is-invalid input-shake"
                                                   : ""
                                               }`}
@@ -4598,6 +4886,14 @@ const AppointmentBooking = () => {
                                                 const value = e.target.value;
                                                 if (/^\d*$/.test(value)) {
                                                   handleChange(e, i);
+                                                  if (value.length >= 8) {
+                                                    // adjust length if passport length differs
+                                                    checkDuplicate(
+                                                      value,
+                                                      i,
+                                                      "hapId"
+                                                    );
+                                                  }
                                                 }
                                               }}
                                               maxLength={8}
@@ -4607,11 +4903,13 @@ const AppointmentBooking = () => {
                                               autoComplete="off"
                                             />
                                           </div>
-                                          {formErrors[`hapId_${i}`] && (
-                                            <small className="text-danger mt-1 d-block text-end">
-                                              eg: 12345678
-                                            </small>
-                                          )}
+                                          {formErrors[`hapId_${i}`] &&
+                                            formErrors[`hapId_${i}`] !==
+                                              "loading" && (
+                                              <small className="text-danger mt-1 d-block text-end">
+                                                {formErrors[`hapId_${i}`]}
+                                              </small>
+                                            )}
                                         </div>
 
                                         <div className="col-md-6 mb-3">
@@ -5489,12 +5787,18 @@ const AppointmentBooking = () => {
                       className={`btn-custom-orange ${
                         txnStatus !== 1 ? "disabled-btn" : ""
                       }`}
-                      onClick={onSubmit}
+                      onClick={
+                        rescheduledata && appointmentType == "Group"
+                          ? navigatereschedule
+                          : onSubmit
+                      }
                       style={{
                         cursor: txnStatus !== 1 ? "not-allowed" : "pointer",
                       }}
                     >
-                      Save
+                      {rescheduledata && appointmentType == "Group"
+                        ? "Reschedule"
+                        : "Save"}
                     </button>
                   )}
                 </div>
