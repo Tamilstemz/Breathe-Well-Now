@@ -578,6 +578,7 @@ export default function Hero() {
     setsuccessModule(false);
     setTimerVisible(false);
     setNewAppointmentSlot([]);
+    setsuccessmsg("")
   };
 
   const handleCancelAppointment = async (item: any) => {
