@@ -49,7 +49,6 @@ export default function Documents() {
       documents: [
         "Photo identification (driver's license)",
         "Recent passport-sized photographs",
-        "Contact details of Australian sponsor",
         "Emergency contact information",
         "Payment for examination fees"
       ]
