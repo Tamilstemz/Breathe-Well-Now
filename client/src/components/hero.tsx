@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import doctorImage from "@assets/newpic1_1749587017199.png";
+import NewBannerImage from "../../assests/NewBannerImage.png";
 import {
   CalendarCheck,
   CalendarSearch,
@@ -78,8 +79,8 @@ export default function Hero() {
   const [appointmentData, setAppointmentData] = useState<AppointmentData[]>([]);
 
   const [newappointmentSlot, setNewAppointmentSlot] = useState<any[]>([]);
-  console.log("newappointmentSlot:",newappointmentSlot);
-  
+  console.log("newappointmentSlot:", newappointmentSlot);
+
   const [appointmentType, setappointmentType] = useState("");
 
   const [otpButtontype, setotpButtontype] = useState("Reschedule");
@@ -94,7 +95,7 @@ export default function Hero() {
   const [timerVisible, setTimerVisible] = useState(true);
   const [appointmentCancelBtn, setAppointmentCancelBtn] = useState(false);
   const [selectedApplicants, setSelectedApplicants] = useState<any[]>([]);
-console.log("selectedApplicants :",selectedApplicants);
+  console.log("selectedApplicants :", selectedApplicants);
 
   const [errors, setErrors] = useState<{
     searchValue?: string;
@@ -148,7 +149,7 @@ console.log("selectedApplicants :",selectedApplicants);
 
   useEffect(() => {
     const processNewSlotData = async () => {
-      let encrypted
+      let encrypted;
       if (localStorage.getItem("NewRescheduleData")) {
         encrypted = localStorage.getItem("NewRescheduleData");
       } else {
@@ -455,8 +456,7 @@ console.log("selectedApplicants :",selectedApplicants);
     setOtpError("");
   };
 
-  console.log("appointmentData :",appointmentData);
-  
+  console.log("appointmentData :", appointmentData);
 
   const handleConfirmReschedule = async (item: any) => {
     // if (!/^\d{6}$/.test(otp)) {
@@ -470,7 +470,7 @@ console.log("selectedApplicants :",selectedApplicants);
       );
 
       if (!rescheduleConfirm) return;
-console.log("selectedApplicants :",selectedApplicants)
+      console.log("selectedApplicants :", selectedApplicants);
       try {
         let payload = {};
         console.log("payload :", payload);
@@ -712,23 +712,25 @@ console.log("selectedApplicants :",selectedApplicants)
   return (
     <section
       id="home"
-      className="hero-gradient py-16 lg:py-24 relative overflow-hidden"
+      className="hero-gradient py-16 relative overflow-hidden"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-brand-blue/5 via-brand-purple/5 to-brand-teal/5" />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <div className="absolute inset-0 bg-gradient-to-br from-brand-blue/5 via-brand-purple/5 to-brand-teal/5"></div>
+      <div className="" style={{ marginLeft: "115px", marginRight: "60px" }}>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-center">
-          <div className="space-y-8">
-            <h1 className="text-4xl xl:text-6xl font-bold leading-tight break-words">
-              <span className="text-brand-black">Visa Medical</span>
-              <br />
-              <span className="text-brand-orange">Examinations</span>
-            </h1>
+          <div className="space-y-8 text-left lg:text-left">
+            <div>
+              <h1 className="text-4xl xl:text-6xl font-bold leading-tight break-words">
+                <span className="text-brand-black">Visa Medical</span>
+                <br />
+                <span className="text-brand-orange">Examinations</span>
+              </h1>
+            </div>
             <p className="text-xl text-brand-black leading-relaxed">
               Welcome to ND Diagnostics India Private Limited, your trusted
-              partner for comprehensive medical examinations required for
-              visa applications.
+              partner for comprehensive medical examinations required for visa
+              applications.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+            <div className="flex flex-col sm:flex-row justify-center lg:justify-start items-center gap-4 pt-8">
               <Button
                 onClick={() => {
                   navigate(`${environment.BASE_PATH}AppointmentBooking`);
@@ -738,7 +740,8 @@ console.log("selectedApplicants :",selectedApplicants)
                   );
                 }}
                 size="lg"
-                className="card-gradient-blue text-white font-semibold text-lg transition-all duration-300 hover:scale-105 border-0"
+                // className="card-gradient-blue text-white font-semibold text-lg transition-all duration-300 hover:scale-105 border-0"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 w-64"
               >
                 <CalendarCheck className="mr-2 h-5 w-5" />
                 Schedule Examination
@@ -748,7 +751,8 @@ console.log("selectedApplicants :",selectedApplicants)
                 onClick={() => setOpenModal(true)}
                 variant="outline"
                 size="lg"
-                className="border-2 border-brand-green text-brand-green hover:bg-orange-500 hover:text-white hover:border-transparent font-semibold text-lg transition-all duration-300 hover:scale-105"
+                // className="border-2 border-brand-green text-brand-green hover:bg-orange-500 hover:text-white hover:border-transparent font-semibold text-lg transition-all duration-300 hover:scale-105"
+                 className="border-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white active:bg-orange-600 active:text-white px-8 py-6 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 w-64"
               >
                 <CalendarSearch className="mr-2 h-5 w-5" />
                 Track Appointment
@@ -766,12 +770,21 @@ console.log("selectedApplicants :",selectedApplicants)
             </div>
           </div>
 
-          <div className="relative min-w-0">
-            <img
+          <div className="relative hidden lg:block">
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl">
+              {/* <img
               src={doctorImage}
               alt="Medical professional with equipment"
               className="rounded-2xl shadow-2xl w-full max-h-[600px] object-cover transition-transform duration-500 hover:scale-105"
-            />
+            /> */}
+<img
+  src={NewBannerImage}
+  alt="Medical professional with equipment"
+  className="w-full h-[550px] object-cover relative transition-transform duration-500 ease-in-out hover:scale-95 hover:z-50"
+/>
+
+
+            </div>
           </div>
         </div>
       </div>
