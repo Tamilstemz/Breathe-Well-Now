@@ -620,9 +620,9 @@ const AppointmentBooking = () => {
     // console.log("day :", day);
 
     const dateStr = formatDateToYYYYMMDD(day); // format: "YYYY-MM-DD"
-    // console.log("datestr :",dateStr , "slotCounts :",slotCounts);
+    console.log("datestr :",dateStr , "slotCounts :",slotCounts);
     const daycount = slotCounts[dateStr];
-    // console.log("daycount :",daycount);
+    console.log("daycount :",daycount);
 
     return slotCounts[dateStr] ?? 0; // return 0 if no slots
   };
@@ -1590,18 +1590,21 @@ const AppointmentBooking = () => {
     return date < today;
   };
 
-  const formatTo12Hour = (time24: string): string => {
-    const [hourStr, minuteStr] = time24.split(":");
-    let hour = parseInt(hourStr, 10);
-    const minute = parseInt(minuteStr, 10);
+const formatTo12Hour = (time24: string | null | undefined): string => {
+  if (!time24) return ""; // 👈 Prevents the 'split' error
 
-    const ampm = hour >= 12 ? "PM" : "AM";
-    hour = hour % 12 || 12; // Convert 0 to 12
-    const formattedHour = hour < 10 ? `0${hour}` : `${hour}`;
-    const formattedMinute = minute < 10 ? `0${minute}` : `${minute}`;
+  const [hourStr, minuteStr] = time24.split(":");
+  let hour = parseInt(hourStr, 10);
+  const minute = parseInt(minuteStr, 10);
 
-    return `${formattedHour}:${formattedMinute} ${ampm}`;
-  };
+  const ampm = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12 || 12; // Convert 0 to 12
+  const formattedHour = hour < 10 ? `0${hour}` : `${hour}`;
+  const formattedMinute = minute < 10 ? `0${minute}` : `${minute}`;
+
+  return `${formattedHour}:${formattedMinute} ${ampm}`;
+};
+
 
   const handleDateClick = (day: Date, rawSlots: any[]) => {
     if (day && isPastDate(day)) return;
@@ -2765,7 +2768,6 @@ const AppointmentBooking = () => {
           setUpcomingDatesWithSlots([]);
           setSelectedDate(null);
           setselectedslottime("");
-          setTransactionId("")
         } else {
           toast({
             title: "error",
@@ -3741,7 +3743,8 @@ const AppointmentBooking = () => {
                         !isWithin90DaysFromToday(day) ||
                         isHoliday(day) ||
                         (totalcount(day) === 0 && hasEvent(day));
-
+{console.log("isDisabled :",day ,  isDisabled);
+}
                       const today = isToday(day);
                       const dayStyle: React.CSSProperties = {
                         opacity: isDisabled ? 0.5 : 1,
