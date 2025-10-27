@@ -7,8 +7,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import doctorImage from "@assets/newpic1_1749587017199.png";
-import NewBannerImage from "../../assests/NewBannerImage.png";
 import {
   CalendarCheck,
   CalendarSearch,
@@ -22,6 +20,7 @@ import { useNavigate } from "react-router-dom";
 import httpClient from "../../../api/httpClient";
 import { API, environment } from "../../../environment/environment";
 import { decrypt, encrypt } from "../../../utils/crypto-util";
+import NewBannerImage from "../../assests/NewBannerImage.png";
 import successImg from "../../assests/successImg.png";
 
 interface AppointmentData {
@@ -272,7 +271,7 @@ export default function Hero() {
       const encrypted = encrypt(JSON.stringify(existing));
 
       localStorage.setItem("appointments", encrypted);
-
+      localStorage.setItem("Reschedule", "true");
       localStorage.setItem("appointmentType", appointmentType);
 
       // Navigate and scroll
@@ -529,6 +528,8 @@ export default function Hero() {
           if (res.data.status === 1) {
             localStorage.removeItem("appointments");
             localStorage.removeItem("Newslot");
+            localStorage.removeItem("appointmentType");
+            localStorage.removeItem("NewRescheduleData");
             setShowAppointmentModal(false);
             setAppointmentData([]);
             setOtpVisible(false);
