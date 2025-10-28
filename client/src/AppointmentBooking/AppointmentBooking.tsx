@@ -2041,17 +2041,18 @@ const AppointmentBooking = () => {
           hasError = true;
         }
 
-        if (Number(selectDepartment) == 43) {
-          if (hapId && !/^\d{8}$/.test(hapId)) {
-            errors[`hapId_${index}`] = "Must be exactly 8 digits.";
-            hasError = true;
-          }
-        } else {
-          if (hapId && !/^\d{10}$/.test(hapId)) {
-            errors[`hapId_${index}`] = "Must be exactly 10 digits.";
-            hasError = true;
-          }
-        }
+       if (Number(selectDepartment) == 43) {
+  if (hapId && !/^\d{8}$/.test(hapId)) {
+    errors[`hapId_${index}`] = "Must be exactly 8 digits.";
+    hasError = true;
+  }
+} else {
+  if (hapId && !/^[a-zA-Z0-9]{10}$/.test(hapId)) {
+    errors[`hapId_${index}`] = "Must be exactly 10 letters or numbers.";
+    hasError = true;
+  }
+}
+
         if (index === 0) {
           if (!contactNumber.trim()) {
             errors[`contactNumber_${index}`] = "Contact Number is required.";
@@ -2066,8 +2067,8 @@ const AppointmentBooking = () => {
             hasError = true;
           }
         } else {
-          if (hapId && !/^\d{10}$/.test(hapId)) {
-            errors[`hapId_${index}`] = "Must be exactly 10 digits.";
+          if (hapId && !/^[a-zA-Z0-9]{10}$/.test(hapId)) {
+            errors[`hapId_${index}`] = "Must be exactly 10 letters or numbers.";
             hasError = true;
           }
         }
@@ -2122,8 +2123,8 @@ const AppointmentBooking = () => {
           errors.hapId = "Must be exactly 8 digits.";
         }
       } else {
-        if (hapId && !/^\d{10}$/.test(hapId)) {
-          errors.hapId = "Must be exactly 10 digits.";
+        if (hapId && !/^[a-zA-Z0-9]{10}$/.test(hapId)) {
+          errors.hapId = "Must be exactly 10 letters or numbers.";
         }
       }
 
@@ -4918,7 +4919,7 @@ const AppointmentBooking = () => {
                                               value={members[i].hapId}
                                               onChange={(e) => {
                                                 const value = e.target.value;
-                                                if (/^\d*$/.test(value)) {
+                                                if (/^[a-zA-Z0-9]*$/.test(value)) {
                                                   // determine required length dynamically
                                                   const requiredLength =
                                                     Number(selectDepartment) ===
@@ -5315,7 +5316,7 @@ const AppointmentBooking = () => {
                                       value={formData.hapId}
                                       onChange={(e) => {
                                         const value = e.target.value;
-                                        if (/^\d*$/.test(value)) {
+                                        if (/^[a-zA-Z0-9]*$/.test(value)) {
                                           let requiredLength =
                                             Number(selectDepartment) === 43
                                               ? 8
