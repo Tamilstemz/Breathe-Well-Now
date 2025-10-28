@@ -1980,7 +1980,6 @@ const AppointmentBooking = () => {
     if (appointmentType === "Group") {
       const errors: { [key: string]: string } = {};
       let hasError = false;
-
       members.forEach((member, index) => {
         const {
           patientName,
@@ -2042,11 +2041,17 @@ const AppointmentBooking = () => {
           hasError = true;
         }
 
-        if (hapId && !/^\d{8}$/.test(hapId)) {
-          errors[`hapId_${index}`] = "Must be exactly 8 digits.";
-          hasError = true;
+        if (Number(selectDepartment) == 43) {
+          if (hapId && !/^\d{8}$/.test(hapId)) {
+            errors[`hapId_${index}`] = "Must be exactly 8 digits.";
+            hasError = true;
+          }
+        } else {
+          if (hapId && !/^\d{10}$/.test(hapId)) {
+            errors[`hapId_${index}`] = "Must be exactly 10 digits.";
+            hasError = true;
+          }
         }
-
         if (index === 0) {
           if (!contactNumber.trim()) {
             errors[`contactNumber_${index}`] = "Contact Number is required.";
@@ -2055,6 +2060,17 @@ const AppointmentBooking = () => {
             errors[`contactNumber_${index}`] = "Must be exactly 10 digits.";
             hasError = true;
           }
+           if (Number(selectDepartment) == 43) {
+          if (hapId && !/^\d{8}$/.test(hapId)) {
+            errors[`hapId_${index}`] = "Must be exactly 8 digits.";
+            hasError = true;
+          }
+        } else {
+          if (hapId && !/^\d{10}$/.test(hapId)) {
+            errors[`hapId_${index}`] = "Must be exactly 10 digits.";
+            hasError = true;
+          }
+        }
         }
 
         if (!gender.trim()) {
@@ -2065,7 +2081,6 @@ const AppointmentBooking = () => {
 
       // ✅ Determine which member has errors
       const memberHasErrorArray: boolean[] = [];
-
       members.forEach((_, index) => {
         const hasErrorForMember = Object.keys(errors).some((key) =>
           key.endsWith(`_${index}`)
@@ -2772,7 +2787,7 @@ const AppointmentBooking = () => {
           setUpcomingDatesWithSlots([]);
           setSelectedDate(null);
           setselectedslottime("");
-          setTransactionId("")
+          setTransactionId("");
         } else {
           toast({
             title: "error",
@@ -4882,44 +4897,66 @@ const AppointmentBooking = () => {
                                         <div className="col-md-6 mb-3">
                                           <div className="d-flex flex-column flex-md-row align-items-start align-items-md-center">
                                             <label className="form-label label-fixed me-md-2 mb-1 mb-md-0">
-  {Number(selectDepartment) === 43 ? "HAP ID" : "NZER ID"}
-</label>
+                                              {Number(selectDepartment) === 43
+                                                ? "HAP ID"
+                                                : "NZER ID"}
+                                            </label>
 
-<input
-  type="text"
-  className={`form-control ${
-    formErrors[`hapId_${i}`] && formErrors[`hapId_${i}`] !== "loading"
-      ? "is-invalid input-shake"
-      : ""
-  }`}
-  id={`hapId_${i}`}
-  inputMode="numeric"
-  pattern="\d*"
-  name="hapId"
-  value={members[i].hapId}
-  onChange={(e) => {
-    const value = e.target.value;
-    if (/^\d*$/.test(value)) {
-      // determine required length dynamically
-      const requiredLength =
-        Number(selectDepartment) === 43 ? 8 : 10;
+                                            <input
+                                              type="text"
+                                              className={`form-control ${
+                                                formErrors[`hapId_${i}`] &&
+                                                formErrors[`hapId_${i}`] !==
+                                                  "loading"
+                                                  ? "is-invalid input-shake"
+                                                  : ""
+                                              }`}
+                                              id={`hapId_${i}`}
+                                              inputMode="numeric"
+                                              pattern="\d*"
+                                              name="hapId"
+                                              value={members[i].hapId}
+                                              onChange={(e) => {
+                                                const value = e.target.value;
+                                                if (/^\d*$/.test(value)) {
+                                                  // determine required length dynamically
+                                                  const requiredLength =
+                                                    Number(selectDepartment) ===
+                                                    43
+                                                      ? 8
+                                                      : 10;
 
-      // ✅ enforce max length manually
-      if (value.length <= requiredLength) {
-        handleChange(e, i);
+                                                  // ✅ enforce max length manually
+                                                  if (
+                                                    value.length <=
+                                                    requiredLength
+                                                  ) {
+                                                    handleChange(e, i);
 
-        if (value.length === requiredLength) {
-          checkDuplicate(value, i, "hapId");
-        }
-      }
-    }
-  }}
-  // ✅ set maxLength dynamically (still good for UX)
-  maxLength={Number(selectDepartment) === 43 ? 8 : 10}
-  placeholder={getDynamicPlaceholder("hapId")}
-  autoComplete="off"
-/>
-
+                                                    if (
+                                                      value.length ===
+                                                      requiredLength
+                                                    ) {
+                                                      checkDuplicate(
+                                                        value,
+                                                        i,
+                                                        "hapId"
+                                                      );
+                                                    }
+                                                  }
+                                                }
+                                              }}
+                                              // ✅ set maxLength dynamically (still good for UX)
+                                              maxLength={
+                                                Number(selectDepartment) === 43
+                                                  ? 8
+                                                  : 10
+                                              }
+                                              placeholder={getDynamicPlaceholder(
+                                                "hapId"
+                                              )}
+                                              autoComplete="off"
+                                            />
                                           </div>
                                           {formErrors[`hapId_${i}`] &&
                                             formErrors[`hapId_${i}`] !==
