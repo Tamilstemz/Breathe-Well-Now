@@ -3821,8 +3821,8 @@ const AppointmentBooking = () => {
                                     style={{
                                       backgroundColor: isHoliday(day)
                                         ? "#ffc107"
-                                        : totaldaycount === 0
-                                        ? ""
+                                        : totaldaycount === 0 
+                                        ? "red"
                                         : "#5ebe5e",
                                     }}
                                   >
@@ -5317,7 +5317,7 @@ const AppointmentBooking = () => {
                                       onChange={(e) => {
                                         const value = e.target.value;
                                         if (/^[a-zA-Z0-9]*$/.test(value)) {
-                                          let requiredLength =
+                                            let requiredLength =
                                             Number(selectDepartment) === 43
                                               ? 8
                                               : 10;
