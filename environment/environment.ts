@@ -55,5 +55,9 @@ export const API = {
   DEPARTMENT_GET_API: apiPath("/master/get_department_by_center"),
   APPLICATION_MASTER: apiPath("/master/application?status=1&id=1"),
   SLOTCOUNT_API : apiPath("/transaction/slotcount"),
-  NEW_SLOT_API: apiPath("/transaction/new/slotapi")
+  NEW_SLOT_API: apiPath("/transaction/new/slotapi"),
+    APPLICANT_CONSENTFORM_API: apiPath("/transaction/applicant/consentform"),
+  APPLICANT_UPLOAD_PDF: apiPath("/transaction/applicant-upload-pdf/"),
+  MATSER_CONSENT_FORMS_API: apiPath("/transaction/forms/"),
+  APPLICANT_DUPLCATE_CHECK_API: apiPath("/transaction/applicantduplicate/check"),
 };
