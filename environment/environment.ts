@@ -59,5 +59,4 @@ export const API = {
     APPLICANT_CONSENTFORM_API: apiPath("/transaction/applicant/consentform"),
   APPLICANT_UPLOAD_PDF: apiPath("/transaction/applicant-upload-pdf/"),
   MATSER_CONSENT_FORMS_API: apiPath("/transaction/forms/"),
-  APPLICANT_DUPLCATE_CHECK_API: apiPath("/transaction/applicantduplicate/check"),
 };

@@ -267,13 +267,6 @@ const AppointmentBooking = () => {
 
   const [loadingSlots, setLoadingSlots] = useState(false);
 
-  const [loading3, setLoading3] = useState(false);
-  const [errorMessage1, setErrorMessage1] = useState("");
-  const [successmessage, setsuccessmessage] = useState("");
-  const [isCheckingEmail, setIsCheckingEmail] = useState(false);
-  const [EmailtxnMessage, setEmailtxnMessage] = useState("");
-  const [EmailerrorMessage, setEmailerrorMessage] = useState("");
-
   const [formData, setFormData] = useState<FormDataType>({
     patientName: "",
     hapId: "",
@@ -1981,13 +1974,12 @@ const AppointmentBooking = () => {
     return hasError;
   };
 
-  const nextStep = async () => {
+  const nextStep = () => {
     const errors: { [key: string]: string } = {};
 
     if (appointmentType === "Group") {
+      const errors: { [key: string]: string } = {};
       let hasError = false;
-      const newErrors: { [key: string]: string } = {};
-
       members.forEach((member, index) => {
         const {
           patientName,
@@ -2003,96 +1995,107 @@ const AppointmentBooking = () => {
           slot_booking,
         } = member;
 
-        // ✅ Field Validations
         if (!patientName.trim()) {
-          newErrors[`patientName_${index}`] = "Applicant Name is required.";
+          errors[`patientName_${index}`] = "Applicant Name is required.";
           hasError = true;
         }
 
         if (index === 0 && !slot_booking.length) {
-          newErrors[`slot_booking_${index}`] = "Please select a time slot.";
+          errors[`slot_booking_${index}`] = "Please select a time slot.";
           hasError = true;
         }
 
         if (!email.trim() && index === 0) {
-          newErrors[`email_${index}`] = "Email is required.";
+          errors[`email_${index}`] = "Email is required.";
           hasError = true;
         } else if (
           !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) &&
           index === 0
         ) {
-          newErrors[`email_${index}`] =
+          errors[`email_${index}`] =
             "Enter a valid email (e.g., name@example.com)";
           hasError = true;
         }
 
         if (!dob) {
-          newErrors[`dob_${index}`] = "Date of Birth is required.";
+          errors[`dob_${index}`] = "Date of Birth is required.";
           hasError = true;
         }
 
         if (!age.trim()) {
-          newErrors[`age_${index}`] = "Age is required.";
+          errors[`age_${index}`] = "Age is required.";
           hasError = true;
         }
 
         if (!paymentMethod.trim()) {
-          newErrors[`paymentMethod_${index}`] = "Payment Method is required.";
+          errors[`paymentMethod_${index}`] = "paymentMethod is required.";
           hasError = true;
         }
 
         if (!passportNo.trim()) {
-          newErrors[`passportNo_${index}`] = "Passport Number is required.";
+          errors[`passportNo_${index}`] = "Passport Number is required.";
           hasError = true;
         } else if (!/^[A-Z0-9]{8,12}$/.test(passportNo)) {
-          newErrors[`passportNo_${index}`] =
+          errors[`passportNo_${index}`] =
             "8-12 characters, uppercase letters/numbers only.";
           hasError = true;
         }
 
-        if (Number(selectDepartment) === 43) {
+        if (Number(selectDepartment) == 43) {
           if (hapId && !/^\d{8}$/.test(hapId)) {
-            newErrors[`hapId_${index}`] = "Must be exactly 8 digits.";
+            errors[`hapId_${index}`] = "Must be exactly 8 digits.";
             hasError = true;
           }
         } else {
           if (hapId && !/^[a-zA-Z0-9]{10}$/.test(hapId)) {
-            newErrors[`hapId_${index}`] =
-              "Must be exactly 10 letters or numbers.";
+            errors[`hapId_${index}`] = "Must be exactly 10 letters or numbers.";
             hasError = true;
           }
         }
 
         if (index === 0) {
           if (!contactNumber.trim()) {
-            newErrors[`contactNumber_${index}`] = "Contact Number is required.";
+            errors[`contactNumber_${index}`] = "Contact Number is required.";
             hasError = true;
           } else if (!/^\d{10}$/.test(contactNumber)) {
-            newErrors[`contactNumber_${index}`] = "Must be exactly 10 digits.";
+            errors[`contactNumber_${index}`] = "Must be exactly 10 digits.";
             hasError = true;
+          }
+          if (Number(selectDepartment) == 43) {
+            if (hapId && !/^\d{8}$/.test(hapId)) {
+              errors[`hapId_${index}`] = "Must be exactly 8 digits.";
+              hasError = true;
+            }
+          } else {
+            if (hapId && !/^[a-zA-Z0-9]{10}$/.test(hapId)) {
+              errors[`hapId_${index}`] =
+                "Must be exactly 10 letters or numbers.";
+              hasError = true;
+            }
           }
         }
 
         if (!gender.trim()) {
-          newErrors[`gender_${index}`] = "Gender is required.";
+          errors[`gender_${index}`] = "Gender is required.";
           hasError = true;
         }
       });
 
-      // ✅ Highlight members with errors
-      const memberHasErrorArray = members.map((_, index) =>
-        Object.keys(newErrors).some((key) => key.endsWith(`_${index}`))
-      );
+      // ✅ Determine which member has errors
+      const memberHasErrorArray: boolean[] = [];
+      members.forEach((_, index) => {
+        const hasErrorForMember = Object.keys(errors).some((key) =>
+          key.endsWith(`_${index}`)
+        );
+        memberHasErrorArray[index] = hasErrorForMember;
+      });
 
-      setFormErrors(newErrors);
-      setMemberHasError(memberHasErrorArray);
+      setFormErrors(errors);
+      setMemberHasError(memberHasErrorArray); // <--- This is critical
 
-      // Stop if there are validation errors
-      if (hasError) return;
-
-      // ✅ Now call DuplicateApplicantCheck API for first member (main applicant)
-      const mainApplicant = members[0];
-      await checkDuplicateAndProceed(mainApplicant);
+      if (!hasError && stepIndex < 1) {
+        setStepIndex(stepIndex + 1);
+      }
     } else if (appointmentType === "Self") {
       const {
         patientName,
@@ -2108,24 +2111,32 @@ const AppointmentBooking = () => {
       } = formData;
 
       if (!paymentMethod.trim())
-        errors.paymentMethod = "Payment Method is required.";
+        errors.paymentMethod = "paymentMethod is required.";
+
       if (!patientName.trim())
         errors.patientName = "Applicant Name is required.";
       if (!contactNumber.trim())
         errors.contactNumber = "Contact Number is required.";
       else if (!/^\d{10}$/.test(contactNumber))
         errors.contactNumber = "Must be exactly 10 digits.";
-
-      if (Number(selectDepartment) === 43) {
-        if (hapId && !/^\d{8}$/.test(hapId))
+      if (Number(selectDepartment) == 43) {
+        if (hapId && !/^\d{8}$/.test(hapId)) {
           errors.hapId = "Must be exactly 8 digits.";
+        }
       } else {
-        if (hapId && !/^[a-zA-Z0-9]{10}$/.test(hapId))
+        if (hapId && !/^[a-zA-Z0-9]{10}$/.test(hapId)) {
           errors.hapId = "Must be exactly 10 letters or numbers.";
+        }
       }
 
       if (!dob) errors.dob = "Date of Birth is required.";
+
       if (!age.trim()) errors.age = "Age is required.";
+
+      if (!age.trim()) {
+        errors.age = "Age is required.";
+      }
+
       if (!passportNo.trim())
         errors.passportNo = "Passport Number is required.";
       else if (!/^[A-Z0-9]{8,12}$/.test(passportNo))
@@ -2137,53 +2148,14 @@ const AppointmentBooking = () => {
       if (!email.trim()) errors.email = "Email is required.";
       else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email))
         errors.email = "Enter a valid email (e.g., name@example.com)";
-      else if (EmailerrorMessage) errors.email = EmailerrorMessage;
 
       if (!gender.trim()) errors.gender = "Gender is required.";
 
       setFormErrors(errors);
-      if (Object.keys(errors).length > 0) return;
 
-      // ✅ Call duplicate check API
-      await checkDuplicateAndProceed(formData);
-    }
-  };
-
-  const checkDuplicateAndProceed = async (mainApplicant: any) => {
-    setLoading3(true);
-    setErrorMessage1("");
-
-    try {
-      const params = {
-        patientname: mainApplicant.patientName,
-        gender: mainApplicant.gender,
-        dob: mainApplicant.dob,
-        center: selectedCenter,
-      };
-
-      const response = await httpClient.get(API.APPLICANT_DUPLCATE_CHECK_API, {
-        params,
-      });
-      const data = response.data;
-      console.log("data :", data);
-
-      if (data.status === true) {
-        setsuccessmessage(data.message);
-
-        setTimeout(() => {
-          setLoading3(false);
-          setsuccessmessage("");
-          if (stepIndex < 1) setStepIndex(stepIndex + 1);
-        }, 1000);
-      } else {
-        // Show message modal
-        setErrorMessage1(data.message);
-        setLoading3(false);
+      if (Object.keys(errors).length === 0 && stepIndex < 1) {
+        setStepIndex(stepIndex + 1);
       }
-    } catch (error) {
-      console.error("Duplicate check failed:", error);
-      setLoading3(false);
-      alert("An error occurred while checking applicant. Please try again.");
     }
   };
 
@@ -2225,7 +2197,7 @@ const AppointmentBooking = () => {
     const totalAvailable = rawSlots1
       .filter((item: any) => item?.slot__date === formattedDay)
       .reduce((sum: number, item: any) => sum + (item.remaining || 0), 0);
-    console.log(totalAvailable, "totalAvailable");
+console.log(totalAvailable ,"totalAvailable");
 
     console.log("matchedSlot :", matchedSlot);
     setavailablemembercount(totalAvailable);
@@ -2325,6 +2297,10 @@ const AppointmentBooking = () => {
   //     setmembercount(0);
   //   }
   // };
+
+
+
+
 
   const handleMemberCountChange = (e: any, rescheduledata?: any) => {
     let rawValue;
@@ -2456,9 +2432,7 @@ const AppointmentBooking = () => {
         dob: "",
         // Keep servicecode and totalPrice
       }));
-      setIsCheckingEmail(false);
-      setEmailtxnMessage("");
-      setEmailerrorMessage("");
+
       setMembers((prevMembers) =>
         prevMembers.map((member) => ({
           ...member,
@@ -2524,9 +2498,6 @@ const AppointmentBooking = () => {
           specialAssistance: false,
         }));
       });
-      setIsCheckingEmail(false);
-      setEmailtxnMessage("");
-      setEmailerrorMessage("");
       const formattedDay = formatDateToYYYYMMDDNew(selectedDate); // Use your date formatting function
       // Find matching slot
       const matchedSlot = rawSlots1.filter(
@@ -2835,7 +2806,6 @@ const AppointmentBooking = () => {
           setSelectedDate(null);
           setselectedslottime("");
           setTransactionId("");
-          setLoading(false);
         } else {
           toast({
             title: "error",
@@ -2843,7 +2813,6 @@ const AppointmentBooking = () => {
             variant: "error",
             duration: 4000,
           });
-          setLoading(false);
         }
       } else {
         // setShowDialog(false);
@@ -2874,9 +2843,6 @@ const AppointmentBooking = () => {
     setShowDialog(false);
     setMemberHasError([]);
     setmembercount(0);
-    setIsCheckingEmail(false);
-    setEmailtxnMessage("");
-    setEmailerrorMessage("");
     // Reset self form
     setFormData({
       patientName: "",
@@ -3086,83 +3052,6 @@ const AppointmentBooking = () => {
     return nextMonth > maxDate;
   };
 
-  const emailvalidatefunction = async (value: string) => {
-    // 🧹 Reset before validation
-    setEmailtxnMessage("");
-    setEmailerrorMessage("");
-
-    if (!value || !value.trim()) {
-      setEmailerrorMessage("Email is required.");
-      return;
-    }
-
-    const email = value.trim().toLowerCase();
-
-    // 1️⃣ Must contain '@'
-    if (!email.includes("@")) {
-      setEmailerrorMessage("Missing '@' in email.");
-      return;
-    }
-
-    const [localPart, domainPart] = email.split("@");
-
-    // 2️⃣ Validate local part
-    if (!localPart || localPart.length < 2) {
-      setEmailerrorMessage("Invalid part before '@'.");
-      return;
-    }
-
-    if (localPart.startsWith(".") || localPart.endsWith(".")) {
-      setEmailerrorMessage("cannot start or end with a dot.");
-      return;
-    }
-
-    if (localPart.includes("..")) {
-      setEmailerrorMessage("cannot contain consecutive dots.");
-      return;
-    }
-
-    if (localPart.startsWith("www")) {
-      setEmailerrorMessage("cannot start with 'www'.");
-      return;
-    }
-
-    // 3️⃣ Validate domain part
-    if (!domainPart || !domainPart.includes(".")) {
-      setEmailerrorMessage("Domain must contain a dot (e.g., gmail.com).");
-      return;
-    }
-
-    if (domainPart.startsWith(".") || domainPart.endsWith(".")) {
-      setEmailerrorMessage("Domain cannot start or end with a dot.");
-      return;
-    }
-
-    if (domainPart.includes("..")) {
-      setEmailerrorMessage("Domain cannot contain consecutive dots.");
-      return;
-    }
-
-    // 4️⃣ Validate TLD
-    const parts = domainPart.split(".");
-    const tld = parts[parts.length - 1];
-    if (tld.length < 2) {
-      setEmailerrorMessage("Invalid domain extension (e.g., '.com').");
-      return;
-    }
-
-    // 🌀 Simulate async check
-    setIsCheckingEmail(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setEmailtxnMessage("✅ Email looks valid!");
-    } catch {
-      setEmailerrorMessage("Error while checking email.");
-    } finally {
-      setIsCheckingEmail(false);
-    }
-  };
-
   const handleChange = async (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     index?: number
@@ -3197,9 +3086,7 @@ const AppointmentBooking = () => {
       } else {
         setFormData((prev) => ({ ...prev, [name]: value }));
       }
-      if (name == "email") {
-        emailvalidatefunction(value);
-      }
+
       setFormData(updatedData);
     } else if (appointmentType === "Group") {
       const isCheckbox = type === "checkbox";
@@ -3235,10 +3122,6 @@ const AppointmentBooking = () => {
         setDebouncedTransactionId(sanitizedValue);
       } else {
         setFormData((prev) => ({ ...prev, [name]: value }));
-      }
-
-      if (name == "email") {
-        emailvalidatefunction(value);
       }
 
       setMembers(updatedMembers);
@@ -4404,28 +4287,30 @@ const AppointmentBooking = () => {
                           </div>
                         )}
 
-                      {availablemembercount > 1 && selectedDate && (
-                        <div className="row g-2 align-items-center">
-                          <div className="col-12 col-md">
-                            <div className="d-flex flex-wrap align-items-center">
-                              <span className="text-danger me-2">
-                                {selectedDate?.toLocaleDateString("en-US", {
-                                  weekday: "long",
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                })}{" "}
-                                - This date is only available for{" "}
-                                {availablemembercount}{" "}
-                                {availablemembercount === 1
-                                  ? "member"
-                                  : "members"}{" "}
-                                Choose another date .
-                              </span>
+
+                        {availablemembercount > 1 &&
+                        selectedDate && (
+                          <div className="row g-2 align-items-center">
+                            <div className="col-12 col-md">
+                              <div className="d-flex flex-wrap align-items-center">
+                                <span className="text-danger me-2">
+                                  {selectedDate?.toLocaleDateString("en-US", {
+                                    weekday: "long",
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                  })}{" "}
+                                  - This date is only available for{" "}
+                                  {availablemembercount}{" "}
+                                  {availablemembercount === 1
+                                    ? "member"
+                                    : "members"}{" "}
+                                  Choose another date .
+                                </span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      )}
+                        )}
                     </div>
                   )}
                 </div>
@@ -4693,7 +4578,7 @@ const AppointmentBooking = () => {
           >
             <div className="modal-dialog modal-lg modal-dialog-centered">
               <div
-                className="modal-content position-relative"
+                className="modal-content"
                 style={{
                   maxHeight: "1200px",
                   height: "600px",
@@ -4704,73 +4589,6 @@ const AppointmentBooking = () => {
                     : "translateY(-20px)",
                 }}
               >
-                {loading3 && (
-                  <div
-                    className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center"
-                    style={{
-                      background: "rgba(255,255,255,0.7)",
-                      backdropFilter: "blur(5px)",
-                      zIndex: 10,
-                    }}
-                  >
-                    <div
-                      className="spinner-border text-primary"
-                      role="status"
-                    ></div>
-                    <p className="mt-3 fw-bold text-dark">Validating...</p>
-                  </div>
-                )}
-
-                {/* ❌ Error message box */}
-                {errorMessage1 && (
-                  <div
-                    className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center"
-                    style={{
-                      background: "rgba(255,255,255,0.8)",
-                      backdropFilter: "blur(4px)",
-                      zIndex: 20,
-                    }}
-                  >
-                    <div
-                      className="p-4 rounded shadow bg-white text-center"
-                      style={{ minWidth: "300px" }}
-                    >
-                      {/* <h5 className="text-danger mb-3">Duplicate Found</h5> */}
-
-                      <p className="text-dark mb-4">{errorMessage1}</p>
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => {
-                          setErrorMessage1("");
-                          setLoading3(false);
-                          setShowDialog(false);
-                          clear(); // 🔁 Reset on click
-                        }}
-                      >
-                        OK
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* {successmessage && (
-                  <div
-                    className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center"
-                    style={{
-                      background: "rgba(255,255,255,0.8)",
-                      backdropFilter: "blur(4px)",
-                      zIndex: 20,
-                    }}
-                  >
-                    <div
-                      className="p-4 rounded shadow bg-white text-center"
-                      style={{ minWidth: "300px" }}
-                    >
-                      <h5 className="text-success mb-3">Proceed....</h5>
-                    </div>
-                  </div>
-                )} */}
-
                 <div className="modal-header justify-content-between">
                   <h1
                     style={{ fontSize: "30px", fontWeight: "bold" }}
@@ -5351,29 +5169,10 @@ const AppointmentBooking = () => {
                                                   autoComplete="off"
                                                 />
                                               </div>
-
                                               {formErrors[`email_${i}`] && (
                                                 <small className="text-danger mt-1 d-block text-end">
                                                   eg: example123@gmail.com
                                                 </small>
-                                              )}
-                                              {isCheckingEmail && (
-                                                <div className="text-primary mt-1">
-                                                  <span className="spinner-border spinner-border-sm me-2"></span>
-                                                  Checking Email Validation...
-                                                </div>
-                                              )}
-
-                                              {/* Success */}
-                                              {EmailtxnMessage && (
-                                                <div className="valid-feedback d-block">
-                                                  {EmailtxnMessage}
-                                                </div>
-                                              )}
-                                              {EmailerrorMessage && (
-                                                <div className="invalid-feedback d-block">
-                                                  {EmailerrorMessage}
-                                                </div>
                                               )}
                                             </div>
 
@@ -5639,24 +5438,6 @@ const AppointmentBooking = () => {
                                   <small className="text-danger mt-1 d-block text-end">
                                     eg: example@gmail.com
                                   </small>
-                                )}
-                                {isCheckingEmail && (
-                                  <div className="text-primary mt-1">
-                                    <span className="spinner-border spinner-border-sm me-2"></span>
-                                    Checking Email Validation...
-                                  </div>
-                                )}
-
-                                {/* Success */}
-                                {EmailtxnMessage && (
-                                  <div className="valid-feedback d-block">
-                                    {EmailtxnMessage}
-                                  </div>
-                                )}
-                                {EmailerrorMessage && (
-                                  <div className="invalid-feedback d-block">
-                                    {EmailerrorMessage}
-                                  </div>
                                 )}
                               </div>
 
@@ -6239,7 +6020,7 @@ const AppointmentBooking = () => {
                       },
                       {
                         label: "Date",
-                        value: appicantResdata?.date,
+                          value: appicantResdata?.date,
                       },
                       { label: "Time", value: appicantResdata.time },
                       { label: "Reference", value: appicantResdata.reference },
