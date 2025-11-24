@@ -95,7 +95,29 @@ export default function Hero() {
   const [appointmentCancelBtn, setAppointmentCancelBtn] = useState(false);
   const [selectedApplicants, setSelectedApplicants] = useState<any[]>([]);
   console.log("selectedApplicants :", selectedApplicants);
+  const [showFastTrackModal, setShowFastTrackModal] = useState<boolean>(false);
+  const [fastTrackSearchType, setFastTrackSearchType] =
+    useState<string>("referenceId");
 
+  const [fastTrackSearchValue, setFastTrackSearchValue] = useState<string>("");
+  const [fastTrackContactValue, setFastTrackContactValue] =
+    useState<string>("");
+  const [fastTrackErrors, setFastTrackErrors] = useState<{
+    searchValue?: string;
+    contactValue?: string;
+  }>({});
+
+  const [isLoadingApplicantData, setIsLoadingApplicantData] =
+    useState<boolean>(false);
+  const [fasttrackapplicantdata, setfasttrackapplicantdata] = useState<any>({});
+  const [showTemplateModal, setShowTemplateModal] = useState<boolean>(false);
+  const [formTemplates, setFormTemplates] = useState<FormTemplate[]>([]);
+  const [currentTemplateIndex, setCurrentTemplateIndex] = useState<number>(0);
+  const [completedTemplates, setCompletedTemplates] = useState<number[]>([]);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState<boolean>(false);
+  const [selectedFastTrackapplicants, setselectedFastTrackapplicants] =
+    useState({});
+  const [isfatstrackotpvisible, setisfatstrackotpvisible] = useState(false);
   const [errors, setErrors] = useState<{
     searchValue?: string;
     contactValue?: string;
@@ -103,10 +125,7 @@ export default function Hero() {
   const [successModule, setsuccessModule] = useState(false);
   const [appicantResdata, setAppicantResdata] = useState<ApplicantResData>({});
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  // const handleTrackBooking = () => {
-  //   setOpenModal(false);
-  // };
-
+  const [consentFormData, setconsentFormData] = useState<any>({});
   useEffect(() => {
     if (!resendDisabled) return;
 
@@ -356,14 +375,22 @@ export default function Hero() {
     }
   };
 
-  const handleValidateOtp = async () => {
+  const handleValidateOtp = async (otptype?: any) => {
     console.log("otpButtontype:", otpButtontype);
+    let finalotptype;
+
+    if (otptype) {
+      finalotptype = otptype;
+    } else {
+      finalotptype =
+        otpButtontype === "Reschedule" ? "RescheduleOTP" : "CancelOTP";
+    }
 
     const payload = {
       phone_number: appointmentData[0]?.contact_number,
       applicant_number: appointmentData[0]?.applicant_number,
       otp: otp.join(""), // Combine the 6 digits
-      otp_type: otpButtontype === "Reschedule" ? "RescheduleOTP" : "CancelOTP",
+      otp_type: finalotptype,
     };
     console.log(payload);
 
@@ -382,6 +409,19 @@ export default function Hero() {
 
         setsuccessmsg(res.data.message);
         setTimerVisible(false);
+        if (otptype == "FastTrackOTP") {
+          localStorage.setItem("consentform", JSON.stringify(consentFormData));
+          navigate("/ConsentForm");
+
+          console.log("55555", consentFormData);
+
+          toast({
+            title: "Success",
+            description: "Applicant details loaded successfully!",
+            variant: "success",
+            duration: 4000,
+          });
+        }
       } else {
         showOtpError(res.data.message || "Invalid OTP");
 
@@ -1004,134 +1044,401 @@ export default function Hero() {
                 Your appointment information and options
               </DialogDescription>
             </DialogHeader>
-
-            {appointmentType === "Group"
-              ? appointmentData.length > 0 && (
-                  <div className="table-responsive">
-                    {/* === Original Appointments Table === */}
-                    <table className="table table-bordered text-center align-middle">
-                      <thead className="table-light">
-                        <tr>
-                          <th>Select</th>
-                          <th>ID</th>
-                          <th>Name</th>
-                          <th>Passport Number</th>
-                          <th>Date</th>
-                          <th>Time</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {appointmentData.map((item, index) => (
-                          <tr key={`original-${index}`}>
-                            <td>
-                              <input
-                                type="checkbox"
-                                value={item.applicant_number}
-                                checked={selectedApplicants.some(
-                                  (a) =>
-                                    a.applicant_number === item.applicant_number
-                                )}
-                                onChange={() => handleCheckboxToggle(item)}
-                              />
-                            </td>
-                            <td>{item.applicant_number}</td>
-                            <td>{item.patient_name}</td>
-                            <td>{item.passport_number}</td>
-                            <td>
-                              {new Date(item.date_booked).toLocaleDateString(
-                                "en-US",
-                                {
-                                  weekday: "short",
-                                  year: "numeric",
-                                  month: "short",
-                                  day: "numeric",
-                                }
-                              )}
-                            </td>
-                            <td>{item.booked_time}</td>
+            {!isfatstrackotpvisible &&
+              (appointmentType === "Group"
+                ? appointmentData.length > 0 && (
+                    <div className="table-responsive">
+                      {/* === Original Appointments Table === */}
+                      <table className="table table-bordered text-center align-middle">
+                        <thead className="table-light">
+                          <tr>
+                            <th>Select</th>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Passport Number</th>
+                            <th>Date</th>
+                            <th>Time</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          {appointmentData.map((item, index) => (
+                            <tr key={`original-${index}`}>
+                              <td>
+                                <input
+                                  type="checkbox"
+                                  value={item.applicant_number}
+                                  checked={selectedApplicants.some(
+                                    (a) =>
+                                      a.applicant_number ===
+                                      item.applicant_number
+                                  )}
+                                  onChange={() => handleCheckboxToggle(item)}
+                                />
+                              </td>
+                              <td>{item.applicant_number}</td>
+                              <td>{item.patient_name}</td>
+                              <td>{item.passport_number}</td>
+                              <td>
+                                {new Date(item.date_booked).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    weekday: "short",
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                  }
+                                )}
+                              </td>
+                              <td>{item.booked_time}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
 
-                    {/* === Rescheduled Appointments Table === */}
-                    {newappointmentSlot?.length > 0 && (
-                      <>
-                        <div className="mt-4 mb-2 text-start font-semibold text-blue-600">
-                          Reschedule Appointment Details
+                      {/* === Rescheduled Appointments Table === */}
+                      {newappointmentSlot?.length > 0 && (
+                        <>
+                          <div className="mt-4 mb-2 text-start font-semibold text-blue-600">
+                            Reschedule Appointment Details
+                          </div>
+
+                          <table className="table table-bordered text-center align-middle bg-gray-50">
+                            <thead className="table-light">
+                              <tr>
+                                <th>S.No.</th>
+                                <th>Name</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {newappointmentSlot.map(
+                                (newitem, index) =>
+                                  Array.isArray(newitem.slot_booking) &&
+                                  newitem.slot_booking.map(
+                                    (slot: any, sIdx: any) => (
+                                      <tr key={`new-${index}-${sIdx}`}>
+                                        <td>{index + 1}</td>
+                                        <td>
+                                          {newitem.fullname ||
+                                            newitem.patient_name}
+                                        </td>
+                                        <td>
+                                          {new Date(
+                                            slot.date_booked
+                                          ).toLocaleDateString("en-US", {
+                                            weekday: "short",
+                                            year: "numeric",
+                                            month: "short",
+                                            day: "numeric",
+                                          })}
+                                        </td>
+                                        <td>{slot.booked_time}</td>
+                                      </tr>
+                                    )
+                                  )
+                              )}
+                            </tbody>
+                          </table>
+                        </>
+                      )}
+
+                      {/* ACTION SECTION */}
+                      {!otpVisible ? (
+                        selectedApplicants.length > 0 &&
+                        selectedApplicants.every(
+                          (item) => parseInt(item.booking_status) === 1
+                        ) && (
+                          <div className="flex justify-between gap-2 pt-4">
+                            <Button
+                              variant="outline"
+                              className="w-full"
+                              onClick={() =>
+                                handleRescheduleClick(selectedApplicants)
+                              }
+                            >
+                              <RefreshCcw className="w-4 h-4 mr-1" />
+                              Reschedule
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              className="w-full"
+                              onClick={handlecancelAppointmentDetails}
+                            >
+                              <X className="w-4 h-4 mr-1" />
+                              Cancel
+                            </Button>
+                          </div>
+                        )
+                      ) : (
+                        <>
+                          <div>
+                            <p className="otpSubheading">
+                              We’ve sent a 6-digit code to{" "}
+                              {appointmentData[0]?.contact_number}
+                            </p>
+
+                            <div className="inputContainer">
+                              {otp.map((digit, i) => (
+                                <input
+                                  key={i}
+                                  type="text"
+                                  inputMode="numeric"
+                                  maxLength={1}
+                                  pattern="\d*"
+                                  value={digit}
+                                  onChange={(e) => handleChange(e, i)}
+                                  onKeyDown={(e) => handleKeyDown(e, i)}
+                                  className={`otp-input ${
+                                    otpErrorActive ? "error" : ""
+                                  }`}
+                                  disabled={appointmentCancelBtn}
+                                />
+                              ))}
+                            </div>
+                            {timerVisible && (
+                              <p className="countdown-timer">
+                                ⏳ OTP expires in:{" "}
+                                <strong>{formatTimer()}</strong>
+                              </p>
+                            )}
+                            {otpError && (
+                              <div className="otp-error">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="error-icon"
+                                  viewBox="0 0 20 20"
+                                  fill="red"
+                                  width="20"
+                                  height="20"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-5h2v2h-2v-2zm0-6h2v5h-2V7z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                                <span>{otpError}</span>
+                              </div>
+                            )}
+                            {successmsg && (
+                              <div className="otp-success">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="success-icon"
+                                  viewBox="0 0 20 20"
+                                  fill="green"
+                                  width="20"
+                                  height="20"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                                <span>{successmsg}</span>
+                              </div>
+                            )}
+
+                            <button
+                              className="verifyButton"
+                              onClick={handleValidateOtp}
+                            >
+                              Verify
+                            </button>
+
+                            <p className="resendNote">
+                              Didn’t receive code?
+                              <button
+                                type="button"
+                                className="resendBtn"
+                                disabled={resendDisabled}
+                                onClick={handleResendOtp}
+                              >
+                                Resend Code
+                              </button>
+                            </p>
+                          </div>
+
+                          <div className="flex justify-between gap-2 pt-3">
+                            <Button
+                              variant="outline"
+                              className="w-full"
+                              onClick={
+                                otpButtontype === "Reschedule"
+                                  ? () => {
+                                      localStorage.removeItem("appointments");
+                                      localStorage.removeItem("Newslot");
+                                      navigate(
+                                        `${environment.BASE_PATH}AppointmentBooking`
+                                      );
+                                    }
+                                  : () => {
+                                      localStorage.removeItem("appointments");
+                                      localStorage.removeItem("Newslot");
+                                      setOtpVisible(false);
+                                    }
+                              }
+                            >
+                              Back
+                            </Button>
+                            {otpButtontype === "Reschedule" ? (
+                              <Button
+                                className="w-full bg-orange-500 text-white font-semibold"
+                                // disabled={!/^\d{6}$/.test(otp)}
+                                onClick={() =>
+                                  handleConfirmReschedule(selectedApplicants)
+                                }
+                                disabled={!appointmentCancelBtn}
+                              >
+                                Confirm Reschedule
+                              </Button>
+                            ) : (
+                              <Button
+                                className="w-full bg-orange-500 text-white font-semibold"
+                                disabled={!appointmentCancelBtn}
+                                onClick={() =>
+                                  handleCancelAppointment(selectedApplicants)
+                                }
+                              >
+                                Cancel Appointment
+                              </Button>
+                            )}
+                          </div>
+
+                          {/* <div className="text-center text-sm underline text-muted-foreground hover:text-black cursor-pointer pt-2">
+                          Resend OTP
+                        </div> */}
+                        </>
+                      )}
+                    </div>
+                  )
+                : appointmentData.map((item, index) => (
+                    <div key={index} className="space-y-4 mt-2 text-sm">
+                      <div className="flex justify-between items-center">
+                        <div className="font-semibold">Appointment Details</div>
+                        <div className="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
+                          <CheckCircle className="w-4 h-4" />{" "}
+                          {bookingStatusMap[parseInt(item.booking_status)] ||
+                            "Unknown"}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-gray-500">Date</div>
+                          <div className="font-medium">
+                            {new Date(item.date_booked).toLocaleDateString(
+                              "en-US",
+                              {
+                                weekday: "short",
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                              }
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500">Time</div>
+                          <div className="font-medium">{item.booked_time}</div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <div className="text-gray-500">Applicant No</div>
+                          <div className="font-medium">
+                            {item.applicant_number}
+                          </div>
                         </div>
 
-                        <table className="table table-bordered text-center align-middle bg-gray-50">
-                          <thead className="table-light">
-                            <tr>
-                              <th>S.No.</th>
-                              <th>Name</th>
-                              <th>Date</th>
-                              <th>Time</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {newappointmentSlot.map(
-                              (newitem, index) =>
-                                Array.isArray(newitem.slot_booking) &&
+                        <div>
+                          <div className="text-gray-500">Mobile Number</div>
+                          <div className="font-medium">
+                            {item.contact_number}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="text-gray-500">Examination Type</div>
+                        <div className="font-medium">{item.service__name}</div>
+                      </div>
+
+                      {newappointmentSlot && newappointmentSlot.length > 0 && (
+                        <>
+                          <div className="flex justify-between items-center">
+                            <div className="font-semibold">
+                              Reschedule Appointment Details
+                            </div>
+                          </div>
+
+                          {newappointmentSlot.map((newitem, index) => (
+                            <div key={index}>
+                              {Array.isArray(newitem.slot_booking) &&
                                 newitem.slot_booking.map(
                                   (slot: any, sIdx: any) => (
-                                    <tr key={`new-${index}-${sIdx}`}>
-                                      <td>{index + 1}</td>
-                                      <td>
-                                        {newitem.fullname ||
-                                          newitem.patient_name}
-                                      </td>
-                                      <td>
-                                        {new Date(
-                                          slot.date_booked
-                                        ).toLocaleDateString("en-US", {
-                                          weekday: "short",
-                                          year: "numeric",
-                                          month: "short",
-                                          day: "numeric",
-                                        })}
-                                      </td>
-                                      <td>{slot.booked_time}</td>
-                                    </tr>
+                                    <div
+                                      key={sIdx}
+                                      style={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                      }}
+                                    >
+                                      <div>
+                                        <div className="text-gray-500">
+                                          Date
+                                        </div>
+                                        <div className="font-medium">
+                                          {new Date(
+                                            slot.date_booked
+                                          ).toLocaleDateString("en-US", {
+                                            weekday: "short",
+                                            year: "numeric",
+                                            month: "short",
+                                            day: "numeric",
+                                          })}
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <div className="text-gray-500">
+                                          Time
+                                        </div>
+                                        <div className="font-medium">
+                                          {slot.booked_time}
+                                        </div>
+                                      </div>
+                                    </div>
                                   )
-                                )
-                            )}
-                          </tbody>
-                        </table>
-                      </>
-                    )}
-
-                    {/* ACTION SECTION */}
-                    {!otpVisible ? (
-                      selectedApplicants.length > 0 &&
-                      selectedApplicants.every(
-                        (item) => parseInt(item.booking_status) === 1
-                      ) && (
-                        <div className="flex justify-between gap-2 pt-4">
-                          <Button
-                            variant="outline"
-                            className="w-full"
-                            onClick={() =>
-                              handleRescheduleClick(selectedApplicants)
-                            }
-                          >
-                            <RefreshCcw className="w-4 h-4 mr-1" />
-                            Reschedule
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            className="w-full"
-                            onClick={handlecancelAppointmentDetails}
-                          >
-                            <X className="w-4 h-4 mr-1" />
-                            Cancel
-                          </Button>
-                        </div>
-                      )
-                    ) : (
-                      <>
-                        <div>
+                                )}
+                            </div>
+                          ))}
+                        </>
+                      )}
+                      {!otpVisible ? (
+                        parseInt(item.booking_status) === 1 ? (
+                          <div className="flex justify-between gap-2 pt-4">
+                            <Button
+                              variant="outline"
+                              className="w-full"
+                              onClick={() => handleRescheduleClick(item)}
+                            >
+                              <RefreshCcw className="w-4 h-4 mr-1" />
+                              Reschedule
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              className="w-full"
+                              onClick={handlecancelAppointmentDetails}
+                            >
+                              <X className="w-4 h-4 mr-1" />
+                              Cancel
+                            </Button>
+                          </div>
+                        ) : null
+                      ) : (
+                        <>
                           <p className="otpSubheading">
                             We’ve sent a 6-digit code to{" "}
                             {appointmentData[0]?.contact_number}
@@ -1218,326 +1525,168 @@ export default function Hero() {
                               Resend Code
                             </button>
                           </p>
-                        </div>
 
-                        <div className="flex justify-between gap-2 pt-3">
-                          <Button
-                            variant="outline"
-                            className="w-full"
-                            onClick={
-                              otpButtontype === "Reschedule"
-                                ? () => {
-                                    localStorage.removeItem("appointments");
-                                    localStorage.removeItem("Newslot");
-                                    navigate(
-                                      `${environment.BASE_PATH}AppointmentBooking`
-                                    );
-                                  }
-                                : () => {
-                                    localStorage.removeItem("appointments");
-                                    localStorage.removeItem("Newslot");
-                                    setOtpVisible(false);
-                                  }
-                            }
-                          >
-                            Back
-                          </Button>
-                          {otpButtontype === "Reschedule" ? (
+                          <div className="flex justify-between gap-2 pt-3">
                             <Button
-                              className="w-full bg-orange-500 text-white font-semibold"
-                              // disabled={!/^\d{6}$/.test(otp)}
-                              onClick={() =>
-                                handleConfirmReschedule(selectedApplicants)
-                              }
-                              disabled={!appointmentCancelBtn}
-                            >
-                              Confirm Reschedule
-                            </Button>
-                          ) : (
-                            <Button
-                              className="w-full bg-orange-500 text-white font-semibold"
-                              disabled={!appointmentCancelBtn}
-                              onClick={() =>
-                                handleCancelAppointment(selectedApplicants)
+                              variant="outline"
+                              className="w-full"
+                              onClick={
+                                otpButtontype === "Reschedule"
+                                  ? () => {
+                                      localStorage.removeItem("appointments");
+                                      navigate(
+                                        `${environment.BASE_PATH}AppointmentBooking`
+                                      );
+                                    }
+                                  : () => {
+                                      localStorage.removeItem("appointments");
+                                      setOtpVisible(false);
+                                    }
                               }
                             >
-                              Cancel Appointment
+                              Back
                             </Button>
-                          )}
-                        </div>
+                            {otpButtontype === "Reschedule" ? (
+                              <Button
+                                className="w-full bg-orange-500 text-white font-semibold"
+                                // disabled={!/^\d{6}$/.test(otp)}
+                                onClick={() => handleConfirmReschedule(item)}
+                                disabled={!appointmentCancelBtn}
+                              >
+                                Confirm Reschedule
+                              </Button>
+                            ) : (
+                              <Button
+                                className={`w-full font-semibold transition duration-300 ${
+                                  appointmentCancelBtn
+                                    ? "bg-orange-500 text-white cursor-pointer hover:bg-orange-600"
+                                    : "bg-gray-400 text-white cursor-not-allowed"
+                                }`}
+                                disabled={!appointmentCancelBtn}
+                                onClick={() => handleCancelAppointment(item)}
+                              >
+                                Cancel Appointment
+                              </Button>
+                            )}
+                          </div>
 
-                        {/* <div className="text-center text-sm underline text-muted-foreground hover:text-black cursor-pointer pt-2">
+                          {/* <div className="text-center text-sm underline text-muted-foreground hover:text-black cursor-pointer pt-2">
                           Resend OTP
                         </div> */}
-                      </>
-                    )}
-                  </div>
-                )
-              : appointmentData.map((item, index) => (
-                  <div key={index} className="space-y-4 mt-2 text-sm">
-                    <div className="flex justify-between items-center">
-                      <div className="font-semibold">Appointment Details</div>
-                      <div className="bg-green-100 text-green-600 px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
-                        <CheckCircle className="w-4 h-4" />{" "}
-                        {bookingStatusMap[parseInt(item.booking_status)] ||
-                          "Unknown"}
+                        </>
+                      )}
+
+                      <div
+                        className="text-center text-sm text-muted-foreground pt-4 underline cursor-pointer hover:text-black"
+                        onClick={moveToTracking}
+                      >
+                        Track Another Booking
                       </div>
                     </div>
+                  )))}
+            {isfatstrackotpvisible && (
+              <>
+                <p className="otpSubheading">
+                  We’ve1 sent a 6-digit code to{" "}
+                  {appointmentData[0]?.contact_number}
+                </p>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <div className="text-gray-500">Date</div>
-                        <div className="font-medium">
-                          {new Date(item.date_booked).toLocaleDateString(
-                            "en-US",
-                            {
-                              weekday: "short",
-                              year: "numeric",
-                              month: "short",
-                              day: "numeric",
-                            }
-                          )}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-gray-500">Time</div>
-                        <div className="font-medium">{item.booked_time}</div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <div className="text-gray-500">Applicant No</div>
-                        <div className="font-medium">
-                          {item.applicant_number}
-                        </div>
-                      </div>
-
-                      <div>
-                        <div className="text-gray-500">Mobile Number</div>
-                        <div className="font-medium">{item.contact_number}</div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="text-gray-500">Examination Type</div>
-                      <div className="font-medium">{item.service__name}</div>
-                    </div>
-
-                    {newappointmentSlot && newappointmentSlot.length > 0 && (
-                      <>
-                        <div className="flex justify-between items-center">
-                          <div className="font-semibold">
-                            Reschedule Appointment Details
-                          </div>
-                        </div>
-
-                        {newappointmentSlot.map((newitem, index) => (
-                          <div key={index}>
-                            {Array.isArray(newitem.slot_booking) &&
-                              newitem.slot_booking.map(
-                                (slot: any, sIdx: any) => (
-                                  <div
-                                    key={sIdx}
-                                    style={{
-                                      display: "flex",
-                                      justifyContent: "space-between",
-                                    }}
-                                  >
-                                    <div>
-                                      <div className="text-gray-500">Date</div>
-                                      <div className="font-medium">
-                                        {new Date(
-                                          slot.date_booked
-                                        ).toLocaleDateString("en-US", {
-                                          weekday: "short",
-                                          year: "numeric",
-                                          month: "short",
-                                          day: "numeric",
-                                        })}
-                                      </div>
-                                    </div>
-                                    <div>
-                                      <div className="text-gray-500">Time</div>
-                                      <div className="font-medium">
-                                        {slot.booked_time}
-                                      </div>
-                                    </div>
-                                  </div>
-                                )
-                              )}
-                          </div>
-                        ))}
-                      </>
-                    )}
-                    {!otpVisible ? (
-                      parseInt(item.booking_status) === 1 ? (
-                        <div className="flex justify-between gap-2 pt-4">
-                          <Button
-                            variant="outline"
-                            className="w-full"
-                            onClick={() => handleRescheduleClick(item)}
-                          >
-                            <RefreshCcw className="w-4 h-4 mr-1" />
-                            Reschedule
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            className="w-full"
-                            onClick={handlecancelAppointmentDetails}
-                          >
-                            <X className="w-4 h-4 mr-1" />
-                            Cancel
-                          </Button>
-                        </div>
-                      ) : null
-                    ) : (
-                      <>
-                        <p className="otpSubheading">
-                          We’ve sent a 6-digit code to{" "}
-                          {appointmentData[0]?.contact_number}
-                        </p>
-
-                        <div className="inputContainer">
-                          {otp.map((digit, i) => (
-                            <input
-                              key={i}
-                              type="text"
-                              inputMode="numeric"
-                              maxLength={1}
-                              pattern="\d*"
-                              value={digit}
-                              onChange={(e) => handleChange(e, i)}
-                              onKeyDown={(e) => handleKeyDown(e, i)}
-                              className={`otp-input ${
-                                otpErrorActive ? "error" : ""
-                              }`}
-                              disabled={appointmentCancelBtn}
-                            />
-                          ))}
-                        </div>
-                        {timerVisible && (
-                          <p className="countdown-timer">
-                            ⏳ OTP expires in: <strong>{formatTimer()}</strong>
-                          </p>
-                        )}
-                        {otpError && (
-                          <div className="otp-error">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="error-icon"
-                              viewBox="0 0 20 20"
-                              fill="red"
-                              width="20"
-                              height="20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-5h2v2h-2v-2zm0-6h2v5h-2V7z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <span>{otpError}</span>
-                          </div>
-                        )}
-                        {successmsg && (
-                          <div className="otp-success">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              className="success-icon"
-                              viewBox="0 0 20 20"
-                              fill="green"
-                              width="20"
-                              height="20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            <span>{successmsg}</span>
-                          </div>
-                        )}
-
-                        <button
-                          className="verifyButton"
-                          onClick={handleValidateOtp}
-                        >
-                          Verify
-                        </button>
-
-                        <p className="resendNote">
-                          Didn’t receive code?
-                          <button
-                            type="button"
-                            className="resendBtn"
-                            disabled={resendDisabled}
-                            onClick={handleResendOtp}
-                          >
-                            Resend Code
-                          </button>
-                        </p>
-
-                        <div className="flex justify-between gap-2 pt-3">
-                          <Button
-                            variant="outline"
-                            className="w-full"
-                            onClick={
-                              otpButtontype === "Reschedule"
-                                ? () => {
-                                    localStorage.removeItem("appointments");
-                                    navigate(
-                                      `${environment.BASE_PATH}AppointmentBooking`
-                                    );
-                                  }
-                                : () => {
-                                    localStorage.removeItem("appointments");
-                                    setOtpVisible(false);
-                                  }
-                            }
-                          >
-                            Back
-                          </Button>
-                          {otpButtontype === "Reschedule" ? (
-                            <Button
-                              className="w-full bg-orange-500 text-white font-semibold"
-                              // disabled={!/^\d{6}$/.test(otp)}
-                              onClick={() => handleConfirmReschedule(item)}
-                              disabled={!appointmentCancelBtn}
-                            >
-                              Confirm Reschedule
-                            </Button>
-                          ) : (
-                            <Button
-                              className={`w-full font-semibold transition duration-300 ${
-                                appointmentCancelBtn
-                                  ? "bg-orange-500 text-white cursor-pointer hover:bg-orange-600"
-                                  : "bg-gray-400 text-white cursor-not-allowed"
-                              }`}
-                              disabled={!appointmentCancelBtn}
-                              onClick={() => handleCancelAppointment(item)}
-                            >
-                              Cancel Appointment
-                            </Button>
-                          )}
-                        </div>
-
-                        {/* <div className="text-center text-sm underline text-muted-foreground hover:text-black cursor-pointer pt-2">
-                          Resend OTP
-                        </div> */}
-                      </>
-                    )}
-
-                    <div
-                      className="text-center text-sm text-muted-foreground pt-4 underline cursor-pointer hover:text-black"
-                      onClick={moveToTracking}
+                <div className="inputContainer">
+                  {otp.map((digit, i) => (
+                    <input
+                      key={i}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      pattern="\d*"
+                      value={digit}
+                      onChange={(e) => handleChange(e, i)}
+                      onKeyDown={(e) => handleKeyDown(e, i)}
+                      className={`otp-input ${otpErrorActive ? "error" : ""}`}
+                      disabled={appointmentCancelBtn}
+                    />
+                  ))}
+                </div>
+                {timerVisible && (
+                  <p className="countdown-timer">
+                    ⏳ OTP expires in: <strong>{formatTimer()}</strong>
+                  </p>
+                )}
+                {otpError && (
+                  <div className="otp-error">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="error-icon"
+                      viewBox="0 0 20 20"
+                      fill="red"
+                      width="20"
+                      height="20"
                     >
-                      Track Another Booking
-                    </div>
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-5h2v2h-2v-2zm0-6h2v5h-2V7z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>{otpError}</span>
                   </div>
-                ))}
+                )}
+                {successmsg && (
+                  <div className="otp-success">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="success-icon"
+                      viewBox="0 0 20 20"
+                      fill="green"
+                      width="20"
+                      height="20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.707a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>{successmsg}</span>
+                  </div>
+                )}
 
-            {}
+                <button
+                  className="verifyButton"
+                  onClick={() => handleValidateOtp("FastTrackOTP")}
+                >
+                  Verify
+                </button>
+
+                <p className="resendNote">
+                  Didn’t receive code?
+                  <button
+                    type="button"
+                    className="resendBtn"
+                    disabled={resendDisabled}
+                    onClick={() => handleResendOtp}
+                  >
+                    Resend Code
+                  </button>
+                </p>
+
+                <div className="flex justify-between gap-2 pt-3">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      setShowFastTrackModal(false);
+                      setselectedFastTrackapplicants([]);
+                      setAppointmentData([]);
+                      setShowAppointmentModal(false);
+                      setisfatstrackotpvisible(false);
+                    }}
+                  >
+                    Back
+                  </Button>
+                </div>
+              </>
+            )}
           </DialogContent>
         </Dialog>
       )}
@@ -1575,7 +1724,6 @@ export default function Hero() {
               }}
             >
               <div className="position-relative">
-                {/* Header - Compact Blue Gradient */}
                 <div
                   className="p-4 text-white"
                   style={{

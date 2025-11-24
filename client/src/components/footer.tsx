@@ -184,7 +184,7 @@ export default function Footer() {
               <li>
                 <button
                   onClick={() => {
-                    navigate(`${environment.BASE_PATH}AppointmentBooking`);
+                    (`${environment.BASE_PATH}AppointmentBooking`);
                     setTimeout(() => {
                       window.scrollTo({ top: 0, behavior: "smooth" });
                     }, 50);
