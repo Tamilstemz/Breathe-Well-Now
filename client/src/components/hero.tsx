@@ -818,9 +818,6 @@ export default function Hero() {
         setSearchType("");
         setShowFastTrackModal(false);
       } else {
-        localStorage.setItem("consentform", JSON.stringify(consentFormData));
-        navigate("/ConsentForm");
-
         const appointmentData1 = data?.detail[0];
         // const otpdata = {
         //   applicant_number: appointmentData1?.applicant_number,
@@ -847,6 +844,9 @@ export default function Hero() {
         // setShowAppointmentModal(true);
         // setisfatstrackotpvisible(true);
         setconsentFormData(data?.detail[0]);
+
+        localStorage.setItem("consentform", JSON.stringify(data?.detail[0]));
+        navigate("/ConsentForm");
       }
     } catch (error: any) {
       console.log("66666", newErrors);
