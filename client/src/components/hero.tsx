@@ -711,6 +711,119 @@ export default function Hero() {
     }
   };
 
+  const handleStartForms = async () => {
+    setShowFastTrackModal(true);
+  };
+
+  const handleFastTrackSearch = async () => {
+    const newErrors: typeof fastTrackErrors = {};
+
+    console.log("111111", fastTrackSearchValue);
+
+    if (!fastTrackSearchValue.trim()) {
+      newErrors.searchValue = "Applicant No is required.";
+    }
+    console.log("22222", fastTrackContactValue);
+
+    if (!fastTrackContactValue.trim()) {
+      newErrors.contactValue = "Mobile Number is required.";
+    } else if (!/^\d{10}$/.test(fastTrackContactValue)) {
+      newErrors.contactValue = "Enter a valid 10-digit mobile number.";
+    }
+
+    console.log("33333", newErrors);
+
+    setFastTrackErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) return;
+
+    setIsLoadingApplicantData(true);
+
+    try {
+      console.log("44444", fastTrackSearchType);
+
+      const getAppointment = "yes";
+      const formData = new FormData();
+      formData.append("application", "1");
+      formData.append("getAppointment", getAppointment);
+      formData.append("searchType", fastTrackSearchType);
+      formData.append("searchValue", fastTrackSearchValue);
+      formData.append("contactType", contactType);
+      formData.append("contactValue", fastTrackContactValue);
+      formData.append("fasttrack", true);
+      const response = await fetch(API.APPOINMENT_REPORT_API, {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+      console.log("fast trac status", data.warning);
+      console.log("data :", data);
+
+      if (data.warning) {
+        showToast("error", data.warning);
+        setFastTrackContactValue("");
+        setfasttrackapplicantdata([]);
+        setFastTrackSearchType("");
+        setFastTrackSearchValue("");
+        setContactType("");
+        setSearchType("");
+        setShowFastTrackModal(false);
+      } else if (data.error) {
+        showToast("error", data.error);
+        setFastTrackContactValue("");
+        setfasttrackapplicantdata([]);
+        setFastTrackSearchType("");
+        setFastTrackSearchValue("");
+        setContactType("");
+        setSearchType("");
+        setShowFastTrackModal(false);
+      } else {
+        localStorage.setItem("consentform", JSON.stringify(consentFormData));
+        navigate("/ConsentForm");
+
+        const appointmentData1 = data?.detail[0];
+        // const otpdata = {
+        //   applicant_number: appointmentData1?.applicant_number,
+        //   contact_number: appointmentData1?.contact_number,
+        //   otp_type: "FastTrackOTP",
+        //   center_id: appointmentData1?.center_id,
+        //   newtype: "new",
+        // };
+        // console.log("otpdata :", otpdata);
+
+        // const res1 = await httpClient.post(API.OTP_API, otpdata);
+
+        // toast({
+        //   title: "success",
+        //   description: res1.data.message,
+        //   variant: "success",
+        //   duration: 4000,
+        // });
+
+        // startTimer(); // ✅ Start 5-min timer
+        // setShowFastTrackModal(false);
+        setselectedFastTrackapplicants(data?.detail[0]);
+        setAppointmentData(data?.detail);
+        // setShowAppointmentModal(true);
+        // setisfatstrackotpvisible(true);
+        setconsentFormData(data?.detail[0]);
+      }
+    } catch (error: any) {
+      console.log("66666", newErrors);
+
+      console.error("Error in fast track:", error);
+      toast({
+        title: "Error",
+        description: error,
+        duration: 4000,
+      });
+    } finally {
+      console.log("77777", newErrors);
+
+      setIsLoadingApplicantData(false);
+    }
+  };
+
   return (
     <section
       id="home"

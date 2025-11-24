@@ -2000,10 +2000,11 @@ const AppointmentBooking = () => {
           hasError = true;
         }
 
-        if (index === 0 && !slot_booking.length) {
-          errors[`slot_booking_${index}`] = "Please select a time slot.";
-          hasError = true;
-        }
+      // ✅ NEW — slot required for ALL members
+if (!slot_booking.length || !slot_booking[0]?.booked_time) {
+  newErrors[`slot_booking_${index}`] = "Please select a time slot.";
+  hasError = true;
+}
 
         if (!email.trim() && index === 0) {
           errors[`email_${index}`] = "Email is required.";
@@ -4245,6 +4246,13 @@ console.log(totalAvailable ,"totalAvailable");
                           )}
                         </div>
                       </div>
+                      Selected Date :{" "}
+                      {selectedDate?.toLocaleDateString("en-US", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                      })}{" "}
                       {availablemembercount === 0 && (
                         <div className="row g-2 align-items-center">
                           <div className="col-12 col-md">
@@ -4262,55 +4270,50 @@ console.log(totalAvailable ,"totalAvailable");
                           </div>
                         </div>
                       )}
-
-                      {availablemembercount <= 1 &&
-                        availablemembercount !== 0 && (
-                          <div className="row g-2 align-items-center">
-                            <div className="col-12 col-md">
-                              <div className="d-flex flex-wrap align-items-center">
-                                <span className="text-danger me-2">
-                                  {selectedDate?.toLocaleDateString("en-US", {
-                                    weekday: "long",
-                                    year: "numeric",
-                                    month: "short",
-                                    day: "numeric",
-                                  })}{" "}
-                                  - This date is only available for{" "}
-                                  {availablemembercount}{" "}
-                                  {availablemembercount === 1
-                                    ? "member"
-                                    : "members"}{" "}
-                                  Choose another date .
-                                </span>
-                              </div>
+                      {availablemembercount == 1 && (
+                        <div className="row g-2 align-items-center">
+                          <div className="col-12 col-md">
+                            <div className="d-flex flex-wrap align-items-center">
+                              <span className="text-danger me-2">
+                                {selectedDate?.toLocaleDateString("en-US", {
+                                  weekday: "long",
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                })}{" "}
+                                - This date is only available for{" "}
+                                {availablemembercount}{" "}
+                                {availablemembercount === 1
+                                  ? "member"
+                                  : "members"}{" "}
+                                Choose another date .
+                              </span>
                             </div>
                           </div>
-                        )}
-
-
-                        {availablemembercount > 1 &&
-                        selectedDate && (
-                          <div className="row g-2 align-items-center">
-                            <div className="col-12 col-md">
-                              <div className="d-flex flex-wrap align-items-center">
-                                <span className="text-danger me-2">
-                                  {selectedDate?.toLocaleDateString("en-US", {
-                                    weekday: "long",
-                                    year: "numeric",
-                                    month: "short",
-                                    day: "numeric",
-                                  })}{" "}
-                                  - This date is only available for{" "}
-                                  {availablemembercount}{" "}
-                                  {availablemembercount === 1
-                                    ? "member"
-                                    : "members"}{" "}
-                                  Choose another date .
-                                </span>
-                              </div>
+                        </div>
+                      )}
+                      {/* {availablemembercount > 1 && selectedDate && (
+                        <div className="row g-2 align-items-center">
+                          <div className="col-12 col-md">
+                            <div className="d-flex flex-wrap align-items-center">
+                              <span className="text-danger me-2">
+                                {selectedDate?.toLocaleDateString("en-US", {
+                                  weekday: "long",
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                })}{" "}
+                                - This date is only available for{" "}
+                                {availablemembercount}{" "}
+                                {availablemembercount === 1
+                                  ? "member"
+                                  : "members"}{" "}
+                                Choose another date .
+                              </span>
                             </div>
                           </div>
-                        )}
+                        </div>
+                      )} */}
                     </div>
                   )}
                 </div>

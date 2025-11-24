@@ -1,14 +1,11 @@
-import TemplatePreview, {
-  extractFormData,
-  prefillForm,
-} from "@/components/TemplatePreview";
+import TemplatePreview, { extractFormData } from "@/components/TemplatePreview";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import httpClient from "../../../api/httpClient";
-import { API, environment } from "../../../environment/environment";
+import { API } from "../../../environment/environment";
 
 interface FormTemplate {
   id: number;
@@ -56,12 +53,37 @@ function ApplicantConsentForm() {
     };
     init();
   }, []);
+  useEffect(() => {
+    const init = async () => {
+      const storedData = localStorage.getItem("consentform");
 
-  const fetchFormTemplates = async (applicantData: any) => {
+      console.log("vvvvvvvv?????", storedData);
+
+      if (storedData) {
+        const parsedData = JSON.parse(storedData);
+
+        setTrackApplicantData(parsedData);
+
+        await fetchFormTemplates(parsedData, "filledtemp");
+      }
+    };
+
+    init();
+  }, []);
+
+  const fetchFormTemplates = async (applicantData: any, edittype?: any) => {
     setIsLoadingTemplates(true);
+    let finaledit;
+    if (edittype == "filledtemp") {
+      finaledit = false;
+    } else {
+      finaledit = true;
+    }
+    console.log("finaledit :", finaledit);
+
     try {
       const response = await httpClient.get(
-        `${API.MATSER_CONSENT_FORMS_API}?gender=${applicantData?.gender}&dob=${applicantData?.Applicant_PersonalDetails__dob}&applicant_number=${applicantData?.applicant_number}&edit=true`
+        `${API.MATSER_CONSENT_FORMS_API}?gender=${applicantData?.gender}&dob=${applicantData?.Applicant_PersonalDetails__dob}&applicant_number=${applicantData?.applicant_number}&edit=${finaledit}`
       );
 
       if (response.data && Array.isArray(response.data.templates)) {
@@ -183,19 +205,19 @@ function ApplicantConsentForm() {
     });
   };
 
-  useEffect(() => {
-    if (formTemplates.length > 0 && currentTemplateIndex >= 0) {
-      const templateId = formTemplates[currentTemplateIndex].id;
-      const stored = localStorage.getItem(`filled_template_${templateId}`);
-      if (stored) {
-        const data = JSON.parse(stored);
-        // Small delay to ensure DOM is rendered
-        setTimeout(() => {
-          populateFormData(data);
-        }, 100);
-      }
-    }
-  }, [currentTemplateIndex, formTemplates]);
+  // useEffect(() => {
+  //   if (formTemplates.length > 0 && currentTemplateIndex >= 0) {
+  //     const templateId = formTemplates[currentTemplateIndex].id;
+  //     const stored = localStorage.getItem(`filled_template_${templateId}`);
+  //     if (stored) {
+  //       const data = JSON.parse(stored);
+  //       // Small delay to ensure DOM is rendered
+  //       setTimeout(() => {
+  //         populateFormData(data);
+  //       }, 100);
+  //     }
+  //   }
+  // }, [currentTemplateIndex, formTemplates]);
 
   const ProgressIndicator = () => {
     if (formTemplates.length === 0) return null;
@@ -378,10 +400,10 @@ function ApplicantConsentForm() {
     const counsellorSignatureBlob = await getCanvasBlob("counsellorSignature");
 
     // ✅ Store filled data locally
-    localStorage.setItem(
-      `filled_template_${formTemplates[currentTemplateIndex].id}`,
-      JSON.stringify(templateData)
-    );
+    // localStorage.setItem(
+    //   `filled_template_${formTemplates[currentTemplateIndex].id}`,
+    //   JSON.stringify(templateData)
+    // );
 
     const formData = new FormData();
     formData.append("formtype", String(templateId));
@@ -427,7 +449,15 @@ function ApplicantConsentForm() {
       );
 
       console.log("✅ Template saved:", response.data);
+      const storedData = localStorage.getItem("consentform");
 
+      console.log("vvvvvvvv?????", storedData);
+
+      if (storedData) {
+        const parsedData = JSON.parse(storedData);
+        setTrackApplicantData(parsedData);
+        await fetchFormTemplates(parsedData, "filledtemp");
+      }
       toast({
         title: "Success",
         description: "Form Saved Successfully",
@@ -437,11 +467,11 @@ function ApplicantConsentForm() {
       // ✅ Mark this form as submitted (ENABLE NEXT BUTTON)
       setSubmittedTemplates((prev) => [...prev, currentTemplateIndex]);
 
-      if (currentTemplateIndex < formTemplates.length - 1) {
-        setTimeout(() => {
-          handleNextTemplate();
-        }, 300); // small delay feels natural
-      }
+      // if (currentTemplateIndex < formTemplates.length - 1) {
+      //   setTimeout(() => {
+      //     handleNextTemplate();
+      //   }, 300); // small delay feels natural
+      // }
 
       if (currentTemplateIndex === formTemplates.length - 1) {
         setTimeout(() => {
@@ -487,6 +517,7 @@ function ApplicantConsentForm() {
           // variant: "destructive",
           duration: 4000,
         });
+        setFile(null);
       }
     } catch (error: any) {
       console.error("PDF upload error:", error);
@@ -520,29 +551,29 @@ function ApplicantConsentForm() {
     }
   };
 
-  useEffect(() => {
-    const currentTemplate = formTemplates[currentTemplateIndex];
-    if (!currentTemplate) return;
+  // useEffect(() => {
+  //   const currentTemplate = formTemplates[currentTemplateIndex];
+  //   if (!currentTemplate) return;
 
-    const savedData = localStorage.getItem(
-      `filled_template_${currentTemplate.id}`
-    );
+  //   const savedData = localStorage.getItem(
+  //     `filled_template_${currentTemplate.id}`
+  //   );
 
-    if (savedData) {
-      const parsed = JSON.parse(savedData);
-      console.log(
-        `🔄 Prefilling Template ${currentTemplate.id} with saved data:`,
-        parsed
-      );
+  //   if (savedData) {
+  //     const parsed = JSON.parse(savedData);
+  //     console.log(
+  //       `🔄 Prefilling Template ${currentTemplate.id} with saved data:`,
+  //       parsed
+  //     );
 
-      // Wait for DOM to render before prefilling
-      setTimeout(() => {
-        prefillForm("template-container", parsed);
-      }, 300);
-    } else {
-      console.log(`ℹ️ No saved data for template ${currentTemplate.id}`);
-    }
-  }, [currentTemplateIndex, formTemplates]);
+  //     // Wait for DOM to render before prefilling
+  //     setTimeout(() => {
+  //       prefillForm("template-container", parsed);
+  //     }, 300);
+  //   } else {
+  //     console.log(`ℹ️ No saved data for template ${currentTemplate.id}`);
+  //   }
+  // }, [currentTemplateIndex, formTemplates]);
 
   const handlePrevTemplate = () => {
     if (currentTemplateIndex > 0) setCurrentTemplateIndex((prev) => prev - 1);
@@ -552,9 +583,7 @@ function ApplicantConsentForm() {
     if (currentTemplateIndex < formTemplates.length - 1) {
       setCompletedTemplates((prev) => [...prev, currentTemplateIndex]);
       setCurrentTemplateIndex((prev) => prev + 1);
-    } else {
-      handleCompleteAllTemplates();
-    }
+    } 
   };
 
   const handleCompleteAllTemplates = () => {
@@ -734,7 +763,7 @@ function ApplicantConsentForm() {
             </div>
 
             <div className="bg-white border-t shadow-lg px-6 py-4">
-              <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-2">
+              {/* <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-2">
                 <Button
                   onClick={handlePrevTemplate}
                   disabled={currentTemplateIndex === 0}
@@ -802,7 +831,145 @@ function ApplicantConsentForm() {
                     Complete All Templates
                   </Button>
                 )}
-              </div>
+              </div> */}
+              <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-2">
+  {/* Previous Button */}
+  <Button
+    onClick={handlePrevTemplate}
+    disabled={currentTemplateIndex === 0}
+    style={{
+      background:
+        "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
+      color: "white",
+    }}
+  >
+    <ChevronLeft className="w-4 h-4 mr-2" />
+    Previous
+  </Button>
+
+  {/* Template Count */}
+  <div className="flex items-center gap-2">
+    <span className="text-sm text-gray-600 font-medium">
+      Template {currentTemplateIndex + 1} of {formTemplates.length}
+    </span>
+  </div>
+
+{(() => {
+  const isLast = currentTemplateIndex === formTemplates.length - 1;
+  const isFilled = formTemplates[currentTemplateIndex]?.is_filled;
+  const alreadySubmitted = submittedTemplates.includes(currentTemplateIndex);
+
+  // 🔥 NEW RULE: Check if all templates are filled
+  const allFilled = formTemplates.every((t) => t.is_filled === true);
+
+  // ========================================================
+  // 1️⃣ ALL TEMPLATES FILLED → VIEW MODE (Prev + Next only)
+  // ========================================================
+  if (allFilled) {
+    // Last template → Show Close
+    if (isLast) {
+      return (
+        <Button
+          onClick={() => navigate("/")}
+          style={{
+            background:
+              "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
+            color: "white",
+          }}
+        >
+          Close
+        </Button>
+      );
+    }
+
+    // Not last → Next only
+    return (
+      <Button
+        onClick={handleNextTemplate}
+        style={{
+          background:
+            "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
+          color: "white",
+        }}
+      >
+        Next
+        <ChevronRight className="w-4 h-4 ml-2" />
+      </Button>
+    );
+  }
+
+  // ========================================================
+  // 2️⃣ NORMAL MODE → Submit / Next / Final Submit Logic
+  // ========================================================
+
+  // Last template NOT filled → Final Submit
+  if (isLast && !isFilled && !alreadySubmitted) {
+    return (
+      <Button
+        onClick={handleSubmitTemplate}
+        style={{
+          background:
+            "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
+          color: "white",
+        }}
+      >
+        Final Submit
+      </Button>
+    );
+  }
+
+  // Last template already filled → Close
+  if (isLast && (isFilled || alreadySubmitted)) {
+    return (
+      <Button
+        onClick={() => navigate("/")}
+        style={{
+          background:
+            "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
+          color: "white",
+        }}
+      >
+        Close
+      </Button>
+    );
+  }
+
+  // Not filled & not last → Submit & Next
+  if (!isFilled && !alreadySubmitted) {
+    return (
+      <Button
+        onClick={handleSubmitTemplate}
+        style={{
+          background:
+            "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
+          color: "white",
+        }}
+      >
+        Submit & Next
+        <ChevronRight className="w-4 h-4 ml-2" />
+      </Button>
+    );
+  }
+
+  // Already filled → Next
+  return (
+    <Button
+      onClick={handleNextTemplate}
+      style={{
+        background:
+          "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
+        color: "white",
+      }}
+    >
+      Next
+      <ChevronRight className="w-4 h-4 ml-2" />
+    </Button>
+  );
+})()}
+
+
+</div>
+
             </div>
           </div>
         </div>
