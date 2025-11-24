@@ -4391,7 +4391,7 @@ if (!slot_booking.length || !slot_booking[0]?.booked_time) {
                           </div>
                         </div>
                       )}
-                      {availablemembercount == 1 && (
+                      {availablemembercount === 1 && (
                         <div className="row g-2 align-items-center">
                           <div className="col-12 col-md">
                             <div className="d-flex flex-wrap align-items-center">
