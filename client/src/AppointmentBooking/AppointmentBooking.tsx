@@ -1305,6 +1305,23 @@ const AppointmentBooking = () => {
       const res1 = await httpClient.post(API.NEW_SLOT_API, formData1);
 
       const rawSlots = res1.data.data; // raw API response
+      const matchedSlot = rawSlots.filter(
+        (item: any) => item.slot?.date === startDate
+      );
+
+      const totalRemaining = matchedSlot.reduce(
+        (sum: number, matchedSlot: any) => {
+          return (
+            sum +
+            (matchedSlot.slot?.slottime?.reduce(
+              (slotSum: number, slot: any) => slotSum + (slot.remaining || 0),
+              0
+            ) || 0)
+          );
+        },
+        0
+      );
+      setavailablemembercount(totalRemaining);
 
       // Group slots by date (simplified)
       const grouped: Record<string, any[]> = {};
@@ -2009,11 +2026,11 @@ const AppointmentBooking = () => {
           hasError = true;
         }
 
-      // ✅ NEW — slot required for ALL members
-if (!slot_booking.length || !slot_booking[0]?.booked_time) {
-  newErrors[`slot_booking_${index}`] = "Please select a time slot.";
-  hasError = true;
-}
+        // ✅ NEW — slot required for ALL members
+        if (!slot_booking.length || !slot_booking[0]?.booked_time) {
+          newErrors[`slot_booking_${index}`] = "Please select a time slot.";
+          hasError = true;
+        }
 
         if (!email.trim() && index === 0) {
           newErrors[`email_${index}`] = "Email is required.";
@@ -2252,8 +2269,8 @@ if (!slot_booking.length || !slot_booking[0]?.booked_time) {
   };
 
   const triggerShake = () => {
-    setShake(true);
-    setErrorMessage("Count must be between 2 and 5");
+    // setShake(true);
+    // setErrorMessage("Count must be between 2 and 5");
 
     setTimeout(() => {
       setShake(false);
@@ -2339,6 +2356,7 @@ if (!slot_booking.length || !slot_booking[0]?.booked_time) {
     } else {
       rawValue = e.target.value;
     }
+    console.log("rawValue:", rawValue);
 
     // Reject invalid values
     if (rawValue === "0" || rawValue === "" || rawValue.length > 2) {
@@ -2904,7 +2922,8 @@ if (!slot_booking.length || !slot_booking[0]?.booked_time) {
       PaymentType: "",
       specialAssistance: false,
     });
-
+    setTransactionId("")
+   setTxnMessage("");
     // Dynamically generate membercount empty members
     const count = membercount || 1; // fallback to 1 if count not set
     const emptyMember = {
@@ -4367,13 +4386,18 @@ if (!slot_booking.length || !slot_booking[0]?.booked_time) {
                           )}
                         </div>
                       </div>
-                      Selected Date :{" "}
+                      {availablemembercount > 2 && (
+<>
+  Selected Date :{" "}
                       {selectedDate?.toLocaleDateString("en-US", {
                         weekday: "long",
                         year: "numeric",
                         month: "short",
                         day: "numeric",
                       })}{" "}
+</>
+                      )}
+                    
                       {availablemembercount === 0 && (
                         <div className="row g-2 align-items-center">
                           <div className="col-12 col-md">

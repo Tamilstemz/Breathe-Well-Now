@@ -339,6 +339,8 @@ export default function Hero() {
 
     const newOtp = [...otp];
     newOtp[index] = value;
+    console.log("newotp :",newOtp);
+    
     setOtp(newOtp);
 
     // Move to next input
@@ -375,16 +377,73 @@ export default function Hero() {
     }
   };
 
-  const handleValidateOtp = async (otptype?: any) => {
-    console.log("otpButtontype:", otpButtontype);
-    let finalotptype;
+//   const handleValidateOtp = async (otptype?: any) => {
+//     console.log("otpButtontype:", otpButtontype);
+//     console.log("otptype :",otptype)
+//     let finalotptype;
 
-    if (otptype) {
-      finalotptype = otptype;
-    } else {
-      finalotptype =
+//     if (otptype) {
+//       finalotptype = otptype.target.value;
+//     } else {
+//       finalotptype =
+//         otpButtontype === "Reschedule" ? "RescheduleOTP" : "CancelOTP";
+//     }
+// console.log("otp :",otp);
+
+//     const payload = {
+//       phone_number: appointmentData[0]?.contact_number,
+//       applicant_number: appointmentData[0]?.applicant_number,
+//       otp: otp.join(""), // Combine the 6 digits
+//       otp_type: finalotptype,
+//     };
+//     console.log(payload);
+
+//     try {
+//       const res = await httpClient.post(API.OTP_VALIDATE_API, payload);
+
+//       if (res.data.status) {
+//         toast({
+//           title: "success",
+//           description: res.data.message,
+//           variant: "success",
+//           duration: 4000,
+//         });
+
+//         setAppointmentCancelBtn(true);
+
+//         setsuccessmsg(res.data.message);
+//         setTimerVisible(false);
+//         if (otptype == "FastTrackOTP") {
+//           localStorage.setItem("consentform", JSON.stringify(consentFormData));
+//           navigate("/ConsentForm");
+
+//           console.log("55555", consentFormData);
+
+//           toast({
+//             title: "Success",
+//             description: "Applicant details loaded successfully!",
+//             variant: "success",
+//             duration: 4000,
+//           });
+//         }
+//       } else {
+//         showOtpError(res.data.message || "Invalid OTP");
+
+//         return;
+//       }
+//     } catch (error) {
+//       console.error("OTP validation error:", error);
+//       showOtpError("OTP validation failed");
+//     }
+//   };
+
+  const handleValidateOtp = async () => {
+    console.log("otpButtontype:", otpButtontype);
+   
+      const finalotptype =
         otpButtontype === "Reschedule" ? "RescheduleOTP" : "CancelOTP";
-    }
+    
+console.log("otp :",otp);
 
     const payload = {
       phone_number: appointmentData[0]?.contact_number,
@@ -409,19 +468,19 @@ export default function Hero() {
 
         setsuccessmsg(res.data.message);
         setTimerVisible(false);
-        if (otptype == "FastTrackOTP") {
-          localStorage.setItem("consentform", JSON.stringify(consentFormData));
-          navigate("/ConsentForm");
+        // if (otptype == "FastTrackOTP") {
+        //   localStorage.setItem("consentform", JSON.stringify(consentFormData));
+        //   navigate("/ConsentForm");
 
-          console.log("55555", consentFormData);
+        //   console.log("55555", consentFormData);
 
-          toast({
-            title: "Success",
-            description: "Applicant details loaded successfully!",
-            variant: "success",
-            duration: 4000,
-          });
-        }
+        //   toast({
+        //     title: "Success",
+        //     description: "Applicant details loaded successfully!",
+        //     variant: "success",
+        //     duration: 4000,
+        //   });
+        // }
       } else {
         showOtpError(res.data.message || "Invalid OTP");
 
@@ -1651,12 +1710,12 @@ export default function Hero() {
                   </div>
                 )}
 
-                <button
+                {/* <button
                   className="verifyButton"
                   onClick={() => handleValidateOtp("FastTrackOTP")}
                 >
                   Verify
-                </button>
+                </button> */}
 
                 <p className="resendNote">
                   Didn’t receive code?
