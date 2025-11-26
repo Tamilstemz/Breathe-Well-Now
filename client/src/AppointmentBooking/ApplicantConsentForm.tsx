@@ -83,7 +83,7 @@ function ApplicantConsentForm() {
 
     try {
       const response = await httpClient.get(
-        `${API.MATSER_CONSENT_FORMS_API}?gender=${applicantData?.gender}&dob=${applicantData?.Applicant_PersonalDetails__dob}&applicant_number=${applicantData?.applicant_number}&edit=${finaledit}`
+        `${API.MATSER_CONSENT_FORMS_API}?gender=${applicantData?.Applicant_PersonalDetails__gender}&dob=${applicantData?.Applicant_PersonalDetails__dob}&applicant_number=${applicantData?.applicant_number}&edit=${finaledit}`
       );
 
       if (response.data && Array.isArray(response.data.templates)) {
@@ -283,24 +283,17 @@ function ApplicantConsentForm() {
     );
   };
 
-  const isCanvasBlank = (canvasId: string): boolean => {
-    const canvas = document.getElementById(
-      canvasId
-    ) as HTMLCanvasElement | null;
-    if (!canvas) return true;
+const isCanvasBlank = (canvas: HTMLCanvasElement) => {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return true;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return true;
+  const pixelBuffer = new Uint32Array(
+    ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer
+  );
 
-    const pixelBuffer = ctx.getImageData(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    ).data;
+  return !pixelBuffer.some(color => color !== 0);
+};
 
-    return !pixelBuffer.some((channel) => channel !== 0);
-  };
 
   const getCanvasBlob = (canvasId: string): Promise<Blob | any> => {
     return new Promise((resolve) => {
@@ -394,7 +387,22 @@ function ApplicantConsentForm() {
       }
     }
 
+    const canvas = document.getElementById(
+      "applicantSignature"
+    ) as HTMLCanvasElement;
+
+    if (!canvas || isCanvasBlank(canvas)) {
+      toast({
+        title: "Missing Signature",
+        description: "Applicant Signature is required to continue.",
+        duration: 4000,
+      });
+      return;
+    }
+
     const applicantSignatureBlob = await getCanvasBlob("applicantSignature");
+    console.log("applicantSignatureBlob:", applicantSignatureBlob);
+    // return;
     const physicianSignatureBlob = await getCanvasBlob("physicianSignature");
     const guardianSignatureBlob = await getCanvasBlob("guardianSignature");
     const counsellorSignatureBlob = await getCanvasBlob("counsellorSignature");
@@ -583,7 +591,7 @@ function ApplicantConsentForm() {
     if (currentTemplateIndex < formTemplates.length - 1) {
       setCompletedTemplates((prev) => [...prev, currentTemplateIndex]);
       setCurrentTemplateIndex((prev) => prev + 1);
-    } 
+    }
   };
 
   const handleCompleteAllTemplates = () => {
@@ -833,143 +841,146 @@ function ApplicantConsentForm() {
                 )}
               </div> */}
               <div className="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-2">
-  {/* Previous Button */}
-  <Button
-    onClick={handlePrevTemplate}
-    disabled={currentTemplateIndex === 0}
-    style={{
-      background:
-        "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
-      color: "white",
-    }}
-  >
-    <ChevronLeft className="w-4 h-4 mr-2" />
-    Previous
-  </Button>
+                {/* Previous Button */}
+                <Button
+                  onClick={handlePrevTemplate}
+                  disabled={currentTemplateIndex === 0}
+                  style={{
+                    background:
+                      "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
+                    color: "white",
+                  }}
+                >
+                  <ChevronLeft className="w-4 h-4 mr-2" />
+                  Previous
+                </Button>
 
-  {/* Template Count */}
-  <div className="flex items-center gap-2">
-    <span className="text-sm text-gray-600 font-medium">
-      Template {currentTemplateIndex + 1} of {formTemplates.length}
-    </span>
-  </div>
+                {/* Template Count */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600 font-medium">
+                    Template {currentTemplateIndex + 1} of{" "}
+                    {formTemplates.length}
+                  </span>
+                </div>
 
-{(() => {
-  const isLast = currentTemplateIndex === formTemplates.length - 1;
-  const isFilled = formTemplates[currentTemplateIndex]?.is_filled;
-  const alreadySubmitted = submittedTemplates.includes(currentTemplateIndex);
+                {(() => {
+                  const isLast =
+                    currentTemplateIndex === formTemplates.length - 1;
+                  const isFilled =
+                    formTemplates[currentTemplateIndex]?.is_filled;
+                  const alreadySubmitted =
+                    submittedTemplates.includes(currentTemplateIndex);
 
-  // 🔥 NEW RULE: Check if all templates are filled
-  const allFilled = formTemplates.every((t) => t.is_filled === true);
+                  // 🔥 NEW RULE: Check if all templates are filled
+                  const allFilled = formTemplates.every(
+                    (t) => t.is_filled === true
+                  );
 
-  // ========================================================
-  // 1️⃣ ALL TEMPLATES FILLED → VIEW MODE (Prev + Next only)
-  // ========================================================
-  if (allFilled) {
-    // Last template → Show Close
-    if (isLast) {
-      return (
-        <Button
-          onClick={() => navigate("/")}
-          style={{
-            background:
-              "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
-            color: "white",
-          }}
-        >
-          Close
-        </Button>
-      );
-    }
+                  // ========================================================
+                  // 1️⃣ ALL TEMPLATES FILLED → VIEW MODE (Prev + Next only)
+                  // ========================================================
+                  if (allFilled) {
+                    // Last template → Show Close
+                    if (isLast) {
+                      return (
+                        <Button
+                          onClick={() => navigate("/")}
+                          style={{
+                            background:
+                              "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
+                            color: "white",
+                          }}
+                        >
+                          Close
+                        </Button>
+                      );
+                    }
 
-    // Not last → Next only
-    return (
-      <Button
-        onClick={handleNextTemplate}
-        style={{
-          background:
-            "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
-          color: "white",
-        }}
-      >
-        Next
-        <ChevronRight className="w-4 h-4 ml-2" />
-      </Button>
-    );
-  }
+                    // Not last → Next only
+                    return (
+                      <Button
+                        onClick={handleNextTemplate}
+                        style={{
+                          background:
+                            "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
+                          color: "white",
+                        }}
+                      >
+                        Next
+                        <ChevronRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    );
+                  }
 
-  // ========================================================
-  // 2️⃣ NORMAL MODE → Submit / Next / Final Submit Logic
-  // ========================================================
+                  // ========================================================
+                  // 2️⃣ NORMAL MODE → Submit / Next / Final Submit Logic
+                  // ========================================================
 
-  // Last template NOT filled → Final Submit
-  if (isLast && !isFilled && !alreadySubmitted) {
-    return (
-      <Button
-        onClick={handleSubmitTemplate}
-        style={{
-          background:
-            "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
-          color: "white",
-        }}
-      >
-        Final Submit
-      </Button>
-    );
-  }
+                  // Last template NOT filled → Final Submit
+                  if (isLast && !isFilled && !alreadySubmitted) {
+                    return (
+                      <Button
+                        onClick={handleSubmitTemplate}
+                        style={{
+                          background:
+                            "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
+                          color: "white",
+                        }}
+                      >
+                        Final Submit
+                      </Button>
+                    );
+                  }
 
-  // Last template already filled → Close
-  if (isLast && (isFilled || alreadySubmitted)) {
-    return (
-      <Button
-        onClick={() => navigate("/")}
-        style={{
-          background:
-            "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
-          color: "white",
-        }}
-      >
-        Close
-      </Button>
-    );
-  }
+                  // Last template already filled → Close
+                  if (isLast && (isFilled || alreadySubmitted)) {
+                    return (
+                      <Button
+                        onClick={() => navigate("/")}
+                        style={{
+                          background:
+                            "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
+                          color: "white",
+                        }}
+                      >
+                        Close
+                      </Button>
+                    );
+                  }
 
-  // Not filled & not last → Submit & Next
-  if (!isFilled && !alreadySubmitted) {
-    return (
-      <Button
-        onClick={handleSubmitTemplate}
-        style={{
-          background:
-            "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
-          color: "white",
-        }}
-      >
-        Submit & Next
-        <ChevronRight className="w-4 h-4 ml-2" />
-      </Button>
-    );
-  }
+                  // Not filled & not last → Submit & Next
+                  if (!isFilled && !alreadySubmitted) {
+                    return (
+                      <Button
+                        onClick={handleSubmitTemplate}
+                        style={{
+                          background:
+                            "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
+                          color: "white",
+                        }}
+                      >
+                        Submit & Next
+                        <ChevronRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    );
+                  }
 
-  // Already filled → Next
-  return (
-    <Button
-      onClick={handleNextTemplate}
-      style={{
-        background:
-          "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
-        color: "white",
-      }}
-    >
-      Next
-      <ChevronRight className="w-4 h-4 ml-2" />
-    </Button>
-  );
-})()}
-
-
-</div>
-
+                  // Already filled → Next
+                  return (
+                    <Button
+                      onClick={handleNextTemplate}
+                      style={{
+                        background:
+                          "linear-gradient(145deg, hsl(30, 95%, 58%) 0%, hsl(25, 100%, 65%) 100%)",
+                        color: "white",
+                      }}
+                    >
+                      Next
+                      <ChevronRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  );
+                })()}
+              </div>
             </div>
           </div>
         </div>

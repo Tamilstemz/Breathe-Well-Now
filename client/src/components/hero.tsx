@@ -339,8 +339,8 @@ export default function Hero() {
 
     const newOtp = [...otp];
     newOtp[index] = value;
-    console.log("newotp :",newOtp);
-    
+    console.log("newotp :", newOtp);
+
     setOtp(newOtp);
 
     // Move to next input
@@ -377,73 +377,73 @@ export default function Hero() {
     }
   };
 
-//   const handleValidateOtp = async (otptype?: any) => {
-//     console.log("otpButtontype:", otpButtontype);
-//     console.log("otptype :",otptype)
-//     let finalotptype;
+  //   const handleValidateOtp = async (otptype?: any) => {
+  //     console.log("otpButtontype:", otpButtontype);
+  //     console.log("otptype :",otptype)
+  //     let finalotptype;
 
-//     if (otptype) {
-//       finalotptype = otptype.target.value;
-//     } else {
-//       finalotptype =
-//         otpButtontype === "Reschedule" ? "RescheduleOTP" : "CancelOTP";
-//     }
-// console.log("otp :",otp);
+  //     if (otptype) {
+  //       finalotptype = otptype.target.value;
+  //     } else {
+  //       finalotptype =
+  //         otpButtontype === "Reschedule" ? "RescheduleOTP" : "CancelOTP";
+  //     }
+  // console.log("otp :",otp);
 
-//     const payload = {
-//       phone_number: appointmentData[0]?.contact_number,
-//       applicant_number: appointmentData[0]?.applicant_number,
-//       otp: otp.join(""), // Combine the 6 digits
-//       otp_type: finalotptype,
-//     };
-//     console.log(payload);
+  //     const payload = {
+  //       phone_number: appointmentData[0]?.contact_number,
+  //       applicant_number: appointmentData[0]?.applicant_number,
+  //       otp: otp.join(""), // Combine the 6 digits
+  //       otp_type: finalotptype,
+  //     };
+  //     console.log(payload);
 
-//     try {
-//       const res = await httpClient.post(API.OTP_VALIDATE_API, payload);
+  //     try {
+  //       const res = await httpClient.post(API.OTP_VALIDATE_API, payload);
 
-//       if (res.data.status) {
-//         toast({
-//           title: "success",
-//           description: res.data.message,
-//           variant: "success",
-//           duration: 4000,
-//         });
+  //       if (res.data.status) {
+  //         toast({
+  //           title: "success",
+  //           description: res.data.message,
+  //           variant: "success",
+  //           duration: 4000,
+  //         });
 
-//         setAppointmentCancelBtn(true);
+  //         setAppointmentCancelBtn(true);
 
-//         setsuccessmsg(res.data.message);
-//         setTimerVisible(false);
-//         if (otptype == "FastTrackOTP") {
-//           localStorage.setItem("consentform", JSON.stringify(consentFormData));
-//           navigate("/ConsentForm");
+  //         setsuccessmsg(res.data.message);
+  //         setTimerVisible(false);
+  //         if (otptype == "FastTrackOTP") {
+  //           localStorage.setItem("consentform", JSON.stringify(consentFormData));
+  //           navigate("/ConsentForm");
 
-//           console.log("55555", consentFormData);
+  //           console.log("55555", consentFormData);
 
-//           toast({
-//             title: "Success",
-//             description: "Applicant details loaded successfully!",
-//             variant: "success",
-//             duration: 4000,
-//           });
-//         }
-//       } else {
-//         showOtpError(res.data.message || "Invalid OTP");
+  //           toast({
+  //             title: "Success",
+  //             description: "Applicant details loaded successfully!",
+  //             variant: "success",
+  //             duration: 4000,
+  //           });
+  //         }
+  //       } else {
+  //         showOtpError(res.data.message || "Invalid OTP");
 
-//         return;
-//       }
-//     } catch (error) {
-//       console.error("OTP validation error:", error);
-//       showOtpError("OTP validation failed");
-//     }
-//   };
+  //         return;
+  //       }
+  //     } catch (error) {
+  //       console.error("OTP validation error:", error);
+  //       showOtpError("OTP validation failed");
+  //     }
+  //   };
 
   const handleValidateOtp = async () => {
     console.log("otpButtontype:", otpButtontype);
-   
-      const finalotptype =
-        otpButtontype === "Reschedule" ? "RescheduleOTP" : "CancelOTP";
-    
-console.log("otp :",otp);
+
+    const finalotptype =
+      otpButtontype === "Reschedule" ? "RescheduleOTP" : "CancelOTP";
+
+    console.log("otp :", otp);
 
     const payload = {
       phone_number: appointmentData[0]?.contact_number,
@@ -862,7 +862,7 @@ console.log("otp :",otp);
         showToast("error", data.warning);
         setFastTrackContactValue("");
         setfasttrackapplicantdata([]);
-        setFastTrackSearchType("");
+        setFastTrackSearchType("referenceId");
         setFastTrackSearchValue("");
         setContactType("");
         setSearchType("");
@@ -871,12 +871,20 @@ console.log("otp :",otp);
         showToast("error", data.error);
         setFastTrackContactValue("");
         setfasttrackapplicantdata([]);
-        setFastTrackSearchType("");
+        setFastTrackSearchType("referenceId");
         setFastTrackSearchValue("");
         setContactType("");
         setSearchType("");
         setShowFastTrackModal(false);
       } else {
+        console.log("else working data");
+        
+        setconsentFormData(data?.detail[0]);
+        setselectedFastTrackapplicants(data?.detail[0]);
+        setAppointmentData(data?.detail);
+        localStorage.setItem("consentform", JSON.stringify(data?.detail[0]));
+        navigate("/ConsentForm");
+
         const appointmentData1 = data?.detail[0];
         // const otpdata = {
         //   applicant_number: appointmentData1?.applicant_number,
@@ -898,14 +906,9 @@ console.log("otp :",otp);
 
         // startTimer(); // ✅ Start 5-min timer
         // setShowFastTrackModal(false);
-        setselectedFastTrackapplicants(data?.detail[0]);
-        setAppointmentData(data?.detail);
+
         // setShowAppointmentModal(true);
         // setisfatstrackotpvisible(true);
-        setconsentFormData(data?.detail[0]);
-
-        localStorage.setItem("consentform", JSON.stringify(data?.detail[0]));
-        navigate("/ConsentForm");
       }
     } catch (error: any) {
       console.log("66666", newErrors);

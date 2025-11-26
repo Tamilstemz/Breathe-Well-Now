@@ -12,9 +12,9 @@ type VariantType = "default" | "success" | "warn" | "error";
 
 const variantStyles: Record<VariantType, string> = {
   default: "bg-gray-800 text-white",
-  success: "bg-[#3be178] text-white",  // rgb(59, 225, 120)
-  warn: "bg-[#f3cf61] text-black",     // rgb(243, 207, 97)
-  error: "bg-[#dc4343] text-white",    // rgb(220, 67, 67)
+  success: "bg-[#3be178] text-white", // rgb(59, 225, 120)
+  warn: "bg-[#f3cf61] text-black", // rgb(243, 207, 97)
+  error: "bg-[#dc4343] text-white", // rgb(220, 67, 67)
 };
 
 const timerBarColors: Record<VariantType, string> = {
@@ -37,8 +37,10 @@ export function Toaster() {
         variant = "default",
         ...props
       }) {
-        const bgClass = variantStyles[variant as VariantType] || variantStyles.default;
-        const barClass = timerBarColors[variant as VariantType] || timerBarColors.default;
+        const bgClass =
+          variantStyles[variant as VariantType] || variantStyles.default;
+        const barClass =
+          timerBarColors[variant as VariantType] || timerBarColors.default;
 
         return (
           <Toast
@@ -48,17 +50,23 @@ export function Toaster() {
           >
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
-              {description && <ToastDescription>{description}</ToastDescription>}
+              {description && (
+                <ToastDescription>{description}</ToastDescription>
+              )}
             </div>
 
             {action}
-
-            <ToastClose className="ml-auto text-sm font-medium underline text-white/80 hover:text-white">
+            <ToastClose
+              style={{ color: "white !important", zIndex: "1000" }}
+              className="ml-auto text-sm font-medium underline text-white hover:text-white"
+            >
               Cancel
             </ToastClose>
 
             {/* Timer progress bar */}
-            <div className={`absolute bottom-0 left-0 h-1 ${barClass} animate-toast-timer`} />
+            <div
+              className={`absolute bottom-0 left-0 h-1 ${barClass} animate-toast-timer`}
+            />
           </Toast>
         );
       })}
