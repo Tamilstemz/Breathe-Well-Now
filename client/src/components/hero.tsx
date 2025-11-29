@@ -78,7 +78,7 @@ export default function Hero() {
   const [appointmentData, setAppointmentData] = useState<AppointmentData[]>([]);
 
   const [newappointmentSlot, setNewAppointmentSlot] = useState<any[]>([]);
-  console.log("newappointmentSlot:", newappointmentSlot);
+  // console.log("newappointmentSlot:", newappointmentSlot);
 
   const [appointmentType, setappointmentType] = useState("");
 
@@ -94,7 +94,7 @@ export default function Hero() {
   const [timerVisible, setTimerVisible] = useState(true);
   const [appointmentCancelBtn, setAppointmentCancelBtn] = useState(false);
   const [selectedApplicants, setSelectedApplicants] = useState<any[]>([]);
-  console.log("selectedApplicants :", selectedApplicants);
+  // console.log("selectedApplicants :", selectedApplicants);
   const [showFastTrackModal, setShowFastTrackModal] = useState<boolean>(false);
   const [fastTrackSearchType, setFastTrackSearchType] =
     useState<string>("referenceId");
@@ -439,10 +439,13 @@ export default function Hero() {
 
   const handleValidateOtp = async () => {
     console.log("otpButtontype:", otpButtontype);
-
-    const finalotptype =
-      otpButtontype === "Reschedule" ? "RescheduleOTP" : "CancelOTP";
-
+    let finalotptype;
+    if (otpButtontype == "FastTrackOTP") {
+      finalotptype = otpButtontype;
+    } else {
+      finalotptype =
+        otpButtontype === "Reschedule" ? "RescheduleOTP" : "CancelOTP";
+    }
     console.log("otp :", otp);
 
     const payload = {
@@ -468,19 +471,19 @@ export default function Hero() {
 
         setsuccessmsg(res.data.message);
         setTimerVisible(false);
-        // if (otptype == "FastTrackOTP") {
-        //   localStorage.setItem("consentform", JSON.stringify(consentFormData));
-        //   navigate("/ConsentForm");
+        if (otpButtontype == "FastTrackOTP") {
+          localStorage.setItem("consentform", JSON.stringify(consentFormData));
+          navigate("/ConsentForm");
 
-        //   console.log("55555", consentFormData);
+          console.log("55555", consentFormData);
 
-        //   toast({
-        //     title: "Success",
-        //     description: "Applicant details loaded successfully!",
-        //     variant: "success",
-        //     duration: 4000,
-        //   });
-        // }
+          toast({
+            title: "Success",
+            description: "Applicant details loaded successfully!",
+            variant: "success",
+            duration: 4000,
+          });
+        }
       } else {
         showOtpError(res.data.message || "Invalid OTP");
 
@@ -504,6 +507,8 @@ export default function Hero() {
   };
 
   const handleResendOtp = async () => {
+    console.log("otpButtontype :", otpButtontype);
+
     const otpdata1 = {
       applicant_number: appointmentData[0]?.applicant_number,
       contact_number: appointmentData[0]?.contact_number,
@@ -810,6 +815,25 @@ export default function Hero() {
     }
   };
 
+  const fasttrackclose = () => {
+    setFastTrackContactValue("");
+    setfasttrackapplicantdata([]);
+    setFastTrackSearchType("referenceId");
+    setFastTrackSearchValue("");
+    setContactType("");
+    setSearchType("");
+    setShowFastTrackModal(false);
+    setotpButtontype("");
+  };
+
+  const searchtypeclose = () => {
+    setSearchType("referenceId");
+    setSearchValue("");
+    setContactType("");
+    setOpenModal(false);
+    setContactValue("");
+  };
+
   const handleStartForms = async () => {
     setShowFastTrackModal(true);
   };
@@ -878,37 +902,34 @@ export default function Hero() {
         setShowFastTrackModal(false);
       } else {
         console.log("else working data");
-        
+
+        const appointmentData1 = data?.detail[0];
+        const otpdata = {
+          applicant_number: appointmentData1?.applicant_number,
+          contact_number: appointmentData1?.contact_number,
+          otp_type: "FastTrackOTP",
+          center_id: appointmentData1?.center_id,
+          newtype: "new",
+        };
+        console.log("otpdata :", otpdata);
+        setotpButtontype("FastTrackOTP");
+        const res1 = await httpClient.post(API.OTP_API, otpdata);
+
+        toast({
+          title: "success",
+          description: res1.data.message,
+          variant: "success",
+          duration: 4000,
+        });
+        setShowAppointmentModal(true);
+        setisfatstrackotpvisible(true);
         setconsentFormData(data?.detail[0]);
         setselectedFastTrackapplicants(data?.detail[0]);
         setAppointmentData(data?.detail);
-        localStorage.setItem("consentform", JSON.stringify(data?.detail[0]));
-        navigate("/ConsentForm");
-
-        const appointmentData1 = data?.detail[0];
-        // const otpdata = {
-        //   applicant_number: appointmentData1?.applicant_number,
-        //   contact_number: appointmentData1?.contact_number,
-        //   otp_type: "FastTrackOTP",
-        //   center_id: appointmentData1?.center_id,
-        //   newtype: "new",
-        // };
-        // console.log("otpdata :", otpdata);
-
-        // const res1 = await httpClient.post(API.OTP_API, otpdata);
-
-        // toast({
-        //   title: "success",
-        //   description: res1.data.message,
-        //   variant: "success",
-        //   duration: 4000,
-        // });
-
-        // startTimer(); // ✅ Start 5-min timer
-        // setShowFastTrackModal(false);
-
-        // setShowAppointmentModal(true);
-        // setisfatstrackotpvisible(true);
+        // localStorage.setItem("consentform", JSON.stringify(data?.detail[0]));
+        // navigate("/ConsentForm");
+        startTimer(); // ✅ Start 5-min timer
+        setShowFastTrackModal(false);
       }
     } catch (error: any) {
       console.log("66666", newErrors);
@@ -1006,8 +1027,114 @@ export default function Hero() {
         </div>
       </div>
 
+      <Dialog
+        open={showFastTrackModal}
+        onOpenChange={(open) => {
+          if (!open) fasttrackclose();
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Fast Track - Applicant Details</DialogTitle>
+            <DialogDescription>
+              Enter your details to access form templates
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="block mb-1 text-sm font-medium">
+                Select ID Type
+              </label>
+              <select
+                className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                value={fastTrackSearchType}
+                onChange={(e) => setFastTrackSearchType(e.target.value)}
+              >
+                <option value="applicantNo">Applicant No</option>
+                <option value="passport">Passport Number</option>
+              </select>
+            </div>
+            <div>
+              <label className="block mb-1 text-sm font-medium">
+                {fastTrackSearchType === "passport"
+                  ? "Passport Number"
+                  : "Applicant No"}
+              </label>
+              <input
+                type="text"
+                className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                  fastTrackErrors.searchValue ? "border-red-500" : ""
+                }`}
+                placeholder={`Enter your ${
+                  fastTrackSearchType === "passport"
+                    ? "Passport Number"
+                    : "Applicant No"
+                }`}
+                value={fastTrackSearchValue}
+                onChange={(e) =>
+                  setFastTrackSearchValue(
+                    fastTrackSearchType === "passport"
+                      ? e.target.value.toUpperCase()
+                      : e.target.value
+                  )
+                }
+              />
+              {fastTrackErrors.searchValue && (
+                <p className="mt-1 text-sm text-red-600">
+                  {fastTrackErrors.searchValue}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block mb-1 text-sm font-medium">
+                Mobile Number
+              </label>
+              <input
+                type="tel"
+                className={`w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                  fastTrackErrors.contactValue ? "border-red-500" : ""
+                }`}
+                placeholder="Enter your mobile number"
+                value={fastTrackContactValue}
+                maxLength={10}
+                onChange={(e) =>
+                  setFastTrackContactValue(e.target.value.replace(/\D/g, ""))
+                }
+              />
+              {fastTrackErrors.contactValue && (
+                <p className="mt-1 text-sm text-red-600">
+                  {fastTrackErrors.contactValue}
+                </p>
+              )}
+            </div>
+            <Button
+              onClick={handleFastTrackSearch}
+              disabled={isLoadingApplicantData}
+              className="w-full card-gradient-blue text-white font-semibold"
+            >
+              {isLoadingApplicantData ? (
+                <>
+                  <RefreshCcw className="w-4 h-4 mr-2 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <Search className="w-4 h-4 mr-2" />
+                  Load Applicant Details
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Modal for Track Appointment */}
-      <Dialog open={openModal} onOpenChange={setOpenModal}>
+      <Dialog
+        open={openModal}
+        onOpenChange={(open) => {
+          if (!open) searchtypeclose();
+        }}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Track Your Booking</DialogTitle>
@@ -1713,12 +1840,9 @@ export default function Hero() {
                   </div>
                 )}
 
-                {/* <button
-                  className="verifyButton"
-                  onClick={() => handleValidateOtp("FastTrackOTP")}
-                >
+                <button className="verifyButton" onClick={handleValidateOtp}>
                   Verify
-                </button> */}
+                </button>
 
                 <p className="resendNote">
                   Didn’t receive code?

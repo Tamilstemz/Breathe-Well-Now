@@ -72,6 +72,8 @@ function ApplicantConsentForm() {
   }, []);
 
   const fetchFormTemplates = async (applicantData: any, edittype?: any) => {
+    console.log("applicantData :",applicantData);
+    
     setIsLoadingTemplates(true);
     let finaledit;
     if (edittype == "filledtemp") {
@@ -83,7 +85,7 @@ function ApplicantConsentForm() {
 
     try {
       const response = await httpClient.get(
-        `${API.MATSER_CONSENT_FORMS_API}?gender=${applicantData?.Applicant_PersonalDetails__gender}&dob=${applicantData?.Applicant_PersonalDetails__dob}&applicant_number=${applicantData?.applicant_number}&edit=${finaledit}`
+        `${API.MATSER_CONSENT_FORMS_API}?gender=${applicantData?.Applicant_PersonalDetails__gender}&dob=${applicantData?.Applicant_PersonalDetails__dob}&applicant_number=${applicantData?.applicant_number}&edit=${finaledit}&appointmentid=${applicantData?.id}`
       );
 
       if (response.data && Array.isArray(response.data.templates)) {
