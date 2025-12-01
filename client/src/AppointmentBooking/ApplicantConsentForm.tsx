@@ -15,6 +15,8 @@ interface FormTemplate {
   created_at: string;
   updated_at: string;
   is_filled: boolean;
+  is_mandatory: boolean;
+  is_mandatorytype: string;
 }
 
 function ApplicantConsentForm() {
@@ -72,8 +74,8 @@ function ApplicantConsentForm() {
   }, []);
 
   const fetchFormTemplates = async (applicantData: any, edittype?: any) => {
-    console.log("applicantData :",applicantData);
-    
+    console.log("applicantData :", applicantData);
+
     setIsLoadingTemplates(true);
     let finaledit;
     if (edittype == "filledtemp") {
@@ -285,17 +287,16 @@ function ApplicantConsentForm() {
     );
   };
 
-const isCanvasBlank = (canvas: HTMLCanvasElement) => {
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return true;
+  const isCanvasBlank = (canvas: HTMLCanvasElement) => {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return true;
 
-  const pixelBuffer = new Uint32Array(
-    ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer
-  );
+    const pixelBuffer = new Uint32Array(
+      ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer
+    );
 
-  return !pixelBuffer.some(color => color !== 0);
-};
-
+    return !pixelBuffer.some((color) => color !== 0);
+  };
 
   const getCanvasBlob = (canvasId: string): Promise<Blob | any> => {
     return new Promise((resolve) => {
@@ -335,73 +336,86 @@ const isCanvasBlank = (canvas: HTMLCanvasElement) => {
 
   const handleSubmitTemplate = async () => {
     if (!formTemplates[currentTemplateIndex]) return;
+    console.log("formTemplates :", formTemplates[currentTemplateIndex]);
 
-    const templateId = formTemplates[currentTemplateIndex].id;
+    const currenttemplate = formTemplates[currentTemplateIndex];
     const templateData = extractFormData("template-container");
     console.log("templateData :", templateData);
+    if (
+      currenttemplate &&
+      (currenttemplate?.is_mandatorytype == "Webiste" ||
+        currenttemplate.is_mandatorytype == "Both") &&
+      currenttemplate?.is_mandatory
+    ) {
+      if (currenttemplate.id === 2) {
+        const errors: string[] = [];
 
-    // ✅ Section-wise validation (only for Template ID = 2)
-    if (templateId === 2) {
-      const errors: string[] = [];
+        const sectionCheck = (questions: string[], sectionName: string) => {
+          let missingAnswer = questions.some((q) => !templateData[q]);
+          let missingDetails = questions.some(
+            (q) =>
+              templateData[q] === "Yes" &&
+              (!templateData[`${q}_details`] ||
+                templateData[`${q}_details`].trim() === "")
+          );
+          if (missingAnswer || missingDetails)
+            errors.push(`${sectionName} section is incomplete`);
+        };
 
-      const sectionCheck = (questions: string[], sectionName: string) => {
-        let missingAnswer = questions.some((q) => !templateData[q]);
-        let missingDetails = questions.some(
-          (q) =>
-            templateData[q] === "Yes" &&
-            (!templateData[`${q}_details`] ||
-              templateData[`${q}_details`].trim() === "")
-        );
-        if (missingAnswer || missingDetails)
-          errors.push(`${sectionName} section is incomplete`);
-      };
+        sectionCheck(["q1", "q2", "q3"], "General Health History");
+        sectionCheck(["q4", "q5", "q6"], "Infectious Disease History");
+        sectionCheck(["q7", "q8"], "Family Medical History");
+        if ("q9" in templateData)
+          sectionCheck(["q9", "q10"], "Pregnancy History");
+        sectionCheck(["q11", "q12"], "Mental Health");
+        if ("q13" in templateData)
+          sectionCheck(["q13", "q14", "q15", "q16"], "Lifestyle & Habits");
+        sectionCheck(["q17", "q18"], "Travel History");
 
-      sectionCheck(["q1", "q2", "q3"], "General Health History");
-      sectionCheck(["q4", "q5", "q6"], "Infectious Disease History");
-      sectionCheck(["q7", "q8"], "Family Medical History");
-      if ("q9" in templateData)
-        sectionCheck(["q9", "q10"], "Pregnancy History");
-      sectionCheck(["q11", "q12"], "Mental Health");
-      if ("q13" in templateData)
-        sectionCheck(["q13", "q14", "q15", "q16"], "Lifestyle & Habits");
-      sectionCheck(["q17", "q18"], "Travel History");
+        if (templateData.declaration === false)
+          errors.push("Check the Declaration");
 
-      if (templateData.declaration === false)
-        errors.push("Check the Declaration");
-
-      if (errors.length > 0) {
-        toast({
-          title: "Form Incomplete",
-          description: errors.join("\n"),
-          duration: 5000,
-        });
-        return;
-      }
-    } else {
-      const missing = findMissingFields(templateData);
-      if (missing.length > 0) {
-        toast({
-          title: "Missing Required Fields",
-          description: `Please fill: ${missing.join(", ")}`,
-          duration: 5000,
-        });
-        return;
+        if (errors.length > 0) {
+          toast({
+            title: "Form Incomplete",
+            description: errors.join("\n"),
+            duration: 5000,
+          });
+          return;
+        }
+      } else {
+        const missing = findMissingFields(templateData);
+        if (missing.length > 0) {
+          toast({
+            title: "Missing Required Fields",
+            description: `Please fill: ${missing.join(", ")}`,
+            duration: 5000,
+          });
+          return;
+        }
       }
     }
+    // return;
 
     const canvas = document.getElementById(
       "applicantSignature"
     ) as HTMLCanvasElement;
 
-    if (!canvas || isCanvasBlank(canvas)) {
-      toast({
-        title: "Missing Signature",
-        description: "Applicant Signature is required to continue.",
-        duration: 4000,
-      });
-      return;
+    if (
+      currenttemplate &&
+      (currenttemplate?.is_mandatorytype == "Webiste" ||
+        currenttemplate.is_mandatorytype == "Both") &&
+      currenttemplate?.is_mandatory
+    ) {
+      if (!canvas || isCanvasBlank(canvas)) {
+        toast({
+          title: "Missing Signature",
+          description: "Applicant Signature is required to continue.",
+          duration: 4000,
+        });
+        return;
+      }
     }
-
     const applicantSignatureBlob = await getCanvasBlob("applicantSignature");
     console.log("applicantSignatureBlob:", applicantSignatureBlob);
     // return;
@@ -416,7 +430,7 @@ const isCanvasBlank = (canvas: HTMLCanvasElement) => {
     // );
 
     const formData = new FormData();
-    formData.append("formtype", String(templateId));
+    formData.append("formtype", String(currenttemplate.id));
     formData.append("template", JSON.stringify(templateData));
     formData.append(
       "applicant",
