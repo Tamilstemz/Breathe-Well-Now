@@ -22,6 +22,7 @@ import { API, environment } from "../../../environment/environment";
 import { decrypt, encrypt } from "../../../utils/crypto-util";
 import NewBannerImage from "../../assests/NewBannerImage.png";
 import successImg from "../../assests/successImg.png";
+import { showToast } from "./ToastContainer/Toast";
 
 interface AppointmentData {
   reappoint_code: string;
@@ -111,7 +112,7 @@ export default function Hero() {
     useState<boolean>(false);
   const [fasttrackapplicantdata, setfasttrackapplicantdata] = useState<any>({});
   const [showTemplateModal, setShowTemplateModal] = useState<boolean>(false);
-  const [formTemplates, setFormTemplates] = useState<FormTemplate[]>([]);
+  // const [formTemplates, setFormTemplates] = useState<FormTemplate[]>([]);
   const [currentTemplateIndex, setCurrentTemplateIndex] = useState<number>(0);
   const [completedTemplates, setCompletedTemplates] = useState<number[]>([]);
   const [isLoadingTemplates, setIsLoadingTemplates] = useState<boolean>(false);
