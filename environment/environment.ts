@@ -1,5 +1,5 @@
 // Single variable to switch environment manually
-export const ACTIVE_ENV = "PROD";  // Change to "LOCAL", "UAT", or "PROD"
+export const ACTIVE_ENV = "PROD"; // Change to "LOCAL", "UAT", or "PROD"
 
 // Configuration Object
 const CONFIG = {
@@ -43,7 +43,9 @@ export const API = {
   AVAILABLE_SLOTS_API: apiPath("/configuration/slot-listing"),
   AVAILABLE_CENTER_API: apiPath("/master/center?application=1"),
   AVAILABLE_SERVICE_API: apiPath("/master/service?status=1&application=1"),
-  APPLICANT_WITH_APPT_API: apiPath("/transaction/applicant-appointment/details"),
+  APPLICANT_WITH_APPT_API: apiPath(
+    "/transaction/applicant-appointment/details"
+  ),
   APPLICANT_RECEIPT_API: (appointmentId: string) =>
     apiPath(`/transaction/invoice/pdf/${appointmentId}/download`),
   APPOINMENT_REPORT_API: apiPath("/transaction/appointment-report"),
@@ -54,9 +56,12 @@ export const API = {
   APPLICANTCHECK_API: apiPath("/transaction/applicant-details/check"),
   DEPARTMENT_GET_API: apiPath("/master/get_department_by_center"),
   APPLICATION_MASTER: apiPath("/master/application?status=1&id=1"),
-  SLOTCOUNT_API : apiPath("/transaction/slotcount"),
+  SLOTCOUNT_API: apiPath("/transaction/slotcount"),
   NEW_SLOT_API: apiPath("/transaction/new/slotapi"),
-    APPLICANT_CONSENTFORM_API: apiPath("/transaction/applicant/consentform"),
+  APPLICANT_CONSENTFORM_API: apiPath("/transaction/applicant/consentform"),
   APPLICANT_UPLOAD_PDF: apiPath("/transaction/applicant-upload-pdf/"),
   MATSER_CONSENT_FORMS_API: apiPath("/transaction/forms/"),
+  APPLICANT_DUPLCATE_CHECK_API: apiPath(
+    "/transaction/applicantduplicate/check"
+  ),
 };
