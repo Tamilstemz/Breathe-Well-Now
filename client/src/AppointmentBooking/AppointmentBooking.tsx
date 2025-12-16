@@ -172,6 +172,7 @@ type FormDataType = {
   totalPrice: number;
   PaymentType: string;
   specialAssistance: boolean;
+  applicant_number: string;
 };
 
 type ApplicantResData = {
@@ -292,6 +293,7 @@ const AppointmentBooking = () => {
     totalPrice: 0,
     PaymentType: "",
     specialAssistance: false,
+    applicant_number: "",
   });
   const [members, setMembers] = useState<any[]>([
     {
@@ -1057,6 +1059,7 @@ const AppointmentBooking = () => {
       totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
       PaymentType: "",
       specialAssistance: false,
+      applicant_number: "",
     });
     setMembers([
       {
@@ -1528,7 +1531,7 @@ const AppointmentBooking = () => {
       totalPrice: total,
     }));
   };
-
+  const [hapidduplicate, sethapidduplicate] = useState(false);
   const checkDuplicateHapId = async (hapId: any) => {
     try {
       // 🔹 Set loading state by reusing formErrors
@@ -1543,13 +1546,23 @@ const AppointmentBooking = () => {
 
       if (data?.status === 1) {
         // Duplicate
+        sethapidduplicate(true);
         setFormErrors((prev) => ({
           ...prev,
           hapId: "HAP ID already exists. Please try another.",
         }));
       } else {
         // Valid
+        sethapidduplicate(false);
         setFormErrors((prev) => ({ ...prev, hapId: "" }));
+        if (data?.applicant_number) {
+          setFormData((prev) => ({
+            ...prev,
+            applicant_number:
+              data?.applicant_number
+                ?.Applicant_PersonalDetails__applicant_number,
+          }));
+        }
       }
     } catch (err) {
       setFormErrors((prev) => ({
@@ -2135,11 +2148,19 @@ const AppointmentBooking = () => {
         errors.contactNumber = "Must be exactly 10 digits.";
 
       if (Number(selectDepartment) === 43) {
-        if (hapId && !/^\d{8}$/.test(hapId))
+        if (hapidduplicate) {
+          errors.hapId = "HAP ID already exists. Please try another.";
+        } else if (hapId && !/^\d{8}$/.test(hapId)) {
           errors.hapId = "Must be exactly 8 digits.";
+        }
       } else {
-        if (hapId && !/^[a-zA-Z0-9]{10}$/.test(hapId))
+        console.log("hapidduplicate :", hapidduplicate);
+
+        if (hapidduplicate) {
+          errors.hapId = "HAP ID already exists. Please try another.";
+        } else if (hapId && !/^[a-zA-Z0-9]{10}$/.test(hapId)) {
           errors.hapId = "Must be exactly 10 letters or numbers.";
+        }
       }
 
       if (!dob) errors.dob = "Date of Birth is required.";
@@ -2699,7 +2720,7 @@ const AppointmentBooking = () => {
         finalData = [
           {
             type: "I",
-            applicant_number: "",
+            applicant_number: formData.applicant_number,
             fullname: formData.patientName,
             email: formData.email,
             contact_number: formData.contactNumber,
@@ -2827,6 +2848,7 @@ const AppointmentBooking = () => {
             totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
             PaymentType: "",
             specialAssistance: false,
+            applicant_number: "",
           });
           setMembers([
             {
@@ -2921,9 +2943,10 @@ const AppointmentBooking = () => {
       totalPrice: serviceList[0] ? parseInt(serviceList[0]?.price) : 100,
       PaymentType: "",
       specialAssistance: false,
+      applicant_number: "",
     });
-    setTransactionId("")
-   setTxnMessage("");
+    setTransactionId("");
+    setTxnMessage("");
     // Dynamically generate membercount empty members
     const count = membercount || 1; // fallback to 1 if count not set
     const emptyMember = {
@@ -4387,17 +4410,17 @@ const AppointmentBooking = () => {
                         </div>
                       </div>
                       {availablemembercount > 2 && (
-<>
-  Selected Date :{" "}
-                      {selectedDate?.toLocaleDateString("en-US", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}{" "}
-</>
+                        <>
+                          Selected Date :{" "}
+                          {selectedDate?.toLocaleDateString("en-US", {
+                            weekday: "long",
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })}{" "}
+                        </>
                       )}
-                    
+
                       {availablemembercount === 0 && (
                         <div className="row g-2 align-items-center">
                           <div className="col-12 col-md">
