@@ -2600,7 +2600,7 @@ const AppointmentBooking = () => {
   };
 
   const navigatereschedule = async () => {
-    console.log("Submitting form with data:");
+    console.log("Submitting form with data????111:",members);
     const finalData1 = members.map((member, index) => {
       const reschedule = rescheduledata?.[index]; // get matching reschedule data, if any
 
@@ -3511,7 +3511,7 @@ const AppointmentBooking = () => {
     fetchData();
   }, [selectedCenter, selected_get_Department, allserviceList]); // ✅ re-run if selectedCenter changes
 
-  console.log("rescheduledata------------???", rescheduledata);
+  console.log("rescheduledata------------???1111", rescheduledata);
 
   const rescheduleSlotbook = (slot: any) => {
     console.log("Reschedule Slot Selected:-----------", slot);
@@ -3528,7 +3528,7 @@ const AppointmentBooking = () => {
       );
 
       if (rescheduleConfirm) {
-        console.log("rescheduledata------------???", rescheduledata);
+        console.log("rescheduledata------------???2222", rescheduledata);
 
         if (appointmentType === "Group") {
           let finalData: any[] = [];
@@ -3550,6 +3550,7 @@ const AppointmentBooking = () => {
               appointmentType: appointmentType,
               specialAssistance: item.specialAssistance,
               selectedDepartment: selectDepartment,
+              dob: formatDateToDDMMYYYY(item.dob),
               slot_booking: [
                 {
                   action_date: formatDateToYYYYMMDDNew(new Date()),
@@ -3631,6 +3632,8 @@ const AppointmentBooking = () => {
               appointmentType: appointmentType,
               specialAssistance: singledata.specialAssistance,
               selectedDepartment: selectDepartment,
+              dob: formatDateToYYYYMMDDNew(singledata.Applicant_PersonalDetails__dob),
+              gender : singledata.Applicant_PersonalDetails__gender,
               slot_booking: [
                 {
                   action_date: formatDateToYYYYMMDDNew(new Date()),
